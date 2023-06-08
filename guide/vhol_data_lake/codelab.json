@@ -1,0 +1,29 @@
+{
+  "environment": "web",
+  "format": "../../../claat/render/template.html",
+  "prefix": "https://quickstarts.snowflake.com/elements",
+  "mainga": "UA-41491190-9",
+  "updated": "2023-06-06T14:18:25-04:00",
+  "id": "vhol_data_lake",
+  "duration": 30,
+  "title": "Snowflake for Data Lake",
+  "summary": "This is the guide for the hands-on lab, Snowflake for Data Lake",
+  "source": "vhol_data_lake/vhol_data_lake.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "getting-started",
+    "data-engineering",
+    "architecture-patterns"
+  ],
+  "tags": [
+    "datalake",
+    "gettingstarted",
+    "unstructureddata",
+    "web"
+  ],
+  "feedback": "https://github.com/Snowflake-Labs/sfguides/issues",
+  "url": "vhol_data_lake"
+}

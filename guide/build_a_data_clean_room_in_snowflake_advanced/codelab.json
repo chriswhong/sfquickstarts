@@ -1,0 +1,29 @@
+{
+  "environment": "web",
+  "format": "../../../claat/render/template.html",
+  "prefix": "https://quickstarts.snowflake.com/elements",
+  "mainga": "UA-41491190-9",
+  "updated": "2023-06-06T14:18:18-04:00",
+  "id": "build_a_data_clean_room_in_snowflake_advanced",
+  "duration": 77,
+  "title": "Build A Data Clean Room in Snowflake - Advanced",
+  "summary": "Learn how to build a simple Data Clean Room in Snowflake (Advanced)",
+  "source": "build_a_data_clean_room_in_snowflake_advanced/build_a_data_clean_room_in_snowflake_advanced.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "data-engineering",
+    "app-development",
+    "solution-examples"
+  ],
+  "tags": [
+    "datacleanrooms",
+    "dataengineering",
+    "gettingstarted",
+    "web"
+  ],
+  "feedback": "https://github.com/Snowflake-Labs/sfguides/issues",
+  "url": "build_a_data_clean_room_in_snowflake_advanced"
+}

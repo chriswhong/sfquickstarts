@@ -1,0 +1,196 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Getting Started with Power Apps and Snowflake</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="power_apps_snowflake"
+                  title="Getting Started with Power Apps and Snowflake"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="5">
+        <h2 is-upgraded>Power Apps</h2>
+<p>Microsoft Power Apps and Power Automate are part of the Microsoft Power Platform, a suite of tools designed to empower organizations to create custom applications and automate workflows with minimal coding effort. Power Apps is a low-code development platform that enables users to build custom web and mobile applications using a drag-and-drop interface and pre-built templates. It offers seamless integration with various data sources and other Microsoft services, making it a powerful tool for businesses to create tailored solutions without the need for extensive development resources.</p>
+<p>Power Automate, formerly known as Microsoft Flow, is a cloud-based service that enables users to automate repetitive tasks and create complex workflows across multiple applications and services. With its intuitive graphical interface and wide range of connectors, users can design and implement automation processes that streamline operations and improve overall efficiency.</p>
+<h2 is-upgraded>Snowflake</h2>
+<p>Snowflake is a cloud-based data warehousing and analytics platform that allows organizations to store, process, and analyze massive amounts of structured and semi-structured data. It provides a scalable and fully managed services that support diverse data types, making it an ideal choice for businesses looking to harness the power of their data. Snowflake&#39;s unique multi-cluster shared architecture separates storage, compute, and services, allowing users to scale resources independently, while offering robust security, seamless data sharing, and near-instant elasticity. Its platform-agnostic approach and support for various programming languages enable seamless integration with a wide range of tools and applications, making it a versatile solution for data-driven enterprises.</p>
+<h2 is-upgraded>Power Apps and Snowflake Integration</h2>
+<p>The Power Apps connector is a wrapper around the Snowflake SQL API that allows users of both platforms to read and write data to and from Snowflake from their Power Automate flows.</p>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Familiarity with <a href="https://quickstarts.snowflake.com/guide/getting_started_with_snowflake/index.html#0" target="_blank">Snowflake</a> and a Snowflake account</li>
+<li>Familiarity with <a href="https://learn.microsoft.com/en-us/power-apps/powerapps-overview" target="_blank">PowerApps</a> and a power apps account</li>
+<li>You must have a premium Power Apps license</li>
+</ul>
+<h2 is-upgraded>You&#39;ll Learn</h2>
+<ul>
+<li>Configure a connection between Power Automate and Snowflake</li>
+<li>Run a simple query from Power Automate to query Snowflake data</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Need</h2>
+<ul>
+<li>A free <a href="https://signup.snowflake.com/" target="_blank">Snowflake Account</a></li>
+<li>A Power Apps account <a href="https://learn.microsoft.com/en-us/power-apps/powerapps-overview" target="_blank">PowerApps</a></li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<p>A Power Apps and Power Automate flow that will query data from a snowflake table.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Set Up Snowflake Environment" duration="5">
+        <p>The first thing we will do is create a database and warehouse in your Snowflake environment. Run the below code in a Snowflake worksheet.</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+
+CREATE OR REPLACE WAREHOUSE HOL_WH WITH WAREHOUSE_SIZE=&#39;X-SMALL&#39;;
+
+CREATE OR REPLACE DATABASE HOL_DB;
+
+GRANT USAGE ON WAREHOUSE hol_wh TO ROLE public;
+grant usage on database hol_db to role public;
+grant usage on schema hol_db.public to role public;
+grant select on table hol_db.public.rockers_table to role public;
+</code></pre>
+<h2 is-upgraded>Load data</h2>
+<p>Now we will create a simple table in this database that we will query from the Power Apps connector. Run the below code in a Snowflake worksheet.</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+use database HOL_DB;
+use warehouse HOL_WH;
+CREATE TABLE rockers_table (
+  id INT,
+  name VARCHAR(50),
+  age INT
+);
+
+INSERT INTO rockers_table (id, name, age)
+VALUES (1, &#39;Jimi Hendrix&#39;, 27),
+       (2, &#39;Janis Joplin&#39;, 27),
+       (3, &#39;Elvis Presley&#39;, 42),
+       (4, &#39;Freddie Mercury&#39;, 45),
+       (5, &#39;Whitney Houston&#39;, 48),
+       (6, &#39;Michael Jackson&#39;, 50),
+       (7, &#39;Prince&#39;, 57),
+       (8, &#39;Amy Winehouse&#39;, 27),
+       (9, &#39;Kurt Cobain&#39;, 27),
+       (10, &#39;John Lennon&#39;, 40);
+</code></pre>
+<p>*for this quickstart we will use the ACCOUNTADMIN role to create the Snowflake environment, but in practice you will likely want to use another role when creating databases, tables and warehouses.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Create Security Integration in Snowflake" duration="10">
+        <p>Copy and paste the below security integration in a Snowflake worksheet. Everything will be left as is other than populating the tenant id for the external_oauth_issuer paramater. This will come from your Power Apps environment</p>
+<pre><code language="language-sql" class="language-sql">create or replace security integration powerapps
+       type = external_oauth
+       enabled = true
+       external_oauth_type = azure 
+       external_oauth_issuer = &#39;https://sts.windows.net/&lt;tenant id&gt;/&#39;     
+       external_oauth_jws_keys_url = &#39;https://login.windows.net/common/discovery/keys&#39;
+       external_oauth_audience_list = (&#39;https://analysis.windows.net/powerbi/connector/Snowflake&#39;,&#39;https://analysis.windows.net/powerbi/connector/snowflake&#39;)
+       external_oauth_token_user_mapping_claim = &#39;upn&#39;
+       external_oauth_snowflake_user_mapping_attribute = &#39;login_name&#39;
+       external_oauth_any_role_mode = &#39;ENABLE&#39;;
+</code></pre>
+<p>To find your Power Apps tenant id you will go to your Power Apps environment, click the settings gear button in the top right, click &#34;Session Details&#34; then copy the &#34;Tenant ID&#34; value and paste it into the code from above where  is tagged. <img src="img/75602f46c8181e83.png"></p>
+<p>For this integration we are using ‘login_name&#39; as the mapping attribute. You will want go to your users and roles in the admin section of your Snowflake environment and make sure that there is exactly one user where the login name matches the username (likely an email address) in your Power Apps environment. It must match exactly and is case sensitive. The user must also have a default warehouse and a default role. <img src="img/fb34b54cc0745715.png"></p>
+<p>This security integration is the same as setting up a Power BI integration <a href="https://docs.snowflake.com/en/user-guide/oauth-powerbi#getting-started" target="_blank">PowerBI</a></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Build Power Automate Flow" duration="15">
+        <p>From the Power Apps homescreen access the apps in the top left and click on Power Automate. <img src="img/db57ea7967db53a6.png"></p>
+<p>On the Power Automate screen click on the ‘My Flow&#39; menu item on the left then &#34;New Flow&#34; and then &#34;Instant Cloud Flow&#34;. Select Power Apps as your trigger, name the flow and then create. <img src="img/cd89d1be819186b6.png"></p>
+<p>Now, it&#39;s time to build the connector! First click on &#34;New Step&#34; and the search bar search for &#34;Snowflake&#34; and select the &#34;Submit SQL Statement for Executiuon&#34; for each of the parameters in the Snowflake connector please populate as such:</p>
+<pre><code language="language-bash" class="language-bash">Instance: &lt;Snowflake host&gt; (it should resemble: sn00111.central-us.azure.snowflakecomputing.com, do not include the &#34;https://&#34;)
+statement: select name, age from rockers_table;
+database: HOL_DB
+schema: PUBLIC
+warehouse: HOL_DB
+role: PUBLIC
+</code></pre>
+<p>Next, create a &#34;New &#34;Step&#34; and select the action &#34;Convert result set rows from arrays to objects&#34; and complete the activity parameters with the options below. Selected from the box on the left of the activity.</p>
+<pre><code language="language-bash" class="language-bash">Row Type: rowType
+Data: data
+</code></pre>
+<p>Lastly, and the &#34;Response&#34; action. Your flow should now look like this: <img src="img/e1e3ae51db06db71.png"></p>
+<p>Click &#34;save&#34; in the top right corner then once saved click &#34;test&#34;. Move through the prompts to run the Flow: select Manually, &#34;Save &amp; Test&#34; then &#34;Run Flow&#34; then &#34;Done&#34;. Within several seconds you should have successfully run the flow and it shoult look like this: <img src="img/8a3e4d18f3a07e84.png"></p>
+<h2 is-upgraded>Things to look out for</h2>
+<ul>
+<li>If you&#39;re getting a username and password error make sure that you the forward slash at the end the external_oauth_issuer parameter value</li>
+<li>Similarly you may explore changing the external_oauth_snowflake_user_mapping_attribute value to &#34;email_name&#34; as that value in your user profile will match the email address in your Power Apps account.</li>
+<li>Make sure the you&#39;re getting the tenant id from your Power Apps account and not your Azure account as they don&#39;t always match.</li>
+<li>If you&#39;re not seeing the Snowflake actions in your options double check your Power Automate Environment and make sure you&#39;re using an environment where the Snowflake connector is available.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion and Next Steps" duration="5">
+        <p>This quickstart will get you started with creating a simple power apps flow that connects to Snowflake and queries a table. From here you can use the connector in many different flows with different power apps activities to read data from and write data to Snowflake see here for more details: <a href="https://learn.microsoft.com/en-us/power-automate/getting-started" target="_blank">Power-Apps</a>. Additionally, users can utilize Azure Active Directory and SSO to create a user that links to the security integration to for power apps. <a href="https://docs.snowflake.com/en/user-guide/oauth-powerbi#getting-started" target="_blank">AAD-SSO</a></p>
+<h2 is-upgraded>Potential Use Cases for the Snowflake Power Apps</h2>
+<ul>
+<li>Build data apps using the connector to share dashboard/analytics for your marketing campaign with Sales or other business users.</li>
+<li>Build an app to check the NextBest Offer or LTV of a customer to avoid churn.</li>
+<li>Build an app that will allow a user to execute queries from Teams chat against their Snowflake environment.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

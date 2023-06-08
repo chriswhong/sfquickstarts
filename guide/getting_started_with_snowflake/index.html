@@ -1,0 +1,808 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Getting Started with Snowflake - Zero to Snowflake</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="getting_started_with_snowflake"
+                  title="Getting Started with Snowflake - Zero to Snowflake"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="2">
+        <p>Welcome to Snowflake! This entry-level guide designed for database and data warehouse administrators and architects will help you navigate the Snowflake interface and introduce you to some of our core capabilities. <a href="https://trial.snowflake.com" target="_blank">Sign up for a free 30-day trial of Snowflake</a> and follow along with this lab exercise. Once we cover the basics, you&#39;ll be ready to start processing your own data and diving into Snowflake&#39;s more advanced features like a pro.</p>
+<h2 is-upgraded>Free Virtual Hands-on Lab</h2>
+<p>This Snowflake Guide is available as a free, instructor-led Virtual Hands on Lab. <a href="https://www.snowflake.com/virtual-hands-on-lab/" target="_blank">Sign up for the VHOL today</a>.</p>
+<h2 is-upgraded>Prerequisites:</h2>
+<ul>
+<li>Use of the <a href="https://trial.snowflake.com" target="_blank">Snowflake free 30-day trial environment</a></li>
+<li>Basic knowledge of SQL, database concepts, and objects</li>
+<li>Familiarity with CSV comma-delimited files and JSON semi-structured data</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Learn:</h2>
+<ul>
+<li>How to create stages, databases, tables, views, and virtual warehouses.</li>
+<li>How to load structured and semi-structured data.</li>
+<li>How to perform analytical queries on data in Snowflake, including joins between tables.</li>
+<li>How to clone objects.</li>
+<li>How to undo user errors using Time Travel.</li>
+<li>How to create roles and users, and grant them privileges.</li>
+<li>How to securely and easily share data with other accounts.</li>
+<li>How to consume datasets in the Snowflake Data Marketplace.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Prepare Your Lab Environment" duration="2">
+        <p>If you haven&#39;t already, register for a <a href="https://signup.snowflake.com/developers" target="_blank">Snowflake free 30-day trial</a>. The rest of the sections in this lab assume you are using a new Snowflake account created by registering for a trial.</p>
+<p>The Snowflake edition (Standard, Enterprise, Business Critical, etc.) and cloud provider (AWS, Azure, GCP), and Region (US East, EU, etc.) you use for this lab do not matter. However, we suggest you select the region that is physically closest to you and Enterprise, our most popular offering, as your Snowflake edition.</p>
+<p>After registering, you will receive an email with an activation link and URL for accessing your Snowflake account.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="The Snowflake ​User Interface &amp; Lab Story" duration="8">
+        <aside class="warning"><p><strong>About the screenshots, sample code, and environment</strong> Screenshots in this lab depict examples and results that may vary slightly from what you see when you complete the exercises.</p>
+</aside>
+<h2 is-upgraded>Logging into the Snowflake User Interface (UI)</h2>
+<p>Open a browser window and enter the URL of your Snowflake 30-day trial environment that was sent with your registration email.</p>
+<p>You should see the following login dialog​. Enter the username and password that you specified during the registration:</p>
+<p class="image-container"><img alt="login screen" src="img/94b9a152c373c99e.png"></p>
+<h2 is-upgraded>Navigating the Snowflake UI</h2>
+<p>Let&#39;s get you acquainted with Snowflake! This section covers the basic components of the user interface. We will move from top to bottom on the left-hand side margin.</p>
+<p class="image-container"><img alt="snowflake navbar" src="img/ce13b4af78a66c6b.png"></p>
+<h3 is-upgraded>Worksheets</h3>
+<p class="image-container"><img alt="worksheets tab main" src="img/ba0e07fe7e6ab958.png"></p>
+<p>The ​<strong>Worksheets​</strong> tab provides an interface for submitting SQL queries, performing DDL and DML operations, and viewing results as your queries or operations complete. A new worksheet is created by clicking <strong>+ Worksheet</strong> on the top right.</p>
+<p class="image-container"><img alt="worksheets tab details" src="img/8fdb16c05fd8c436.png"></p>
+<p>The top left corner contains the following:</p>
+<ul>
+<li><strong>Home</strong> icon: Use this to get back to the main console/close the worksheet.</li>
+<li><strong>Worksheet_name</strong> drop-down: The default name is the timestamp when the worksheet was created. Click the timestamp to edit the worksheet name. The drop-down also displays additional actions you can perform for the worksheet.</li>
+<li><strong>Manage filters</strong> button: Custom filters are special keywords that resolve as a subquery or list of values.</li>
+</ul>
+<p>The top right corner contains the following:</p>
+<ul>
+<li><strong>Context</strong> box: This lets Snowflake know which role and warehouse to use during this session. It can be changed via the UI or SQL commands.</li>
+<li><strong>Share</strong> button: Open the sharing menu to share to other users or copy the link to the worksheet.</li>
+<li><strong>Play/Run</strong> button: Run the SQL statement where the cursor currently is or multiple selected statements.</li>
+</ul>
+<p>The middle pane contains the following:</p>
+<ul>
+<li>Drop-down at the top for setting the database/schema/object context for the worksheet.</li>
+<li>General working area where you enter and execute queries and other SQL statements.</li>
+</ul>
+<p>The middle-left panel contains the following:</p>
+<ul>
+<li><strong>Worksheets</strong> tab: Use this tab to quickly select and jump between different worksheets</li>
+<li><strong>Databases</strong> tab: Use this tab to view all of the database objects available to the current role</li>
+<li><strong>Search</strong> bar: database objects browser which enables you to explore all databases, schemas, tables, and views accessible by the role currently in use for the worksheet.</li>
+</ul>
+<p>The bottom pane displays the results of queries and other operations. Also includes 4 options (<strong>Object</strong>, <strong>Query</strong>, <strong>Result</strong>, <strong>Chart</strong>) that open/close their respective panels on the UI. <strong>Chart</strong> opens a visualization panel for the returned results. More on this later.</p>
+<p>The various panes on this page can be resized by adjusting their sliders. If you need more room in the worksheet, collapse the database objects browser in the left panel. Many of the screenshots in this guide keep this panel closed.</p>
+<aside class="warning"><p><strong>Worksheets vs the UI</strong> Most of the exercises in this lab are executed using pre-written SQL within this worksheet to save time. These tasks can also be done via the UI, but would require navigating back-and-forth between multiple UI tabs.</p>
+</aside>
+<h3 is-upgraded>Dashboards</h3>
+<p class="image-container"><img alt="dashboards tab" src="img/21d6de710923c81b.png"></p>
+<p>The <strong>Dashboards</strong> tab allows you to create flexible displays of one or more charts (in the form of tiles, which can be rearranged). Tiles and widgets are produced by executing SQL queries that return results in a worksheet. Dashboards work at a variety of sizes with minimal configuration.</p>
+<h3 is-upgraded>Databases</h3>
+<p class="image-container"><img alt="databases tab" src="img/1efb94fd8e624f9.png"></p>
+<p>Under <strong>Data</strong>, the <strong>Databases</strong>​ tab shows information about the databases you have created or have permission to access. You can create, clone, drop, or transfer ownership of databases, as well as load data in the UI. Notice that a database already exists in your environment. However, we will not be using it in this lab.</p>
+<h3 is-upgraded>Private Shared Data</h3>
+<p class="image-container"><img alt="shared data tab" src="img/ac79b50634875aeb.png"></p>
+<p>Also under <strong>Data</strong>, the <strong>Private Shared Data</strong> tab is where data sharing can be configured to easily and securely share Snowflake tables among separate Snowflake accounts or external users, without having to create a copy of the data. We will cover data sharing in Section 10.</p>
+<h3 is-upgraded>Marketplace</h3>
+<p class="image-container"><img alt="marketplace tab" src="img/2ebba15c6973ed6d.png"></p>
+<p>The <strong>Marketplace</strong> tab is where any Snowflake customer can browse and consume data sets made available by providers. There are two types of shared data: Public and Personalized. Public data is free data sets available for querying instantaneously. Personalized data requires reaching out to the provider of data for approval of sharing data.</p>
+<h3 is-upgraded>Query History</h3>
+<p class="image-container"><img alt="history tab" src="img/78319bfb37054a7a.png"></p>
+<p>Under <strong>Activity</strong> there are two tabs <strong>Query History</strong> and <strong>Copy History</strong>:</p>
+<ul>
+<li><strong>QuerHistory</strong> is where previous queries are shown, along with filters that can be used to hone results (user, warehouse, status, query tag, etc.). View the details of all queries executed in the last 14 days from your Snowflake account. Click a query ID to drill into it for more information.</li>
+<li><strong>Copy History</strong> shows the status of copy commands run to ingest data into Snowflake.</li>
+</ul>
+<h3 is-upgraded>Warehouses</h3>
+<p class="image-container"><img alt="warehouses tab" src="img/e8ae082b9907f027.png"></p>
+<p>Under <strong>Admin</strong>, the <strong>​Warehouses​</strong> tab is where you set up and manage compute resources known as virtual warehouses to load or query data in Snowflake. A warehouse called COMPUTE_WH already exists in your environment.</p>
+<h3 is-upgraded>Resource Monitors</h3>
+<p class="image-container"><img alt="resource monitors tab" src="img/bf1224962773e6c8.png"></p>
+<p>Under <strong>Admin</strong>, the <strong>Resource Monitors</strong> tab shows all the resource monitors that have been created to control the number of credits that virtual warehouses consume. For each resource monitor, it shows the credit quota, type of monitoring, schedule, and actions performed when the virtual warehouse reaches its credit limit.</p>
+<h3 is-upgraded>Roles</h3>
+<p class="image-container"><img alt="roles tab" src="img/4dda97b955d14138.png"></p>
+<p>Under <strong>Admin</strong>, the <strong>Roles</strong> sub-tab of the <strong>Users and Roles</strong> tab shows a list of the roles and their hierarchies. Roles can be created, reorganized, and granted to users in this tab. The roles can also be displayed in tabular/list format by selecting the <strong>Table</strong> sub-tab.</p>
+<h3 is-upgraded>Users</h3>
+<p class="image-container"><img alt="users tab" src="img/46fa56f76ccba504.png"></p>
+<p>Also under <strong>Admin</strong> tab, the <strong>Users</strong> sub-tab of the <strong>Users and Roles</strong> tab shows a list of users in the account, default roles, and owner of the users. For a new account, no records are shown because no additional roles have been created. Permissions granted through your current role determine the information shown for this tab. To see all the information available on the tab, switch your role to ACCOUNTADMIN.</p>
+<p class="image-container"><img alt="user preferences dropdown" src="img/f9ca5cc23fcd83cb.png"></p>
+<p>Clicking on your username in the top right of the UI allows you to change your password, roles, and preferences. Snowflake has several system defined roles. You are currently in the default role of <code>SYSADMIN</code> and will stay in this role for the majority of the lab.</p>
+<aside class="warning"><p><strong>SYSADMIN</strong> The <code>SYSADMIN</code> (aka System Administrator) role has privileges to create warehouses, databases, and other objects in an account. In a real-world environment, you would use different roles for the tasks in this lab, and assign roles to your users. We will cover more on roles and Snowflake&#39;s access control model in Section 9 and you can find additional information in the <a href="https://docs.snowflake.net/manuals/user-guide/security-access-control.html" target="_blank">Snowflake documentation</a>.</p>
+</aside>
+<h2 is-upgraded>The Lab Story</h2>
+<p>This lab is based on the analytics team at Citi Bike, a real, citywide bike sharing system in New York City, USA. The team wants to run analytics on data from their internal transactional systems to better understand their riders and how to best serve them.</p>
+<p>We will first load structured <code>.csv</code> data from rider transactions into Snowflake. Later we will work with open-source, semi-structured JSON weather data to determine if there is any correlation between the number of bike rides and the weather.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Preparing to Load Data" duration="14">
+        <p>Let&#39;s start by preparing to load the structured Citi Bike rider transaction data into Snowflake.</p>
+<p>This section walks you through the steps to:</p>
+<ul>
+<li>Create a database and table.</li>
+<li>Create an external stage.</li>
+<li>Create a file format for the data.</li>
+</ul>
+<aside class="warning"><p><strong>Getting Data into Snowflake</strong> There are many ways to get data into Snowflake from many locations including the COPY command, Snowpipe auto-ingestion, external connectors, or third-party ETL/ELT solutions. For more information on getting data into Snowflake, see the <a href="https://docs.snowflake.net/manuals/user-guide-data-load.html" target="_blank">Snowflake documentation</a>. For the purposes of this lab, we use the COPY command and AWS S3 storage to load data manually. In a real-world scenario, you would more likely use an automated process or ETL solution.</p>
+</aside>
+<p>The data we will be using is bike share data provided by Citi Bike NYC. The data has been exported and pre-staged for you in an Amazon AWS S3 bucket in the US-EAST region. The data consists of information about trip times, locations, user type, gender, age, etc. On AWS S3, the data represents 61.5M rows, 377 objects, and 1.9GB compressed.</p>
+<p>Below is a snippet from one of the Citi Bike CSV data files:</p>
+<p class="image-container"><img alt="data snippet" src="img/a58c8af550412709.png"></p>
+<p>It is in comma-delimited format with a single header line and double quotes enclosing all string values, including the field headings in the header line. This will come into play later in this section as we configure the Snowflake table to store this data.</p>
+<h2 is-upgraded>Create a Database and Table</h2>
+<p>First, let&#39;s create a database called <code>CITIBIKE</code> to use for loading the structured data.</p>
+<p>Ensure you are using the sysadmin role by selecting <strong>Switch Role</strong> &gt; <strong>SYSADMIN</strong>.</p>
+<p>Navigate to the <strong>Databases</strong> tab. Click <strong>Create</strong>, name the database <code>CITIBIKE</code>, then click <strong>CREATE</strong>.</p>
+<p class="image-container"><img alt="worksheet creation" src="img/617e691cd998d830.png"></p>
+<p>Now navigate to the <strong>Worksheets</strong> tab. You should see the worksheet we created in step 3.</p>
+<p class="image-container"><img alt="new worksheet" src="img/12afc32e8196d6b0.png"></p>
+<p>We need to set the context appropriately within the worksheet. In the upper right corner of the worksheet, click the box to the left of the <strong>Share</strong> button to show the context menu. Here we control the elements you can see and run from each worksheet. We are using the UI here to set the context. Later in the lab, we will accomplish the same thing via SQL commands within the worksheet.</p>
+<p>Select the following context settings:</p>
+<p>Role: <code>SYSADMIN</code> Warehouse: <code>COMPUTE_WH</code></p>
+<p class="image-container"><img alt="context role and warehouse settings" src="img/e1133050d123b025.png"></p>
+<p>Next, in the drop-down for the database, select the following context settings:</p>
+<p>Database: <code>CITIBIKE</code> Schema = <code>PUBLIC</code></p>
+<p class="image-container"><img alt="context database settings" src="img/3dafea3169e84fff.png"></p>
+<aside class="warning"><p><strong>Data Definition Language (DDL) operations are free!</strong> All the DDL operations we have done so far do not require compute resources, so we can create all our objects for free.</p>
+</aside>
+<p>To make working in the worksheet easier, let&#39;s rename it. In the top left corner, click the worksheet name, which is the timestamp when the worksheet was created, and change it to <code>CITIBIKE_ZERO_TO_SNOWFLAKE</code>.</p>
+<p>Next we create a table called <code>TRIPS</code> to use for loading the comma-delimited data. Instead of using the UI, we use the worksheet to run the DDL that creates the table. Copy the following SQL text into your worksheet:</p>
+<pre><code language="language-SQL" class="language-SQL">create or replace table trips
+(tripduration integer,
+starttime timestamp,
+stoptime timestamp,
+start_station_id integer,
+start_station_name string,
+start_station_latitude float,
+start_station_longitude float,
+end_station_id integer,
+end_station_name string,
+end_station_latitude float,
+end_station_longitude float,
+bikeid integer,
+membership_type string,
+usertype string,
+birth_year integer,
+gender integer);
+</code></pre>
+<aside class="warning"><p><strong>Many Options to Run Commands.</strong> SQL commands can be executed through the UI, via the <strong>Worksheets</strong> tab, using our SnowSQL command line tool, with a SQL editor of your choice via ODBC/JDBC, or through our other connectors (Python, Spark, etc.). As mentioned earlier, to save time, we are performing most of the operations in this lab via pre-written SQL executed in the worksheet as opposed to using the UI.</p>
+</aside>
+<p>Run the query by placing your cursor anywhere in the SQL text and clicking the blue <strong>Play/Run</strong> button in the top right of the worksheet. Or use the keyboard shortcut [Ctrl]/[Cmd]+[Enter].</p>
+<p>Verify that your TRIPS table has been created. At the bottom of the worksheet you should see a Results section displaying a &#34;Table TRIPS successfully created&#34; message.</p>
+<p class="image-container"><img alt="TRIPS confirmation message" src="img/dbed54bac4e63585.png"></p>
+<p>Navigate to the <strong>Databases</strong> tab by clicking the <strong>HOME</strong> icon in the upper left corner of the worksheet. Then click <strong>Data</strong> &gt; <strong>Databases</strong>. In the list of databases, click <code>CITIBIKE</code> &gt; <code>PUBLIC</code> &gt; <strong>TABLES</strong> to see your newly created <code>TRIPS</code> table. If you don&#39;t see any databases on the left, expand your browser because they may be hidden.</p>
+<p class="image-container"><img alt="TRIPS table" src="img/3b9b222029a49f7a.png"></p>
+<p>Click <code>TRIPS</code> and the <strong>Columns</strong> tab to see the table structure you just created.</p>
+<p class="image-container"><img alt="TRIPS table structure" src="img/5201e54b3b7772f4.png"></p>
+<h2 is-upgraded>Create an External Stage</h2>
+<p>We are working with structured, comma-delimited data that has already been staged in a public, external S3 bucket. Before we can use this data, we first need to create a Stage that specifies the location of our external bucket.</p>
+<aside class="special"><p>For this lab we are using an AWS-East bucket. To prevent data egress/transfer costs in the future, you should select a staging location from the same cloud provider and region as your Snowflake account.</p>
+</aside>
+<p>From the <strong>Databases</strong> tab, click the <code>CITIBIKE</code> database and <code>PUBLIC</code> schema. In the <strong>Stages</strong> tab, click the <strong>Create</strong> button, then <strong>Stage</strong> &gt; <strong>Amazon S3</strong>.</p>
+<p class="image-container"><img alt="stages create" src="img/a0b3421ffacddeec.png"></p>
+<p>In the &#34;Create Securable Object&#34; dialog that opens, replace the following values in the SQL statement:</p>
+<p><code>stage_name</code>: <code>citibike_trips</code></p>
+<p><code>url</code>: <code>s3://snowflake-workshop-lab/citibike-trips-csv/</code></p>
+<p><strong>Note:</strong> Make sure to include the final forward slash (<code>/</code>) at the end of the URL or you will encounter errors later when loading data from the bucket. Also ensure you have removed ‘credentials = (...)&#39; statejment which is not required. The create stage command should resemble that show above exactly.</p>
+<aside class="special"><p>The S3 bucket for this lab is public so you can leave the credentials options in the statement empty. In a real-world scenario, the bucket used for an external stage would likely require key information.</p>
+</aside>
+<p class="image-container"><img alt="create stage settings" src="img/91fa215e0a17b483.png"></p>
+<p>Now let&#39;s take a look at the contents of the <code>citibike_trips</code> stage. Navigate to the <strong>Worksheets</strong> tab and execute the following SQL statement:</p>
+<pre><code language="language-SQL" class="language-SQL">list @citibike_trips;
+</code></pre>
+<p>In the results in the bottom pane, you should see the list of files in the stage:</p>
+<p class="image-container"><img alt="worksheet result" src="img/e60ace83025630e9.png"></p>
+<h2 is-upgraded>Create a File Format</h2>
+<p>Before we can load the data into Snowflake, we have to create a file format that matches the data structure.</p>
+<p>In the worksheet, run the following command to create the file format:</p>
+<pre><code language="language-SQL" class="language-SQL">--create file format
+
+create or replace file format csv type=&#39;csv&#39;
+  compression = &#39;auto&#39; field_delimiter = &#39;,&#39; record_delimiter = &#39;\n&#39;
+  skip_header = 0 field_optionally_enclosed_by = &#39;\042&#39; trim_space = false
+  error_on_column_count_mismatch = false escape = &#39;none&#39; escape_unenclosed_field = &#39;\134&#39;
+  date_format = &#39;auto&#39; timestamp_format = &#39;auto&#39; null_if = (&#39;&#39;) comment = &#39;file format for ingesting data for zero to snowflake&#39;;
+</code></pre>
+<p class="image-container"><img alt="create file format" src="img/3c52420ff7677f1.png"></p>
+<p>Verify that the file format has been created with the correct settings by executing the following command:</p>
+<pre><code language="language-SQL" class="language-SQL">--verify file format is created
+
+show file formats in database citibike;
+</code></pre>
+<p>The file format created should be listed in the result:</p>
+<p class="image-container"><img alt="create file format settings" src="img/e277ae2e58729906.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Loading Data" duration="10">
+        <p>In this section, we will use a virtual warehouse and the COPY command to initiate bulk loading of structured data into the Snowflake table we created in the last section.</p>
+<h2 is-upgraded>Resize and Use a Warehouse for Data Loading</h2>
+<p>Compute resources are needed for loading data. Snowflake&#39;s compute nodes are called virtual warehouses and they can be dynamically sized up or out according to workload, whether you are loading data, running a query, or performing a DML operation. Each workload can have its own warehouse so there is no resource contention.</p>
+<p>Navigate to the <strong>Warehouses</strong> tab (under <strong>Admin</strong>). This is where you can view all of your existing warehouses, as well as analyze their usage trends.</p>
+<p>Note the <strong>+ Warehouse</strong> option in the upper right corner of the top. This is where you can quickly add a new warehouse. However, we want to use the existing warehouse COMPUTE_WH included in the 30-day trial environment.</p>
+<p>Click the row of the <code>COMPUTE_WH</code> warehouse. Then click the <strong>...</strong> (dot dot dot) in the upper right corner text above it to see the actions you can perform on the warehouse. We will use this warehouse to load the data from AWS S3.</p>
+<p class="image-container"><img alt="compute warehouse configure" src="img/5fcf1309cb972674.png"></p>
+<p>Click <strong>Edit</strong> to walk through the options of this warehouse and learn some of Snowflake&#39;s unique functionality.</p>
+<aside class="special"><p>If this account isn&#39;t using Snowflake Enterprise Edition (or higher), you will not see the <strong>Mode</strong> or <strong>Clusters</strong> options shown in the screenshot below. The multi-cluster warehouses feature is not used in this lab, but we will discuss it as a key capability of Snowflake.</p>
+</aside>
+<p class="image-container"><img alt="warehouse configure settings" src="img/94c5ebc4ce00220c.png"></p>
+<ul>
+<li>The <strong>Size</strong> drop-down is where the capacity of the warehouse is selected. For larger data loading operations or more compute-intensive queries, a larger warehouse is recommended. The sizes translate to the underlying compute resources provisioned from the cloud provider (AWS, Azure, or GCP) where your Snowflake account is hosted. It also determines the number of credits consumed by the warehouse for each full hour it runs. The larger the size, the more compute resources from the cloud provider are allocated to the warehouse and the more credits it consumes. For example, the <code>4X-Large</code> setting consumes 128 credits for each full hour. This sizing can be changed up or down at any time with a simple click.</li>
+<li>If you are using Snowflake Enterprise Edition (or higher) the <strong>Query Acceleration</strong> option is available. When it is enabled for a warehouse, it can improve overall warehouse performance by reducing the impact of outlier queries, which are queries that use more resources than the typical query. Leave this disabled</li>
+<li>If you are using Snowflake Enterprise Edition (or higher) and the <strong>Multi-cluster Warehouse</strong> option is enabled, you will see additional options. This is where you can set up a warehouse to use multiple clusters of compute resources, up to 10 clusters. For example, if a <code>4X-Large</code> multi-cluster warehouse is assigned a maximum cluster size of 10, it can scale out to 10 times the compute resources powering that warehouse...and it can do this in seconds! However, note that this will increase the number of credits consumed by the warehouse to 1280 if all 10 clusters run for a full hour (128 credits/hour x 10 clusters). Multi-cluster is ideal for concurrency scenarios, such as many business analysts simultaneously running different queries using the same warehouse. In this use case, the various queries are allocated across multiple clusters to ensure they run quickly.</li>
+<li>Under <strong>Advanced Warehouse Options</strong>, the options allow you to automatically suspend the warehouse when not in use so no credits are needlessly consumed. There is also an option to automatically resume a suspended warehouse so when a new workload is sent to it, it automatically starts back up. This functionality enables Snowflake&#39;s efficient &#34;pay only for what you use&#34; billing model which allows you to scale your resources when necessary and automatically scale down or turn off when not needed, nearly eliminating idle resources. Additionally, there is an option to change the Warehouse type from Standard to Snowpark-optimized. Snowpark-optmized warehouses provide 16x memory per node and are recommended for workloads that have large memory requirements such as ML training use cases using a stored procedure on a single virtual warehouse node. Leave this type as Standard</li>
+</ul>
+<aside class="warning"><p><strong>Snowflake Compute vs Other Data Warehouses</strong> Many of the virtual warehouse and compute capabilities we just covered, such as the ability to create, scale up, scale out, and auto-suspend/resume virtual warehouses are easy to use in Snowflake and can be done in seconds. For on-premise data warehouses, these capabilities are much more difficult, if not impossible, as they require significant physical hardware, over-provisioning of hardware for workload spikes, and significant configuration work, as well as additional challenges. Even other cloud-based data warehouses cannot scale up and out like Snowflake without significantly more configuration work and time.</p>
+</aside>
+<p><strong>Warning - Watch Your Spend!</strong> During or after this lab, you should be careful about performing the following actions without good reason or you may burn through your $400 of free credits more quickly than desired:</p>
+<ul>
+<li>Do not disable auto-suspend. If auto-suspend is disabled, your warehouses continues to run and consume credits even when not in use.</li>
+<li>Do not use a warehouse size that is excessive given the workload. The larger the warehouse, the more credits are consumed.</li>
+</ul>
+<p>We are going to use this virtual warehouse to load the structured data in the CSV files (stored in the AWS S3 bucket) into Snowflake. However, we are first going to change the size of the warehouse to increase the compute resources it uses. After the load, note the time taken and then, in a later step in this section, we will re-do the same load operation with an even larger warehouse, observing its faster load time.</p>
+<p>Change the <strong>Size</strong> of this data warehouse from <code>X-Small</code> to <code>Small</code>. then click the <strong>Save Warehouse</strong> button:</p>
+<p class="image-container"><img alt="configure settings small" src="img/8c4fb3ecad091198.png"></p>
+<h2 is-upgraded>Load the Data</h2>
+<p>Now we can run a COPY command to load the data into the <code>TRIPS</code> table we created earlier.</p>
+<p>Navigate back to the <code>CITIBIKE_ZERO_TO_SNOWFLAKE</code> worksheet in the <strong>Worksheets</strong> tab. Make sure the worksheet context is correctly set:</p>
+<p>Role: <code>SYSADMIN</code> Warehouse: <code>COMPUTE_WH</code> Database: <code>CITIBIKE</code> Schema = <code>PUBLIC</code></p>
+<p class="image-container"><img alt="worksheet context" src="img/a22dcc20c3929d09.png"></p>
+<p>Execute the following statements in the worksheet to load the staged data into the table. This may take up to 30 seconds.</p>
+<pre><code language="language-SQL" class="language-SQL">copy into trips from @citibike_trips file_format=csv PATTERN = &#39;.*csv.*&#39; ;
+</code></pre>
+<p>In the result pane, you should see the status of each file that was loaded. Once the load is done, in the <strong>Query Details</strong> pane on the bottom right, you can scroll through the various statuses, error statistics, and visualizations for the last statement executed:</p>
+<p class="image-container"><img alt="results load status" src="img/6bcc9ac924e135ed.png"></p>
+<p>Next, navigate to the <strong>Query History</strong> tab by clicking the <strong>Home</strong> icon and then <strong>Activity</strong> &gt; <strong>Query History</strong>. Select the query at the top of the list, which should be the COPY INTO statement that was last executed. Select the <strong>Query Profile</strong> tab and note the steps taken by the query to execute, query details, most expensive nodes, and additional statistics.</p>
+<p class="image-container"><img alt="history and duration" src="img/ba7874d9fe5cb2b7.png"></p>
+<p>Now let&#39;s reload the <code>TRIPS</code> table with a larger warehouse to see the impact the additional compute resources have on the loading time.</p>
+<p>Go back to the worksheet and use the TRUNCATE TABLE command to clear the table of all data and metadata:</p>
+<pre><code language="language-SQL" class="language-SQL">truncate table trips;
+</code></pre>
+<p>Verify that the table is empty by running the following command:</p>
+<pre><code language="language-SQL" class="language-SQL">--verify table is clear
+select * from trips limit 10;
+</code></pre>
+<p>The result should show &#34;Query produced no results&#34;.</p>
+<p>Change the warehouse size to <code>large</code> using the following ALTER WAREHOUSE:</p>
+<pre><code language="language-SQL" class="language-SQL">--change warehouse size from small to large (4x)
+alter warehouse compute_wh set warehouse_size=&#39;large&#39;;
+</code></pre>
+<p>Verify the change using the following SHOW WAREHOUSES:</p>
+<pre><code language="language-SQL" class="language-SQL">--load data with large warehouse
+show warehouses;
+</code></pre>
+<p class="image-container"><img alt="resize context to large in UI step 1" src="img/808e94b8dc375648.png"></p>
+<p>The size can also be changed using the UI by clicking on the worksheet context box, then the <strong>Configure</strong> (3-line) icon on the right side of the context box, and changing <code>Small</code> to <code>Large</code> in the <strong>Size</strong> drop-down:</p>
+<p class="image-container"><img alt="resize context to large in UI step 1" src="img/a22dcc20c3929d09.png"><img alt="resize context to large in UI step 2" src="img/e92369b011ce703f.png"></p>
+<p>Execute the same COPY INTO statement as before to load the same data again:</p>
+<pre><code language="language-SQL" class="language-SQL">copy into trips from @citibike_trips
+file_format=CSV;
+</code></pre>
+<p class="image-container"><img alt="compare load durations" src="img/2e1eaaced0a95340.png"></p>
+<p>Once the load is done, navigate back to the <strong>Queries</strong> page (<strong>Home</strong> icon &gt; <strong>Activity</strong> &gt; <strong>Query History</strong>). Compare the times of the two COPY INTO commands. The load using the <code>Large</code> warehouse was significantly faster.</p>
+<h2 is-upgraded>Create a New Warehouse for Data Analytics</h2>
+<p>Going back to the lab story, let&#39;s assume the Citi Bike team wants to eliminate resource contention between their data loading/ETL workloads and the analytical end users using BI tools to query Snowflake. As mentioned earlier, Snowflake can easily do this by assigning different, appropriately-sized warehouses to various workloads. Since Citi Bike already has a warehouse for data loading, let&#39;s create a new warehouse for the end users running analytics. We will use this warehouse to perform analytics in the next section.</p>
+<p>Navigate to the <strong>Admin</strong> &gt; <strong>Warehouses</strong> tab, click <strong>+ Warehouse</strong>, and name the new warehouse `` and set the size to <code>Large</code>.</p>
+<p>If you are using Snowflake Enterprise Edition (or higher) and <strong>Multi-cluster Warehouses</strong> is enabled, you will see additional settings:</p>
+<ul>
+<li>Make sure <strong>Max Clusters</strong> is set to <code>1</code>.</li>
+<li>Leave all the other settings at their defaults.</li>
+</ul>
+<p class="image-container"><img alt="warehouse settings" src="img/970f2ab7dc954538.png"></p>
+<p>Click the <strong>Create Warehouse</strong> button to create the warehouse.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Working with Queries, the Results Cache, &amp; Cloning" duration="8">
+        <p>In the previous exercises, we loaded data into two tables using Snowflake&#39;s COPY bulk loader command and the <code>COMPUTE_WH</code> virtual warehouse. Now we are going to take on the role of the analytics users at Citi Bike who need to query data in those tables using the worksheet and the second warehouse <code>ANALYTICS_WH</code>.</p>
+<aside class="warning"><p><strong>Real World Roles and Querying</strong> Within a real company, analytics users would likely have a different role than SYSADMIN. To keep the lab simple, we are going to stay with the SYSADMIN role for this section. Additionally, querying would typically be done with a business intelligence product like Tableau, Looker, PowerBI, etc. For more advanced analytics, data science tools like Datarobot, Dataiku, AWS Sagemaker or many others can query Snowflake. Any technology that leverages JDBC/ODBC, Spark, Python, or any of the other supported programmatic interfaces can run analytics on the data in Snowflake. To keep this lab simple, all queries are being executed via the Snowflake worksheet.</p>
+</aside>
+<h2 is-upgraded>Execute Some Queries</h2>
+<p>Go to the <strong>CITIBIKE_ZERO_TO_SNOWFLAKE</strong> worksheet and change the warehouse to use the new warehouse you created in the last section. Your worksheet context should be the following:</p>
+<p>Role: <code>SYSADMIN</code> Warehouse: <code>ANALYTICS_WH (L)</code> Database: <code>CITIBIKE</code> Schema = <code>PUBLIC</code></p>
+<p class="image-container"><img alt="sample data query results" src="img/9635d6afa094fff2.png"></p>
+<p>Run the following query to see a sample of the <code>trips</code> data:</p>
+<pre><code language="language-SQL" class="language-SQL">select * from trips limit 20;
+</code></pre>
+<p class="image-container"><img alt="sample data query results" src="img/af740efabf9cd961.png"></p>
+<p>Now, let&#39;s look at some basic hourly statistics on Citi Bike usage. Run the query below in the worksheet. For each hour, it shows the number of trips, average trip duration, and average trip distance.</p>
+<pre><code language="language-SQL" class="language-SQL">select date_trunc(&#39;hour&#39;, starttime) as &#34;date&#34;,
+count(*) as &#34;num trips&#34;,
+avg(tripduration)/60 as &#34;avg duration (mins)&#34;,
+avg(haversine(start_station_latitude, start_station_longitude, end_station_latitude, end_station_longitude)) as &#34;avg distance (km)&#34;
+from trips
+group by 1 order by 1;
+</code></pre>
+<p class="image-container"><img alt="hourly query results" src="img/57b57e5d9b3f0d00.png"></p>
+<h2 is-upgraded>Use the Result Cache</h2>
+<p>Snowflake has a result cache that holds the results of every query executed in the past 24 hours. These are available across warehouses, so query results returned to one user are available to any other user on the system who executes the same query, provided the underlying data has not changed. Not only do these repeated queries return extremely fast, but they also use no compute credits.</p>
+<p>Let&#39;s see the result cache in action by running the exact same query again.</p>
+<pre><code language="language-SQL" class="language-SQL">select date_trunc(&#39;hour&#39;, starttime) as &#34;date&#34;,
+count(*) as &#34;num trips&#34;,
+avg(tripduration)/60 as &#34;avg duration (mins)&#34;,
+avg(haversine(start_station_latitude, start_station_longitude, end_station_latitude, end_station_longitude)) as &#34;avg distance (km)&#34;
+from trips
+group by 1 order by 1;
+</code></pre>
+<p>In the <strong>Query Details</strong> pane on the right, note that the second query runs significantly faster because the results have been cached.</p>
+<p class="image-container"><img alt="cached query duration" src="img/f4f345c789dd5be5.png"></p>
+<h2 is-upgraded>Execute Another Query</h2>
+<p>Next, let&#39;s run the following query to see which months are the busiest:</p>
+<pre><code language="language-SQL" class="language-SQL">select
+monthname(starttime) as &#34;month&#34;,
+count(*) as &#34;num trips&#34;
+from trips
+group by 1 order by 2 desc;
+</code></pre>
+<p class="image-container"><img alt="months query results" src="img/770de9bb669575ab.png"></p>
+<h2 is-upgraded>Clone a Table</h2>
+<p>Snowflake allows you to create clones, also known as &#34;zero-copy clones&#34; of tables, schemas, and databases in seconds. When a clone is created, Snowflake takes a snapshot of data present in the source object and makes it available to the cloned object. The cloned object is writable and independent of the clone source. Therefore, changes made to either the source object or the clone object are not included in the other.</p>
+<p>A popular use case for zero-copy cloning is to clone a production environment for use by Development &amp; Testing teams to test and experiment without adversely impacting the production environment and eliminating the need to set up and manage two separate environments.</p>
+<aside class="warning"><p><strong>Zero-Copy Cloning</strong> A massive benefit of zero-copy cloning is that the underlying data is not copied. Only the metadata and pointers to the underlying data change. Hence, clones are &#34;zero-copy&#34; and storage requirements are not doubled when the data is cloned. Most data warehouses cannot do this, but for Snowflake it is easy!</p>
+</aside>
+<p>Run the following command in the worksheet to create a development (dev) table clone of the <code>trips</code> table:</p>
+<pre><code language="language-SQL" class="language-SQL">create table trips_dev clone trips;
+</code></pre>
+<p>Click the three dots (<strong>...</strong>) in the left pane and select <strong>Refresh</strong>. Expand the object tree under the <code>CITIBIKE</code> database and verify that you see a new table named <code>trips_dev</code>. Your Development team now can do whatever they want with this table, including updating or deleting it, without impacting the <code>trips</code> table or any other object.</p>
+<p class="image-container"><img alt="trips_dev table" src="img/adae9f4ec4cec092.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Working with Semi-Structured Data, Views, &amp; Joins" duration="16">
+        <aside class="special"><p>This section requires loading additional data and, therefore, provides a review of data loading while also introducing loading semi-structured data.</p>
+</aside>
+<p>Going back to the lab&#39;s example, the Citi Bike analytics team wants to determine how weather impacts ride counts. To do this, in this section, we will:</p>
+<ul>
+<li>Load weather data in semi-structured JSON format held in a public S3 bucket.</li>
+<li>Create a view and query the JSON data using SQL dot notation.</li>
+<li>Run a query that joins the JSON data to the previously loaded <code>TRIPS</code> data.</li>
+<li>Analyze the weather and ride count data to determine their relationship.</li>
+</ul>
+<p>The JSON data consists of weather information provided by <em>MeteoStat</em> detailing the historical conditions of New York City from 2016-07-05 to 2019-06-25. It is also staged on AWS S3 where the data consists of 75k rows, 36 objects, and 1.1MB compressed. If viewed in a text editor, the raw JSON in the GZ files looks like:</p>
+<p class="image-container"><img alt="raw JSON sample" src="img/c025f1200b524e26.png"></p>
+<aside class="warning"><p><strong>SEMI-STRUCTURED DATA</strong> Snowflake can easily load and query semi-structured data such as JSON, Parquet, or Avro without transformation. This is a key Snowflake feature because an increasing amount of business-relevant data being generated today is semi-structured, and many traditional data warehouses cannot easily load and query such data. Snowflake makes it easy!</p>
+</aside>
+<h2 is-upgraded>Create a New Database and Table for the Data</h2>
+<p>First, in the worksheet, let&#39;s create a database named <code>WEATHER</code> to use for storing the semi-structured JSON data.</p>
+<pre><code language="language-SQL" class="language-SQL">create database weather;
+</code></pre>
+<p>Execute the following USE commands to set the worksheet context appropriately:</p>
+<pre><code language="language-SQL" class="language-SQL">use role sysadmin;
+
+use warehouse compute_wh;
+
+use database weather;
+
+use schema public;
+</code></pre>
+<aside class="special"><p><strong>Executing Multiple Commands</strong> Remember that you need to execute each command individually. However, you can execute them in sequence together by selecting all of the commands and then clicking the <strong>Play/Run</strong> button (or using the keyboard shortcut).</p>
+</aside>
+<p>Next, let&#39;s create a table named <code>JSON_WEATHER_DATA</code> to use for loading the JSON data. In the worksheet, execute the following CREATE TABLE command:</p>
+<pre><code language="language-SQL" class="language-SQL">create table json_weather_data (v variant);
+</code></pre>
+<p>Note that Snowflake has a special column data type called <code>VARIANT</code> that allows storing the entire JSON object as a single row and eventually query the object directly.</p>
+<aside class="warning"><p><strong>Semi-Structured Data Magic</strong> The VARIANT data type allows Snowflake to ingest semi-structured data without having to predefine the schema.</p>
+</aside>
+<p>In the results pane at the bottom of the worksheet, verify that your table, <code>JSON_WEATHER_DATA</code>, was created:</p>
+<p class="image-container"><img alt="success message" src="img/d8810aacbaa1cbcf.png"></p>
+<h2 is-upgraded>Create Another External Stage</h2>
+<p>In the <code>CITIBIKE_ZERO_TO_SNOWFLAKE</code> worksheet, use the following command to create a stage that points to the bucket where the semi-structured JSON data is stored on AWS S3:</p>
+<pre><code language="language-SQL" class="language-SQL">create stage nyc_weather
+url = &#39;s3://snowflake-workshop-lab/zero-weather-nyc&#39;;
+</code></pre>
+<p>Now let&#39;s take a look at the contents of the <code>nyc_weather</code> stage. Execute the following LIST command to display the list of files:</p>
+<pre><code language="language-SQL" class="language-SQL">list @nyc_weather;
+</code></pre>
+<p>In the results pane, you should see a list of <code>.gz</code> files from S3:</p>
+<p class="image-container"><img alt="results output" src="img/f94b7130857937b0.png"></p>
+<h2 is-upgraded>Load and Verify the Semi-structured Data</h2>
+<p>In this section, we will use a warehouse to load the data from the S3 bucket into the <code>JSON_WEATHER_DATA</code> table we created earlier.</p>
+<p>In the <code>CITIBIKE_ZERO_TO_SNOWFLAKE</code> worksheet, execute the COPY command below to load the data.</p>
+<p>Note that you can specify a <code>FILE FORMAT</code> object inline in the command. In the previous section where we loaded structured data in CSV format, we had to define a file format to support the CSV structure. Because the JSON data here is well-formed, we are able to simply specify the JSON type and use all the default settings:</p>
+<pre><code language="language-SQL" class="language-SQL">copy into json_weather_data
+from @nyc_weather 
+    file_format = (type = json strip_outer_array = true);
+</code></pre>
+<p>Verify that each file has a status of <code>LOADED</code>:</p>
+<p class="image-container"><img alt="query result" src="img/56840eb3550a91e2.png"></p>
+<p>Now, let&#39;s take a look at the data that was loaded:</p>
+<pre><code language="language-SQL" class="language-SQL">select * from json_weather_data limit 10;
+</code></pre>
+<p>Click any of the rows to display the formatted JSON in the right panel:</p>
+<p class="image-container"><img alt="JSON data snippet" src="img/396dcc5f249ba6ff.png"></p>
+<p>To close the display in the panel and display the query details again, click the <strong>X</strong> (Close) button that appears when you hover your mouse in the right corner of the panel.</p>
+<h2 is-upgraded>Create a View and Query Semi-Structured Data</h2>
+<p>Next, let&#39;s look at how Snowflake allows us to create a view and also query the JSON data directly using SQL.</p>
+<aside class="warning"><p><strong>Views &amp; Materialized Views</strong> A view allows the result of a query to be accessed as if it were a table. Views can help present data to end users in a cleaner manner, limit what end users can view in a source table, and write more modular SQL. Snowflake also supports materialized views in which the query results are stored as though the results are a table. This allows faster access, but requires storage space. Materialized views can be created and queried if you are using Snowflake Enterprise Edition (or higher).</p>
+</aside>
+<p>Run the following command to create a columnar view of the semi-structured JSON weather data so it is easier for analysts to understand and query. The <code>72502</code> value for <code>station_id</code> corresponds to Newark Airport, the closest station that has weather conditions for the whole period.</p>
+<pre><code language="language-SQL" class="language-SQL">// create a view that will put structure onto the semi-structured data
+create or replace view json_weather_data_view as
+select
+    v:obsTime::timestamp as observation_time,
+    v:station::string as station_id,
+    v:name::string as city_name,
+    v:country::string as country,
+    v:latitude::float as city_lat,
+    v:longitude::float as city_lon,
+    v:weatherCondition::string as weather_conditions,
+    v:coco::int as weather_conditions_code,
+    v:temp::float as temp,
+    v:prcp::float as rain,
+    v:tsun::float as tsun,
+    v:wdir::float as wind_dir,
+    v:wspd::float as wind_speed,
+    v:dwpt::float as dew_point,
+    v:rhum::float as relative_humidity,
+    v:pres::float as pressure
+from
+    json_weather_data
+where
+    station_id = &#39;72502&#39;;
+</code></pre>
+<p>SQL dot notation <code>v:temp</code> is used in this command to pull out values at lower levels within the JSON object hierarchy. This allows us to treat each field as if it were a column in a relational table.</p>
+<p>The new view should appear as <code>JSON_WEATHER_DATA</code> under <code>WEATHER</code> &gt; <code>PUBLIC</code> &gt; <strong>Views</strong> in the object browser on the left. You may need to expand or refresh the objects browser in order to see it.</p>
+<p class="image-container"><img alt="JSON_WEATHER_DATA _VIEW in dropdown" src="img/19a8eb22f6f8c146.png"></p>
+<p>Verify the view with the following query:</p>
+<pre><code language="language-SQL" class="language-SQL">select * from json_weather_data_view
+where date_trunc(&#39;month&#39;,observation_time) = &#39;2018-01-01&#39;
+limit 20;
+</code></pre>
+<p>Notice the results look just like a regular structured data source. Your result set may have different <code>observation_time</code> values:</p>
+<p class="image-container"><img alt="query results with view" src="img/1f418f127b4bf730.png"></p>
+<h2 is-upgraded>Use a Join Operation to Correlate Against Data Sets</h2>
+<p>We will now join the JSON weather data to our <code>CITIBIKE.PUBLIC.TRIPS</code> data to answer our original question of how weather impacts the number of rides.</p>
+<p>Run the query below to join <code>WEATHER</code> to <code>TRIPS</code> and count the number of trips associated with certain weather conditions:</p>
+<aside class="special"><p>Because we are still in the worksheet, the <code>WEATHER</code> database is still in use. You must, therefore, fully qualify the reference to the <code>TRIPS</code> table by providing its database and schema name.</p>
+</aside>
+<pre><code language="language-SQL" class="language-SQL">select weather_conditions as conditions
+,count(*) as num_trips
+from citibike.public.trips
+left outer join json_weather_data_view
+on date_trunc(&#39;hour&#39;, observation_time) = date_trunc(&#39;hour&#39;, starttime)
+where conditions is not null
+group by 1 order by 2 desc;
+</code></pre>
+<p class="image-container"><img alt="weather results" src="img/a155931384ef1a63.png"></p>
+<p>The initial goal was to determine if there was any correlation between the number of bike rides and the weather by analyzing both ridership and weather data. Per the results above we have a clear answer. As one would imagine, the number of trips is significantly higher when the weather is good!</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Using Time Travel" duration="6">
+        <p>Snowflake&#39;s powerful Time Travel feature enables accessing historical data, as well as the objects storing the data, at any point within a period of time. The default window is 24 hours and, if you are using Snowflake Enterprise Edition,   can be increased up to 90 days. Most data warehouses cannot offer this functionality, but - you guessed it - Snowflake makes it easy!</p>
+<p>Some useful applications include:</p>
+<ul>
+<li>Restoring data-related objects such as tables, schemas, and databases that may have been deleted.</li>
+<li>Duplicating and backing up data from key points in the past.</li>
+<li>Analyzing data usage and manipulation over specified periods of time.</li>
+</ul>
+<h2 is-upgraded>Drop and Undrop a Table</h2>
+<p>First let&#39;s see how we can restore data objects that have been accidentally or intentionally deleted.</p>
+<p>In the <code>CITIBIKE_ZERO_TO_SNOWFLAKE</code> worksheet, run the following DROP command to remove the <code>JSON_WEATHER_DATA</code> table:</p>
+<pre><code language="language-SQL" class="language-SQL">drop table json_weather_data;
+</code></pre>
+<p>Run a query on the table:</p>
+<pre><code language="language-SQL" class="language-SQL">select * from json_weather_data limit 10;
+</code></pre>
+<p>In the results pane at the bottom, you should see an error because the underlying table has been dropped:</p>
+<p class="image-container"><img alt="table dropped error" src="img/b3e5cb9802b07b8d.png"></p>
+<p>Now, restore the table:</p>
+<pre><code language="language-SQL" class="language-SQL">undrop table json_weather_data;
+</code></pre>
+<p>The json_weather_data table should be restored. Verify by running the following query:</p>
+<pre><code language="language-SQL" class="language-SQL">--verify table is undropped
+
+select * from json_weather_data limit 10;
+</code></pre>
+<p class="image-container"><img alt="restored table result" src="img/1c83f7a8b9f40112.png"></p>
+<h2 is-upgraded>Roll Back a Table</h2>
+<p>Let&#39;s roll back the <code>TRIPS</code> table in the <code>CITIBIKE</code> database to a previous state to fix an unintentional DML error that replaces all the station names in the table with the word &#34;oops&#34;.</p>
+<p>First, run the following SQL statements to switch your worksheet to the proper context:</p>
+<pre><code language="language-SQL" class="language-SQL">use role sysadmin;
+
+use warehouse compute_wh;
+
+use database citibike;
+
+use schema public;
+</code></pre>
+<p>Run the following command to replace all of the station names in the table with the word &#34;oops&#34;:</p>
+<pre><code language="language-SQL" class="language-SQL">update trips set start_station_name = &#39;oops&#39;;
+</code></pre>
+<p>Now, run a query that returns the top 20 stations by number of rides. Notice that the station names result contains only one row:</p>
+<pre><code language="language-SQL" class="language-SQL">select
+start_station_name as &#34;station&#34;,
+count(*) as &#34;rides&#34;
+from trips
+group by 1
+order by 2 desc
+limit 20;
+</code></pre>
+<p class="image-container"><img alt="one row result" src="img/7c217a81e0eaaf86.png"></p>
+<p>Normally we would need to scramble and hope we have a backup lying around.</p>
+<p>In Snowflake, we can simply run a command to find the query ID of the last UPDATE command and store it in a variable named <code>$QUERY_ID</code>.</p>
+<pre><code language="language-SQL" class="language-SQL">set query_id =
+(select query_id from table(information_schema.query_history_by_session (result_limit=&gt;5))
+where query_text like &#39;update%&#39; order by start_time desc limit 1);
+</code></pre>
+<p>Use Time Travel to recreate the table with the correct station names:</p>
+<pre><code language="language-SQL" class="language-SQL">create or replace table trips as
+(select * from trips before (statement =&gt; $query_id));
+</code></pre>
+<p>Run the previous query again to verify that the station names have been restored:</p>
+<pre><code language="language-SQL" class="language-SQL">select
+start_station_name as &#34;station&#34;,
+count(*) as &#34;rides&#34;
+from trips
+group by 1
+order by 2 desc
+limit 20;
+</code></pre>
+<p class="image-container"><img alt="restored names result" src="img/9f28f362225b2ee1.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Working with Roles, Account Admin, &amp; Account Usage" duration="8">
+        <p>In this section, we will explore aspects of Snowflake&#39;s access control security model, such as creating a role and granting it specific permissions. We will also explore other usage of the ACCOUNTADMIN (Account Administrator) role, which was briefly introduced earlier in the lab.</p>
+<p>Continuing with the lab story, let&#39;s assume a junior DBA has joined Citi Bike and we want to create a new role for them with less privileges than the system-defined, default role of SYSADMIN.</p>
+<aside class="warning"><p><strong>Role-Based Access Control</strong> Snowflake offers very powerful and granular access control that dictates the objects and functionality a user can access, as well as the level of access they have. For more details, check out the <a href="https://docs.snowflake.net/manuals/user-guide/security-access-control.html" target="_blank">Snowflake documentation</a>.</p>
+</aside>
+<h2 is-upgraded>Create a New Role and Add a User</h2>
+<p>In the <code>CITIBIKE_ZERO_TO_SNOWFLAKE</code> worksheet, switch to the ACCOUNTADMIN role to create a new role. ACCOUNTADMIN encapsulates the SYSADMIN and SECURITYADMIN system-defined roles. It is the top-level role in the account and should be granted only to a limited number of users.</p>
+<p>In the <code>CITIBIKE_ZERO_TO_SNOWFLAKE</code> worksheet, run the following command:</p>
+<pre><code language="language-SQL" class="language-SQL">use role accountadmin;
+</code></pre>
+<p>Notice that, in the top right of the worksheet, the context has changed to ACCOUNTADMIN:</p>
+<p class="image-container"><img alt="ACCOUNTADMIN context" src="img/1ce33af499221e4e.png"></p>
+<p>Before a role can be used for access control, at least one user must be assigned to it. So let&#39;s create a new role named <code>JUNIOR_DBA</code> and assign it to your Snowflake user. To complete this task, you need to know your username, which is the name you used to log in to the UI.</p>
+<p>Use the following commands to create the role and assign it to you. Before you run the GRANT ROLE command, replace <code>YOUR_USERNAME_GOES_HERE</code> with your username:</p>
+<pre><code language="language-SQL" class="language-SQL">create role junior_dba;
+
+grant role junior_dba to user YOUR_USERNAME_GOES_HERE;
+</code></pre>
+<aside class="special"><p>If you try to perform this operation while in a role such as SYSADMIN, it would fail due to insufficient privileges. By default (and design), the SYSADMIN role cannot create new roles or users.</p>
+</aside>
+<p>Change your worksheet context to the new <code>JUNIOR_DBA</code> role:</p>
+<pre><code language="language-SQL" class="language-SQL">use role junior_dba;
+</code></pre>
+<p>In the top right of the worksheet, notice that the context has changed to reflect the <code>JUNIOR_DBA</code> role.</p>
+<p class="image-container"><img alt="JUNIOR_DBA context" src="img/575ebcf012a2eb20.png"></p>
+<p>Also, the warehouse is not selected because the newly created role does not have usage privileges on any warehouse. Let&#39;s fix it by switching back to ADMIN role and grant usage privileges to <code>COMPUTE_WH</code> warehouse.</p>
+<pre><code language="language-SQL" class="language-SQL">use role accountadmin;
+
+grant usage on warehouse compute_wh to role junior_dba;
+</code></pre>
+<p>Switch back to the <code>JUNIOR_DBA</code> role. You should be able to use <code>COMPUTE_WH</code> now.</p>
+<pre><code language="language-SQL" class="language-SQL">use role junior_dba;
+
+use warehouse compute_wh;
+</code></pre>
+<p>Finally, you can notice that in the database object browser panel on the left, the <code>CITIBIKE</code> and <code>WEATHER</code> databases no longer appear. This is because the <code>JUNIOR_DBA</code> role does not have privileges to access them.</p>
+<p>Switch back to the ACCOUNTADMIN role and grant the <code>JUNIOR_DBA</code> the USAGE privilege required to view and use the <code>CITIBIKE</code> and <code>WEATHER</code> databases:</p>
+<pre><code language="language-SQL" class="language-SQL">use role accountadmin;
+
+grant usage on database citibike to role junior_dba;
+
+grant usage on database weather to role junior_dba;
+</code></pre>
+<p>Switch to the <code>JUNIOR_DBA</code> role:</p>
+<pre><code language="language-SQL" class="language-SQL">use role junior_dba;
+</code></pre>
+<p>Notice that the <code>CITIBIKE</code> and <code>WEATHER</code> databases now appear in the database object browser panel on the left. If they don&#39;t appear, try clicking <strong>...</strong> in the panel, then clicking <strong>Refresh</strong>.</p>
+<p class="image-container"><img alt="object browser panel with databases" src="img/ca8ad7b1ccd3299e.png"></p>
+<h2 is-upgraded>View the Account Administrator UI</h2>
+<p>Let&#39;s change our access control role back to <code>ACCOUNTADMIN</code> to see other areas of the UI accessible only to this role. However, to perform this task, use the UI instead of the worksheet.</p>
+<p>First, click the <strong>Home</strong> icon in the top left corner of the worksheet. Then, in the top left corner of the UI, click your name to display the user preferences menu. In the menu, go to <strong>Switch Role</strong> and select ACCOUNTADMIN.</p>
+<p class="image-container"><img alt="switch UI role" src="img/214666277b661dea.png"></p>
+<aside class="warning"><p><strong>Roles in User Preference vs Worksheet</strong> Why did we use the user preference menu to change the role instead of the worksheet? The UI session and each worksheet have their own separate roles. The UI session role controls the elements you can see and access in the UI, whereas the worksheet role controls only the objects and actions you can access within the role.</p>
+</aside>
+<p>Notice that once you switch the UI session to the ACCOUNTADMIN role, new tabs are available under <strong>Admin</strong>.</p>
+<h3 is-upgraded>Usage</h3>
+<p class="image-container"><img alt="account usage" src="img/8d884fa261e50a8a.png"></p>
+<p>The <strong>Usage</strong> tab shows the following, each with their own page:</p>
+<ul>
+<li><strong>Organization</strong>: Credit usage across all the accounts in your organization.</li>
+<li><strong>Consumption</strong>: Credits consumed by the virtual warehouses in the current account.</li>
+<li><strong>Storage</strong>: Average amount of data stored in all databases, internal stages, and Snowflake Failsafe in the current account for the past month.</li>
+<li><strong>Transfers</strong>: Average amount of data transferred out of the region (for the current account) into other regions for the past month.</li>
+</ul>
+<p>The filters in the top right corner of each page can be used to break down the usage/consumption/etc. visualizations by different measures.</p>
+<h3 is-upgraded>Security</h3>
+<p class="image-container"><img alt="account usage" src="img/7120e6f745df5b1a.png"></p>
+<p>The <strong>Security</strong> tab contains network policies created for the Snowflake account. New network policies can be created by selecting &#34;+ Network Policy&#34; at the top right hand side of the page.</p>
+<h3 is-upgraded>Billing</h3>
+<p class="image-container"><img alt="account usage" src="img/f0aa505b50d2f777.png"></p>
+<p>The <strong>Billing</strong> tab contains the payment method for the account:</p>
+<ul>
+<li>If you are a Snowflake contract customer, the tab shows the name associated with your contract information.</li>
+<li>If you are an on-demand Snowflake customer, the tab shows the credit card used to pay month-to-month, if one has been entered. If no credit card is on file, you can add one to continue using Snowflake when your trial ends.</li>
+</ul>
+<p>For the next section, stay in the ACCOUNTADMIN role for the UI session.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Sharing Data Securely &amp; the Data Marketplace" duration="12">
+        <p>Snowflake enables data access between accounts through the secure data sharing features. Shares are created by data providers and imported by data consumers, either through their own Snowflake account or a provisioned Snowflake Reader account. The consumer can be an external entity or a different internal business unit that is required to have its own unique Snowflake account.</p>
+<p>With secure data sharing:</p>
+<ul>
+<li>There is only one copy of the data that lives in the data provider&#39;s account.</li>
+<li>Shared data is always live, real-time, and immediately available to consumers.</li>
+<li>Providers can establish revocable, fine-grained access to shares.</li>
+<li>Data sharing is simple and safe, especially compared to older data sharing methods, which were often manual and insecure, such as transferring large <code>.csv</code> files across the internet.</li>
+</ul>
+<aside class="special"><p><strong>Cross-region &amp; cross-cloud data sharing</strong> To share data across regions or cloud platforms, you must set up replication. This is outside the scope of this lab, but more information is available in <a href="https://www.snowflake.com/trending/what-is-data-replication" target="_blank">this Snowflake article</a>.</p>
+</aside>
+<p>Snowflake uses secure data sharing to provide account usage data and sample data sets to all Snowflake accounts. In this capacity, Snowflake acts as the data provider of the data and all other accounts.</p>
+<p>Secure data sharing also powers the Snowflake Data Marketplace, which is available to all Snowflake customers and allows you to discover and access third-party datasets from numerous data providers and SaaS vendors. Again, in this data sharing model, the data doesn&#39;t leave the provider&#39;s account and you can use the datasets without any transformation.</p>
+<h2 is-upgraded>View Existing Shares</h2>
+<p>In the home page, navigate to <strong>Data</strong> &gt; <strong>Databases</strong>. In the list of databases, look at the <strong>SOURCE</strong> column. You should see two databases with <code>Local</code> in the column. These are the two databases we created previously in the lab. The other database, <code>SNOWFLAKE</code>, shows <code>Share</code> in the column, indicating it&#39;s shared from a provider.</p>
+<p class="image-container"><img alt="arrow over database icon" src="img/9cca7e7a65947747.png"></p>
+<h2 is-upgraded>Create an Outbound Share</h2>
+<p>Let&#39;s go back to the Citi Bike story and assume we are the Account Administrator for Snowflake at Citi Bike. We have a trusted partner who wants to analyze the data in our <code>TRIPS</code> database on a near real-time basis. This partner also has their own Snowflake account in the same region as our account. So let&#39;s use secure data sharing to allow them to access this information.</p>
+<p>Navigate to <strong>Data</strong> &gt; <strong>Private Sharing</strong>, then at the top of the tab click <strong>Shared by My Account</strong>. Click the <strong>Share</strong> button in the top right corner and select <strong>Create a Direct Share</strong>:</p>
+<p class="image-container"><img alt="shares outbound button" src="img/cd89c2f5d7184298.png"></p>
+<p>Click <strong>+ Select Data</strong> and navigate to the <code>CITIBIKE</code> database and <code>PUBLIC</code> schema. Select the 2 tables we created in the schema and click the <strong>Done</strong> button:</p>
+<p class="image-container"><img alt="share fields" src="img/11826cb562ca6ac2.png"></p>
+<p>The default name of the share is a generic name with a random numeric value appended. Edit the default name to a more descriptive value that will help identify the share in the future (e.g. <code>ZERO_TO_SNOWFLAKE_SHARED_DATA</code>. You can also add a comment.</p>
+<p>In a real-world scenario, the Citi Bike Account Administrator would next add one or more consumer accounts to the share, but we&#39;ll stop here for the purposes of this lab.</p>
+<p>Click the <strong>Create Share</strong> button at the bottom of the dialog:</p>
+<p class="image-container"><img alt="success message" src="img/9a779766bb0908b6.png"></p>
+<p>The dialog closes and the page shows the secure share you created:</p>
+<p class="image-container"><img alt="TRIPS_SHARE share" src="img/1054c2298f427b81.png"></p>
+<p>You can add consumers, add/change the description, and edit the objects in the share at any time. In the page, click the <strong>&lt;</strong> button next to the share name to return to the <strong>Share with Other Accounts</strong> page:</p>
+<p class="image-container"><img alt="TRIPS_SHARE share" src="img/7ef3b0f4e0abcfed.png"></p>
+<p>We&#39;ve demonstrated how it only takes seconds to give other accounts access to data in your Snowflake account in a secure manner with no copying or transferring of data required!</p>
+<p>Snowflake provides several ways to securely share data without compromising confidentiality. In addition to tables, you can share secure views, secure UDFs (user-defined functions), and other secure objects. For more details about using these methods to share data while preventing access to sensitive information, see the <a href="https://docs.snowflake.com/en/user-guide/data-sharing-secure-views.html" target="_blank">Snowflake documentation</a>.</p>
+<h2 is-upgraded>Snowflake Data Marketplace</h2>
+<p>Make sure you&#39;re using the ACCOUNTADMIN role and, navigate to the <strong>Marketplace</strong>:</p>
+<p class="image-container"><img alt="data marketplace tab" src="img/f68187f997fbab13.png"></p>
+<h3 is-upgraded>Find a listing</h3>
+<p>The search box at the top allows you to search for a listings. The drop-down lists to the right of the search box let you filter data listings by Provider, Business Needs, and Category.</p>
+<p>Type <code>COVID</code> in the search box, scroll through the results, and select <strong>COVID-19 Epidemiological Data</strong> (provided by Starschema).</p>
+<p class="image-container"><img alt="health tab" src="img/65eaa2ae94859dda.png"></p>
+<p>In the <strong>COVID-19 Epidemiological Data</strong> page, you can learn more about the dataset and see some usage example queries. When you&#39;re ready, click the <strong>Get</strong> button to make this information available within your Snowflake account:</p>
+<p class="image-container"><img alt="get data fields" src="img/bef8d41daf4d9db5.png"></p>
+<p>Review the information in the dialog and lick <strong>Get</strong> again:</p>
+<p class="image-container"><img alt="get data fields" src="img/972d3855489076f5.png"></p>
+<p>You can now click <strong>Done</strong> or choose to run the sample queries provided by Starschema:</p>
+<p class="image-container"><img alt="get data fields" src="img/d145f0c4d17fd68f.png"></p>
+<p>If you chose <strong>Open</strong>, a new worksheet opens in a new browser tab/window:</p>
+<ol type="1">
+<li>Set your context</li>
+<li>Select the query you want to run (or place your cursor in the query text).</li>
+<li>Click the <strong>Run/Play</strong> button (or use the keyboard shortcut).</li>
+<li>You can view the data results in the bottom pane.</li>
+<li>When you are done running the sample queries, click the <strong>Home</strong> icon in the upper left corner.</li>
+</ol>
+<p class="image-container"><img alt="get data fields" src="img/9cde374afcc7c1c8.png"></p>
+<p>Next:</p>
+<ol type="1">
+<li>Click <strong>Data</strong> &gt; <strong>Databases</strong></li>
+<li>Click the <code>COVID19_BY_STARSCHEMA_DM</code> database.</li>
+<li>You can see details about the schemas, tables, and views that are available to query.</li>
+</ol>
+<p class="image-container"><img alt="covid19 databases" src="img/64d8b592cac65f81.png"></p>
+<p>That&#39;s it! You have now successfully subscribed to the COVID-19 dataset from Starschema, which is updated daily with global COVID data. Notice we didn&#39;t have to create databases, tables, views, or an ETL process. We simply searched for and accessed shared data from the Snowflake Data Marketplace.</p>
+<p>Positive To learn more about how to use the new worksheet interface, go to the <a href="https://docs.snowflake.com/en/user-guide/ui-snowsight.html#using-snowsight" target="_blank">Snowsight Docs</a></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Resetting Your Snowflake Environment" duration="2">
+        <p>If you would like to reset your environment by deleting all the objects created as part of this lab, run the SQL statements in a worksheet.</p>
+<p>First, ensure you are using the ACCOUNTADMIN role in the worksheet:</p>
+<pre><code language="language-SQL" class="language-SQL">use role accountadmin;
+</code></pre>
+<p>Then, run the following SQL commands to drop all the objects we created in the lab:</p>
+<pre><code language="language-SQL" class="language-SQL">drop share if exists zero_to_snowflake_shared_data;
+-- If necessary, replace &#34;zero_to_snowflake-shared_data&#34; with the name you used for the share
+
+drop database if exists citibike;
+
+drop database if exists weather;
+
+drop warehouse if exists analytics_wh;
+
+drop role if exists junior_dba;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion &amp; Next Steps" duration="2">
+        <p>Congratulations on completing this introductory lab exercise! You&#39;ve mastered the Snowflake basics and are ready to apply these fundamentals to your own data. Be sure to reference this guide if you ever need a refresher.</p>
+<p>We encourage you to continue with your free trial by loading your own sample or production data and by using some of the more advanced capabilities of Snowflake not covered in this lab.</p>
+<h2 is-upgraded>Additional Resources:</h2>
+<ul>
+<li>Learn more about the <a href="https://docs.snowflake.com/en/user-guide/ui-snowsight.html#using-snowsight" target="_blank">Snowsight</a> docs.</li>
+<li>Read the <a href="https://www.snowflake.com/test-driving-snowflake-the-definitive-guide-to-maximizing-your-free-trial/" target="_blank">Definitive Guide to Maximizing Your Free Trial</a> document.</li>
+<li>Attend a <a href="https://www.snowflake.com/about/events/" target="_blank">Snowflake virtual or in-person event</a> to learn more about our capabilities and customers.</li>
+<li>Join the <a href="https://community.snowflake.com/s/topic/0TO0Z000000wmFQWAY/getting-started-with-snowflake" target="_blank">Snowflake Community</a>.</li>
+<li>Sign up for <a href="https://community.snowflake.com/s/article/Getting-Access-to-Snowflake-University" target="_blank">Snowflake University</a>.</li>
+<li>Contact our <a href="https://www.snowflake.com/free-trial-contact-sales/" target="_blank">Sales Team</a> to learn more.</li>
+</ul>
+<h2 is-upgraded>What we&#39;ve covered:</h2>
+<ul>
+<li>How to create stages, databases, tables, views, and virtual warehouses.</li>
+<li>How to load structured and semi-structured data.</li>
+<li>How to perform analytical queries on data in Snowflake, including joins between tables.</li>
+<li>How to clone objects.</li>
+<li>How to undo user errors using Time Travel.</li>
+<li>How to create roles and users, and grant them privileges.</li>
+<li>How to securely and easily share data with other accounts.</li>
+<li>How to consume datasets in the Snowflake Data Marketplace.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

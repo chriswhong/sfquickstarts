@@ -1,0 +1,29 @@
+{
+  "environment": "web",
+  "format": "../../../claat/render/template.html",
+  "prefix": "https://quickstarts.snowflake.com/elements",
+  "mainga": "UA-41491190-9",
+  "updated": "2023-06-06T14:18:18-04:00",
+  "id": "data_apps_summit_lab",
+  "duration": 42,
+  "title": "Building a data application with Marketplace, Snowpark and Streamlit",
+  "summary": "This is a sample Snowflake Guide",
+  "source": "data_apps_summit_lab/data_apps_summit_lab.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "featured",
+    "app-development"
+  ],
+  "tags": [
+    "dataengineering",
+    "datascience",
+    "gettingstarted",
+    "twitter",
+    "web"
+  ],
+  "feedback": "https://github.com/Snowflake-Labs/sfguides/issues",
+  "url": "data_apps_summit_lab"
+}

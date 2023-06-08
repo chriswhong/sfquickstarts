@@ -1,0 +1,406 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Terraforming Snowflake</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="terraforming_snowflake"
+                  title="Terraforming Snowflake"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="5">
+        <p><a href="https://www.terraform.io/" target="_blank">Terraform</a> is an open-source Infrastructure as Code (IaC) tool created by HashiCorp. It is a declarative Infrastructure as Code tool, meaning instead of writing step-by-step imperative instructions like with SQL, JavaScript or Python, you can declare what you want using a YAML like syntax. Terraform is also stateful, meaning it keeps track of your current state, and compares it with your desired state. A reconcilation process between the two states generates an plan that Terraform can execute to create new resources, or update/delete existing resources. This plan is implemented as an acyclic graph, and is what allows Terraform to understand and handle dependencies between resources. Using Terraform is a great way to manage account level Snowflake resources like Warehouses, Databases, Schemas, Tables, and Roles/Grants, among many other use cases.</p>
+<p>A Terraform provider is available for <a href="https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest/docs" target="_blank">Snowflake</a>, that allows Terraform to integrate with Snowflake.</p>
+<p>Example Terraform use-cases:</p>
+<ul>
+<li>Set up storage in your cloud provider and add it to Snowflake as an external stage</li>
+<li>Add storage and connect it to Snowpipe</li>
+<li>Create a service user and push the key into the secrets manager of your choice, or rotate keys</li>
+</ul>
+<p>Many Snowflake customers use Terraform to comply with security controls, maintain consistency, and support similar engineering workflows for infrastructure at scale.</p>
+<p>This tutorial demonstrates how you can use Terraform to manage your Snowflake configurations in an automated and source-controlled way. We show you how to install and use Terraform to create and manage your Snowflake environment, including how to create a database, schema, warehouse, multiple roles, and a service user.</p>
+<p>This introductory tutorial does <em>not</em> cover specific cloud providers or how to integrate Terraform into specific CI/CD tools. Those topics may be covered in future labs.</p>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Familiarity with Git, Snowflake, and Snowflake objects</li>
+<li><code>ACCOUNTADMIN</code> role access to a Snowflake account</li>
+</ul>
+<h2 class="checklist" is-upgraded>What You&#39;ll Learn</h2>
+<ul class="checklist">
+<li>Basic Terraform usage</li>
+<li>How to create users, roles, databases, schemas, and warehouses in Terraform</li>
+<li>How to manage objects from code/source control</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Need</h2>
+<ul>
+<li>A <a href="https://github.com/" target="_blank">GitHub</a> account</li>
+<li>A git command-line client</li>
+<li>Text editor of your choice</li>
+<li><a href="https://www.terraform.io/downloads.html" target="_blank">Terraform</a> installed</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<ul>
+<li>A repository containing a Terraform project that manages Snowflake account objects through code</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Create a New Repository" duration="5">
+        <p><a href="https://github.com/new" target="_blank">Create</a> a new repository to hold your Terraform project. We use the name <code>sfguide-terraform-sample</code> in this lab.</p>
+<p>Run the following commands if you use the git command-line client replacing <code>YOUR_GITHUB_USERNAME</code> with your username:</p>
+<pre><code language="language-Shell" class="language-Shell">$ mkdir sfguide-terraform-sample &amp;&amp; cd sfguide-terraform-sample
+$ echo &#34;# sfguide-terraform-sample&#34; &gt;&gt; README.md
+$ git init
+$ git add README.md
+$ git commit -m &#34;first commit&#34;
+$ git branch -M main
+$ git remote add origin git@github.com:YOUR_GITHUB_USERNAME/sfguide-terraform-sample.git
+$ git push -u origin main
+</code></pre>
+<aside class="special"><p><strong>Tip</strong> – If the commands don&#39;t work, verify that you can connect to GitHub using your SSH key, and that your git config is correct for your account.</p>
+</aside>
+<p>You now have an empty repo that we will use in subsequent steps to Terraform your Snowflake account.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Create a Service User for Terraform" duration="5">
+        <p>We will now create a user account separate from your own that uses key-pair authentication. The reason this is required in this lab is due to the provider&#39;s limitations around caching credentials and the lack of support for 2FA. Service accounts and key pair are also how most CI/CD pipelines run Terraform.</p>
+<h2 is-upgraded>Create an RSA key for Authentication</h2>
+<p>This creates the private and public keys we use to authenticate the service account we will use for Terraform.</p>
+<pre><code language="language-Shell" class="language-Shell">$ cd ~/.ssh
+$ openssl genrsa 2048 | openssl pkcs8 -topk8 -inform PEM -out snowflake_tf_snow_key.p8 -nocrypt
+$ openssl rsa -in snowflake_tf_snow_key.p8 -pubout -out snowflake_tf_snow_key.pub
+</code></pre>
+<h2 is-upgraded>Create the User in Snowflake</h2>
+<p>Log in to the Snowflake console and create the user account by running the following command as the <code>ACCOUNTADMIN</code> role.</p>
+<p>But first:</p>
+<ol type="1">
+<li>Copy the text contents of the <code>~/.ssh/snowflake_tf_snow_key.pub</code> file, starting <em>after</em> the <code>PUBLIC KEY</code> header, and stopping just <em>before</em> the <code>PUBLIC KEY</code> footer.</li>
+<li>Paste over the <code>RSA_PUBLIC_KEY_HERE</code> label (shown below).</li>
+</ol>
+<p>Execute both of the following SQL statements to create the User and grant it access to the <code>SYSADMIN</code> and <code>SECURITYADMIN</code> roles needed for account management.</p>
+<pre><code language="language-SQL" class="language-SQL">CREATE USER &#34;tf-snow&#34; RSA_PUBLIC_KEY=&#39;RSA_PUBLIC_KEY_HERE&#39; DEFAULT_ROLE=PUBLIC MUST_CHANGE_PASSWORD=FALSE;
+
+GRANT ROLE SYSADMIN TO USER &#34;tf-snow&#34;;
+GRANT ROLE SECURITYADMIN TO USER &#34;tf-snow&#34;;
+</code></pre>
+<aside class="warning"><p>We grant the user <code>SYSADMIN</code> and <code>SECURITYADMIN</code> privileges to keep the lab simple. An important security best practice, however, is to limit all user accounts to least-privilege access. In a production environment, this key should also be secured with a secrets management solution like Hashicorp Vault, Azure Key Vault, or AWS Secrets Manager.</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Setup Terraform Authentication" duration="1">
+        <p>We need to pass provider information via environment variables and input variables so that Terraform can authenticate as the user.</p>
+<p>Run the following to find the <code>YOUR_ACCOUNT_LOCATOR</code> and your Snowflake Region ID values needed.</p>
+<pre><code language="language-SQL" class="language-SQL">SELECT current_account() as YOUR_ACCOUNT_LOCATOR, current_region() as YOUR_SNOWFLAKE_REGION_ID;
+</code></pre>
+<p>You can find your Region ID (<code>YOUR_REGION_HERE</code>) from <code>YOUR_SNOWFLAKE_REGION_ID</code> in <a href="https://docs.snowflake.com/en/user-guide/admin-account-identifier.html#snowflake-region-ids" target="_blank">this reference table</a>.</p>
+<p><strong>Example</strong>: aws_us_west_2 would have a us-west-2 value for <code>YOUR_REGION_HERE</code>.</p>
+<h2 is-upgraded>Add Account Information to Environment</h2>
+<p>Run these commands in your shell. Be sure to replace the <code>YOUR_ACCOUNT_LOCATOR</code> and <code>YOUR_REGION_HERE</code> placeholders with the correct values.</p>
+<pre><code language="language-Shell" class="language-Shell">$ export SNOWFLAKE_USER=&#34;tf-snow&#34;
+$ export SNOWFLAKE_PRIVATE_KEY_PATH=&#34;~/.ssh/snowflake_tf_snow_key.p8&#34;
+$ export SNOWFLAKE_ACCOUNT=&#34;YOUR_ACCOUNT_LOCATOR&#34;
+$ export SNOWFLAKE_REGION=&#34;YOUR_REGION_HERE&#34;
+</code></pre>
+<p>If you plan on working on this or other projects in multiple shells, it may be convenient to put this in a <code>snow.env</code> file that you can source or put it in your <code>.bashrc</code> or <code>.zshrc</code> file. For this lab, we expect you to run future Terraform commands in a shell with those set.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Declaring Resources" duration="3">
+        <p>Add a file to your project in the base directory named <code>main.tf</code>. In <code>main.tf</code> we set up the provider and define the configuration for the database and the warehouse that we want Terraform to create.</p>
+<p>Copy the contents of the following block to your <code>main.tf</code></p>
+<pre><code>terraform {
+  required_providers {
+    snowflake = {
+      source  = &#34;Snowflake-Labs/snowflake&#34;
+      version = &#34;~&gt; 0.59&#34;
+    }
+  }
+}
+
+provider &#34;snowflake&#34; {
+  role  = &#34;SYSADMIN&#34;
+}
+
+resource &#34;snowflake_database&#34; &#34;db&#34; {
+  name     = &#34;TF_DEMO&#34;
+}
+
+resource &#34;snowflake_warehouse&#34; &#34;warehouse&#34; {
+  name           = &#34;TF_DEMO&#34;
+  warehouse_size = &#34;large&#34;
+
+  auto_suspend = 60
+}
+</code></pre>
+<p>This is all the code needed to create these resources.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Preparing the Project to Run" duration="3">
+        <p>To set up the project to run Terraform, you first need to initialize the project.</p>
+<p>Run the following from a shell in your project folder:</p>
+<pre><code language="language-Shell" class="language-Shell">$ terraform init
+</code></pre>
+<p>The dependencies needed to run Terraform are downloaded to your computer.</p>
+<p>In this demo, we use a local backend for Terraform, which means that state file are stored locally on the machine running Terraform. Because Terraform state files are required to calculate all changes, its critical that you do not lose this file (<code>*.tfstate</code>, and <code>*.tfstate.*</code> for older state files), or Terraform will lose track of what resources it is managing. For any kind of multi-tenancy or automation workflows, it is highly recommended to use <a href="https://www.terraform.io/docs/language/state/remote.html" target="_blank">Remote Backends</a>, which is outside the scope of this lab.</p>
+<p>The <code>.terraform</code> folder is where all provider and modules depenencies are downloaded. There is nothing important in this folder and it is safe to delete. You should add this folder, and the Terraform state files (since you do not want to be checking in sensitive information to VCS) to <code>.gitignore</code>.</p>
+<p>Create a file named <code>.gitignore</code> in your project root, then add the following text to the file and save it:</p>
+<pre><code language="language-plaintext" class="language-plaintext">*.terraform*
+*.tfstate
+*.tfstate.*
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Commit  changes to source control" duration="2">
+        <p>Run the following to check in your files for future change tracking:</p>
+<pre><code language="language-Shell" class="language-Shell">$ git checkout -b dbwh
+$ git add main.tf
+$ git add .gitignore
+$ git commit -m &#34;Add Database and Warehouse&#34;
+$ git push origin HEAD
+</code></pre>
+<p>Next, you can log in to GitHub and create a Pull Request.</p>
+<p>In many production systems, a GitHub commit triggers a CI/CD job, which creates a plan that engineers can review. If the changes are desired, the Pull Request is merged. After the merge, a CI/CD job kicks off and applies the changes made in the main branch.</p>
+<p>To manage different environments (dev/test/prod), you can configure the Terraform code with different <a href="https://www.terraform.io/docs/language/values/variables.html" target="_blank">input variables</a> and either deploy to either the same Snowflake account, or different Snowflake accounts.</p>
+<p>Your specific workflow will depend on your requirements, including your compliance needs, your other workflows, and your environment and account topology.</p>
+<p>For this lab, you can simulate the proposed CI/CD job and do a plan to see what Terraform wants to change. During the Terraform plan, Terraform performs a diff calculation to compare the desired state with the previous/current state from the state file to determine the acitons that need to be done.</p>
+<p>From a shell in your project folder (with your Account Information in environment), run:</p>
+<pre><code language="language-Shell" class="language-Shell">$ terraform plan
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Running Terraform" duration="3">
+        <p>Now that you have reviewed the plan, we simulate the next step of the CI/CD job by applying those changes to your account.</p>
+<ol type="1">
+<li>From a shell in your project folder (with your Account Information in environment) run:<pre><code>$ terraform apply
+</code></pre>
+</li>
+<li>Terraform regenerates the execution plan (unless you supply an optional path to the <code>plan.out</code> file) and applies the needed changes after confirmation. In this case, Terraform will create two new resources, and have no other changes.</li>
+<li>Log in to your Snowflake account and verify that Terraform created the database and the warehouse.</li>
+</ol>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Changing and Adding Resources" duration="5">
+        <p>All databases need a schema to store tables, so we&#39;ll add that and a service user so that our application/client can connect to the database and schema. The syntax is very similar to the database and warehouse you already created. By now you have learned everything you need to know to create and update resources in Snowflake. We&#39;ll also add privileges so the service role/user can use the database and schema.</p>
+<p>You&#39;ll see that most of this is what you would expect. The only new part is creating the private key. Because the Terraform TLS private key generator doesn&#39;t export the public key in a format that the Terraform provider can consume, some string manipulations are needed.</p>
+<ol type="1">
+<li>Change the warehouse size in the <code>main.tf</code> file from <code>xsmall</code> to <code>small</code>.</li>
+<li>Add the following resources to your <code>main.tf</code> file:<pre><code>    provider &#34;snowflake&#34; {
+        alias = &#34;security_admin&#34;
+        role  = &#34;SECURITYADMIN&#34;
+    }
+
+    resource &#34;snowflake_role&#34; &#34;role&#34; {
+        provider = snowflake.security_admin
+        name     = &#34;TF_DEMO_SVC_ROLE&#34;
+    }
+
+    resource &#34;snowflake_database_grant&#34; &#34;grant&#34; {
+        provider          = snowflake.security_admin
+        database_name     = snowflake_database.db.name
+        privilege         = &#34;USAGE&#34;
+        roles             = [snowflake_role.role.name]
+        with_grant_option = false
+    }
+
+    resource &#34;snowflake_schema&#34; &#34;schema&#34; {
+        database   = snowflake_database.db.name
+        name       = &#34;TF_DEMO&#34;
+        is_managed = false
+    }
+
+    resource &#34;snowflake_schema_grant&#34; &#34;grant&#34; {
+        provider          = snowflake.security_admin
+        database_name     = snowflake_database.db.name
+        schema_name       = snowflake_schema.schema.name
+        privilege         = &#34;USAGE&#34;
+        roles             = [snowflake_role.role.name]
+        with_grant_option = false
+    }
+
+    resource &#34;snowflake_warehouse_grant&#34; &#34;grant&#34; {
+        provider          = snowflake.security_admin
+        warehouse_name    = snowflake_warehouse.warehouse.name
+        privilege         = &#34;USAGE&#34;
+        roles             = [snowflake_role.role.name]
+        with_grant_option = false
+    }
+
+    resource &#34;tls_private_key&#34; &#34;svc_key&#34; {
+        algorithm = &#34;RSA&#34;
+        rsa_bits  = 2048
+    }
+
+    resource &#34;snowflake_user&#34; &#34;user&#34; {
+        provider          = snowflake.security_admin
+        name              = &#34;tf_demo_user&#34;
+        default_warehouse = snowflake_warehouse.warehouse.name
+        default_role      = snowflake_role.role.name
+        default_namespace = &#34;${snowflake_database.db.name}.${snowflake_schema.schema.name}&#34;
+        rsa_public_key    = substr(tls_private_key.svc_key.public_key_pem, 27, 398)
+    }
+
+    resource &#34;snowflake_role_grants&#34; &#34;grants&#34; {
+        provider  = snowflake.security_admin
+        role_name = snowflake_role.role.name
+        users     = [snowflake_user.user.name]
+    }
+</code></pre>
+</li>
+<li>To get the public and private key information for the application, use Terraform <a href="https://www.terraform.io/docs/language/values/outputs.html" target="_blank">output values</a>.Add the following resources to a new file named <code>outputs.tf</code><pre><code>output &#34;snowflake_svc_public_key&#34; {
+    value = tls_private_key.svc_key.public_key_pem
+}
+
+output &#34;snowflake_svc_private_key&#34; {
+    value = tls_private_key.svc_key.private_key_pem
+    sensitive = true
+}
+</code></pre>
+</li>
+</ol>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Commit Changes to Source Control" duration="3">
+        <p>Let&#39;s check in our files for future change tracking:</p>
+<pre><code language="language-Shell" class="language-Shell">$ git checkout -b svcuser
+$ git add main.tf
+$ git add outputs.tf
+$ git commit -m &#34;Add Service User, Schema, Grants&#34;
+$ git push origin HEAD
+</code></pre>
+<p>You can log in to Github to create the Pull Request and merge the changes. Pull Requests allow for process controls for reviews and the centralized git repo can automatically event CI/CD workflows as desired.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Apply and Verify the Changes" duration="2">
+        <p>To simulate the CI/CD pipeline, we can apply the changes to conform the desired state with the stored state.</p>
+<ol type="1">
+<li>From a shell in your project folder (with your Account Information in environment) run:<pre><code>$ terraform apply
+</code></pre>
+</li>
+<li>Accept the changes if they look appropriate.</li>
+<li>Log in to the console to see all the changes complete.</li>
+</ol>
+<p>Because all changes are stored in source control and applied by CI/CD, you can get a <a href="https://github.com/Snowflake-Labs/sfguide-terraform-sample/commits/main/main.tf" target="_blank">history</a> of all your environment changes. You can put compliance controls into place and limit authorization to directly manage the environments to fewer users. This also makes it easy to bring up new environments that are identical to others in a timely manner without managing SQL scripts.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Cleanup" duration="1">
+        <p>You&#39;re almost done with the demo. We have one thing left to do: clean up your account.</p>
+<h2 is-upgraded>Destroy all the Terraform Managed Resources</h2>
+<ol type="1">
+<li>From a shell in your project folder (with your Account Information in environment) run:<pre><code> $ terraform destroy
+</code></pre>
+</li>
+<li>Accept the changes if they look appropriate.</li>
+<li>Log in to the console to verify that all the objects are destroyed. The database, schema, warehouse, role, and the user objects created by Terraform will be automatically deleted.</li>
+</ol>
+<h2 is-upgraded>Drop the User we added</h2>
+<ul>
+<li>From your Snowflake console run:<pre><code language="language-SQL" class="language-SQL">DROP USER &#34;tf-snow&#34;;
+</code></pre>
+</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion" duration="3">
+        <p>If you are new to Terraform, there&#39;s still a lot to learn. We suggest researching <a href="https://www.terraform.io/docs/language/state/remote.html" target="_blank">remote state</a>, <a href="https://www.terraform.io/docs/language/values/variables.html" target="_blank">input variables</a>, and <a href="https://www.terraform.io/docs/language/modules/develop/index.html" target="_blank">building modules</a>. This will empower you to build and manage your Snowflake environment(s) through a simple declarative language.</p>
+<p>The Terraform provider for Snowflake is an open-source project. If you need Terraform to manage a resource that has not yet been created in the <a href="https://registry.terraform.io/providers/Snowflake-Labs/snowflake/latest" target="_blank">provider</a>, we welcome contributions! We also welcome submitting issues and feedback to the <a href="https://github.com/SnowflakeLabs/terraform-provider-snowflake" target="_blank">Github Project</a> to help improve the Terraform provider project and overall experience.</p>
+<h2 is-upgraded>Next steps</h2>
+<ul>
+<li>You will need to decide how you will run your Terraform changes. In this demo, you ran everything on your local computer, but that is rarely done in a production environment. Best practices will have CI/CD pipelines that automate all workflows responsible for changing shared environments. CI/CD pipelines provide better gates for changing those environments, and they produce an audit trail in source control so that you can review the history of an environment.</li>
+<li>You will want to make the decision about how you isolate your environments and projects, whether via namespacing/RBAC or via multiple accounts. Changing this later is difficult as most modules and CI/CD infrastructure will need to be heavily modified for the alternative approach.</li>
+<li>You may also need to evaluate other tools to complete your infrastructure management. Terraform is a powerful tool for managing many resources in Snowflake, but it has limitations managing schema and data changes.</li>
+</ul>
+<p>Other tools are available to manage things like data migrations and table schema changes. We often see Terraform paired with one of the following to meet all customer requirements.</p>
+<ul>
+<li><a href="https://www.getdbt.com/" target="_blank">dbt</a></li>
+<li><a href="https://github.com/Snowflake-Labs/snowchange" target="_blank">snowchange</a></li>
+<li><a href="https://flywaydb.org/" target="_blank">Flyway</a></li>
+</ul>
+<p>If you had any issues with this project you can pull <a href="https://github.com/Snowflake-Labs/sfguide-terraform-sample" target="_blank">a working version</a> directly from Github.</p>
+<h2 class="checklist" is-upgraded>What we&#39;ve covered</h2>
+<ul class="checklist">
+<li>Getting started with Terraform</li>
+<li>Setting up a new project</li>
+<li>Adding a new database, warehouse, schema, user, role, and new grants</li>
+<li>Cleaning up by destroying all the resources we created</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

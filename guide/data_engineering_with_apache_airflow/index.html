@@ -1,0 +1,489 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Data Engineering with Apache Airflow, Snowflake &amp; dbt</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="data_engineering_with_apache_airflow"
+                  title="Data Engineering with Apache Airflow, Snowflake &amp; dbt"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="5">
+        <p class="image-container"><img alt="architecture" src="img/910e5bbd35f22796.png"></p>
+<p>Numerous business are looking at modern data strategy built on platforms that could support agility, growth and operational efficiency. Snowflake is Data Cloud, a future proof solution that can simplify data pipelines for all your businesses so you can focus on your data and analytics instead of infrastructure management and maintenance.</p>
+<p>Apache Airflow is an open-source workflow management platform that can be used to author and manage data pipelines. Airflow uses worklows made of directed acyclic graphs (DAGs) of tasks.</p>
+<p><a href="https://www.getdbt.com/" target="_blank">dbt</a> is a modern data engineering framework maintained by <a href="https://www.getdbt.com/" target="_blank">dbt Labs</a> that is becoming very popular in modern data architectures, leveraging cloud data platforms like Snowflake. <a href="https://docs.getdbt.com/dbt-cli/cli-overview" target="_blank">dbt CLI</a> is the command line interface for running dbt projects. The CLI is free to use and open source.</p>
+<p>In this virtual hands-on lab, you will follow a step-by-step guide to using Airflow with dbt to create data transformation job schedulers.</p>
+<p>Let&#39;s get started.</p>
+<h2 is-upgraded>Prerequisites</h2>
+<p>This guide assumes you have a basic working knowledge of Python and dbt</p>
+<h2 class="checklist" is-upgraded>What You&#39;ll Learn</h2>
+<ul class="checklist">
+<li>how to use an opensource tool like Airflow to create a data scheduler</li>
+<li>how do we write a DAG and upload it onto Airflow</li>
+<li>how to build scalable pipelines using dbt, Airflow and Snowflake</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Need</h2>
+<p>You will need the following things before beginning:</p>
+<ol type="1">
+<li>Snowflake</li>
+<li><strong>A Snowflake Account.</strong></li>
+<li><strong>A Snowflake User created with appropriate permissions.</strong> This user will need permission to create objects in the DEMO_DB database.</li>
+<li>GitHub</li>
+<li><strong>A GitHub Account.</strong> If you don&#39;t already have a GitHub account you can create one for free. Visit the <a href="https://github.com/join" target="_blank">Join GitHub</a> page to get started.</li>
+<li><strong>A GitHub Repository.</strong> If you don&#39;t already have a repository created, or would like to create a new one, then <a href="https://github.com/new" target="_blank">Create a new respository</a>. For the type, select <code>Public</code> (although you could use either). And you can skip adding the README, .gitignore and license for now.</li>
+<li>Integrated Development Environment (IDE)</li>
+<li><strong>Your favorite IDE with Git integration.</strong> If you don&#39;t already have a favorite IDE that integrates with Git I would recommend the great, free, open-source <a href="https://code.visualstudio.com/" target="_blank">Visual Studio Code</a>.</li>
+<li><strong>Your project repository cloned to your computer.</strong> For connection details about your Git repository, open the Repository and copy the <code>HTTPS</code> link provided near the top of the page. If you have at least one file in your repository then click on the green <code>Code</code> icon near the top of the page and copy the <code>HTTPS</code> link. Use that link in VS Code or your favorite IDE to clone the repo to your computer.</li>
+<li>Docker</li>
+<li><strong>Docker Desktop on your laptop.</strong>  We will be running Airflow as a container. Please install Docker Desktop on your desired OS by following the <a href="https://docs.docker.com/desktop/" target="_blank">Docker setup instructions</a>.</li>
+</ol>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<ul>
+<li>A simple working Airflow pipeline with dbt and Snowflake</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Set up of environment" duration="2">
+        <p>First, let us create a folder by running the command below</p>
+<pre><code>mkdir dbt_airflow &amp;&amp; cd &#34;$_&#34;
+</code></pre>
+<p>Next, we will get our docker-compose file of our Airflow. To do so lets do a curl of the file onto our local laptop</p>
+<pre><code language="language-bash" class="language-bash">curl -LfO &#39;https://airflow.apache.org/docs/apache-airflow/2.3.0/docker-compose.yaml&#39;
+</code></pre>
+<p>We will be now adjusting our docker-compose file - add in our 2 folders as volumes. The <code>dags</code> is the folder where the Airflow DAGs are placed for Airflow to pick up and analyse. The <code>dbt</code> is the folder in which we configured our dbt models and our CSV files.</p>
+<pre><code language="language-bash" class="language-bash">  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - ./dbt:/dbt # add this in
+    - ./dags:/dags # add this in
+
+</code></pre>
+<p>We would now need to create additional file with additional docker-compose parameters. This way dbt will be installed when the containers are started.</p>
+<p><code>.env</code></p>
+<pre><code language="language-bash" class="language-bash">_PIP_ADDITIONAL_REQUIREMENTS=dbt==0.19.0
+</code></pre>
+<p>We would now need to create a <code>dbt</code> project as well as an <code>dags</code> folder.</p>
+<p>For the dbt project, do a <code>dbt init dbt</code> - this is where we will configure our dbt later in step 4.</p>
+<p>For the dags folder, just create the folder by doing</p>
+<pre><code>mkdir dags
+</code></pre>
+<p>Your tree repository should look like this</p>
+<p class="image-container"><img alt="Folderstructure" src="img/526b15af3f7538f.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Setting up our dbt Project" duration="6">
+        <p>Now that we have gotten our repo up, it is time to configure and set up our dbt project.</p>
+<p>Before we begin, let&#39;s take some time to understand what we are going to do for our dbt project.</p>
+<p>As can be seen in the diagram below, we have 3 csv files <code>bookings_1</code>, <code>bookings_2</code> and <code>customers</code> . We are going to seed these csv files into Snowflake as tables. This will be covered in step 4 in detailed later.</p>
+<p>Following this, we are going to merge <code>bookings_1</code> and <code>bookings_2</code> tables into <code>combined_bookings</code>. Next, we are going to join the <code>combined_bookings</code> and <code>customer</code> table on customer_id to form the <code>prepped_data</code> table.</p>
+<p>Finally, we are going to perform our analysis and transformation on the <code>prepped_data</code> by creating 2 views.</p>
+<ol type="1">
+<li><code>hotel_count_by_day.sql</code>: This will create a hotel_count_by_day view in the ANALYSIS schema in which we will count the number of hotel bookings by day.</li>
+<li><code>thirty_day_avg_cost.sql</code>: This will create a thirty_day_avg_cost view in the ANALYSIS schema in which we will do a average cost of booking for the last 30 days.</li>
+</ol>
+<p class="image-container"><img alt="dbt_structure" src="img/d36a140ee3fb4128.png"></p>
+<p>First, let&#39;s go to the Snowflake console and run the script below. What this does is create a dbt_user and a dbt_dev_role and after which we set up a database for dbt_user.</p>
+<pre><code language="language-sql" class="language-sql">USE ROLE SECURITYADMIN;
+
+CREATE OR REPLACE ROLE dbt_DEV_ROLE COMMENT=&#39;dbt_DEV_ROLE&#39;;
+GRANT ROLE dbt_DEV_ROLE TO ROLE SYSADMIN;
+
+CREATE OR REPLACE USER dbt_USER PASSWORD=&#39;&lt;PASSWORD&gt;&#39;
+	DEFAULT_ROLE=dbt_DEV_ROLE
+	DEFAULT_WAREHOUSE=dbt_WH
+	COMMENT=&#39;dbt User&#39;;
+    
+GRANT ROLE dbt_DEV_ROLE TO USER dbt_USER;
+
+-- Grant privileges to role
+USE ROLE ACCOUNTADMIN;
+
+GRANT CREATE DATABASE ON ACCOUNT TO ROLE dbt_DEV_ROLE;
+
+/*---------------------------------------------------------------------------
+Next we will create a virtual warehouse that will be used
+---------------------------------------------------------------------------*/
+USE ROLE SYSADMIN;
+
+--Create Warehouse for dbt work
+CREATE OR REPLACE WAREHOUSE dbt_DEV_WH
+  WITH WAREHOUSE_SIZE = &#39;XSMALL&#39;
+  AUTO_SUSPEND = 120
+  AUTO_RESUME = true
+  INITIALLY_SUSPENDED = TRUE;
+
+GRANT ALL ON WAREHOUSE dbt_DEV_WH TO ROLE dbt_DEV_ROLE;
+
+</code></pre>
+<p>Let&#39;s login with the <code>dbt_user</code> and create the database <code>DEMO_dbt</code> by running the command</p>
+<pre><code language="language-sql" class="language-sql">CREATE OR REPLACE DATABASE DEMO_dbt
+
+</code></pre>
+<p class="image-container"><img alt="airflow" src="img/bcdcf208927fcb3d.png"></p>
+<p>Now, let&#39;s go back to our project <code>dbt_airflow</code> &gt; <code>dbt</code>that we set up previously in step 1.</p>
+<p>We will set up a few configurations for the respective files below. Please note for the <code>dbt_project.yml</code> you just need to replace the models section</p>
+<p>profiles.yml</p>
+<pre><code language="language-yml" class="language-yml">default:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      ######## Please replace with your Snowflake account name 
+      ######## for example sg_demo.ap-southeast-1
+      account: &lt;ACCOUNT_URL&gt;.&lt;REGION&gt; 
+
+      user: &#34;&#123;&#123; env_var(&#39;dbt_user&#39;) }}&#34;
+      ######## These environment variables dbt_user and dbt_password 
+      ######## are read from the variabls in Airflow which we will set later
+      password: &#34;&#123;&#123; env_var(&#39;dbt_password&#39;) }}&#34;
+
+      role: dbt_dev_role
+      database: demo_dbt
+      warehouse: dbt_dev_wh
+      schema: public
+      threads: 200
+</code></pre>
+<p>packages.yml</p>
+<pre><code language="language-yml" class="language-yml">packages:
+  - package: fishtown-analytics/dbt_utils
+    version: 0.6.4
+</code></pre>
+<p>dbt_project.yml</p>
+<pre><code language="language-yml" class="language-yml">models:
+  my_new_project:
+      # Applies to all files under models/example/
+      transform:
+          schema: transform
+          materialized: view
+      analysis:
+          schema: analysis
+          materialized: view
+</code></pre>
+<p>Next, we will install the <code>fishtown-analytics/dbt_utils</code> that we had placed inside <code>packages.yml</code>. This can be done by running the command <code>dbt deps</code> from the <code>dbt</code> folder.</p>
+<p>We will now create a file called <code>custom_demo_macros.sql</code> under the <code>macros</code> folder and input the below sql</p>
+<pre><code language="language-sql" class="language-sql">{% macro generate_schema_name(custom_schema_name, node) -%}
+    {%- set default_schema = target.schema -%}
+    {%- if custom_schema_name is none -%}
+        &#123;&#123; default_schema }}
+    {%- else -%}
+        &#123;&#123; custom_schema_name | trim }}
+    {%- endif -%}
+{%- endmacro %}
+
+
+{% macro set_query_tag() -%}
+  {% set new_query_tag = model.name %} {# always use model name #}
+  {% if new_query_tag %}
+    {% set original_query_tag = get_current_query_tag() %}
+    &#123;&#123; log(&#34;Setting query_tag to &#39;&#34; ~ new_query_tag ~ &#34;&#39;. Will reset to &#39;&#34; ~ original_query_tag ~ &#34;&#39; after materialization.&#34;) }}
+    {% do run_query(&#34;alter session set query_tag = &#39;{}&#39;&#34;.format(new_query_tag)) %}
+    &#123;&#123; return(original_query_tag)}}
+  {% endif %}
+  &#123;&#123; return(none)}}
+{% endmacro %}
+</code></pre>
+<p>If everything is done correctly, your folder should look like below. The annotated boxes are what we just went through above.</p>
+<p>Our final step here is to install our dbt module for <code>db_utils</code>. From the dbt directory run</p>
+<pre><code language="language-\u00a0" class="language-\u00a0">dbt deps
+</code></pre>
+<p>and you would see the assoicated modules being installed in the <code>dbt_modules</code> folder</p>
+<p>By now, you should see the folder structure as below:</p>
+<p class="image-container"><img alt="airflow" src="img/559f995347083ec8.png"></p>
+<p>We are done configuring dbt. Let us proceed on crafting our csv files and our dags in the next section.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating our CSV data files in dbt" duration="10">
+        <p>In this section, we will be prepping our sample csv data files alongside the associated sql models.</p>
+<p>To start, let us first create 3 excel files under the folder <code>data</code> inside the dbt folder.</p>
+<p>bookings_1.csv</p>
+<pre><code language="language-csv" class="language-csv">id,booking_reference,hotel,booking_date,cost
+1,232323231,Pan Pacific,2021-03-19,100
+1,232323232,Fullerton,2021-03-20,200
+1,232323233,Fullerton,2021-04-20,300
+1,232323234,Jackson Square,2021-03-21,400
+1,232323235,Mayflower,2021-06-20,500
+1,232323236,Suncity,2021-03-19,600
+1,232323237,Fullerton,2021-08-20,700
+</code></pre>
+<p>bookings_2.csv</p>
+<pre><code language="language-csv" class="language-csv">id,booking_reference,hotel,booking_date,cost
+2,332323231,Fullerton,2021-03-19,100
+2,332323232,Jackson Square,2021-03-20,300
+2,332323233,Suncity,2021-03-20,300
+2,332323234,Jackson Square,2021-03-21,300
+2,332323235,Fullerton,2021-06-20,300
+2,332323236,Suncity,2021-03-19,300
+2,332323237,Berkly,2021-05-20,200
+</code></pre>
+<p>customers.csv</p>
+<pre><code language="language-csv" class="language-csv">id,first_name,last_name,birthdate,membership_no
+1,jim,jone,1989-03-19,12334
+2,adrian,lee,1990-03-10,12323
+</code></pre>
+<p>Our folder structure should be like as below</p>
+<p class="image-container"><img alt="airflow" src="img/bc601bb6767d64e2.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating our dbt models in models folder" duration="2">
+        <p>Create 2 folders <code>analysis</code> and <code>transform</code> in the models folder. Please follow the sections below for analysis and transform respectively.</p>
+<h2 is-upgraded>dbt models for transform folder</h2>
+<p>Inside the <code>transform</code> folder, we will have 3 SQL files</p>
+<ol type="1">
+<li><code>combined_bookings.sql</code>: This will combine the 2 bookings CSV files we had above and create the  <code>COMBINED_BOOKINGS</code> view in the <code>TRANSFORM</code> schema.</li>
+</ol>
+<p>combined_bookings.sql</p>
+<pre><code language="language-sql" class="language-sql">&#123;&#123; dbt_utils.union_relations(
+    relations=[ref(&#39;bookings_1&#39;), ref(&#39;bookings_2&#39;)]
+) }}
+</code></pre>
+<ol type="1" start="2">
+<li><code>customer.sql</code>: This will create a <code>CUSTOMER</code> view in the <code>TRANSFORM</code> schema.</li>
+</ol>
+<p>customer.sql</p>
+<pre><code language="language-sql" class="language-sql">SELECT ID 
+    , FIRST_NAME
+    , LAST_NAME
+    , birthdate
+FROM &#123;&#123; ref(&#39;customers&#39;) }}
+</code></pre>
+<ol type="1" start="3">
+<li><code>prepped_data.sql</code>: This will create a <code>PREPPED_DATA</code> view in the <code>TRANSFORM</code> schema in which it will perform an inner join on the <code>CUSTOMER</code> and <code>COMBINED_BOOKINGS</code> views from the steps above.</li>
+</ol>
+<p>prepped_data.sql</p>
+<pre><code language="language-sql" class="language-sql">SELECT A.ID 
+    , FIRST_NAME
+    , LAST_NAME
+    , birthdate
+    , BOOKING_REFERENCE
+    , HOTEL
+    , BOOKING_DATE
+    , COST
+FROM &#123;&#123;ref(&#39;customer&#39;)}}  A
+JOIN &#123;&#123;ref(&#39;combined_bookings&#39;)}} B
+on A.ID = B.ID
+</code></pre>
+<h2 is-upgraded>dbt models for analysis folder</h2>
+<p>Now let&#39;s move on to the <code>analysis</code> folder. Change to the <code>analysis</code> folder and create these 2 SQL files</p>
+<ol type="1">
+<li><code>hotel_count_by_day.sql</code>: This will create a hotel_count_by_day view in the <code>ANALYSIS</code> schema in which we will count the number of hotel bookings by day.</li>
+</ol>
+<pre><code language="language-sql" class="language-sql">SELECT
+  BOOKING_DATE,
+  HOTEL,
+  COUNT(ID) as count_bookings
+FROM &#123;&#123; ref(&#39;prepped_data&#39;) }}
+GROUP BY
+  BOOKING_DATE,
+  HOTEL
+</code></pre>
+<ol type="1" start="2">
+<li><code>thirty_day_avg_cost.sql</code>: This will create a thirty_day_avg_cost view in the <code>ANALYSIS</code> schema in which we will do a average cost of booking for the last 30 days.</li>
+</ol>
+<pre><code language="language-sql" class="language-sql">SELECT
+  BOOKING_DATE,
+  HOTEL,
+  COST,
+  AVG(COST) OVER (
+    ORDER BY BOOKING_DATE ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+  ) as &#34;30_DAY_AVG_COST&#34;,
+  COST -   AVG(COST) OVER (
+    ORDER BY BOOKING_DATE ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+  ) as &#34;DIFF_BTW_ACTUAL_AVG&#34;
+FROM &#123;&#123; ref(&#39;prepped_data&#39;) }}
+</code></pre>
+<p>Your file structure should be as below. We have already finished our dbt models and can proceed onto working on Airflow.</p>
+<p class="image-container"><img alt="airflow" src="img/c50fe4445f3c7a09.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Preparing our Airflow DAGs" duration="5">
+        <p>In our <code>dags</code> folder, create 2 files: <code>init.py</code> and <code>transform_and_analysis.py</code>. The <code>init.py</code> will initialise and see the CSV data. The <code>transform_and_analysis.py</code> will perform the transformation and analysis.</p>
+<p>With Airflow, we can then schedule the <code>transform_and_analysis</code> DAG on a daily basis. However, in this example, we will be triggering the DAG manually.</p>
+<p>init.py</p>
+<pre><code language="language-python" class="language-python">from datetime import datetime
+import os
+
+from airflow import DAG
+from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.bash import BashOperator
+from airflow.operators.dummy_operator import DummyOperator
+
+default_args = {
+    &#39;owner&#39;: &#39;airflow&#39;,
+    &#39;depends_on_past&#39;: False,
+    &#39;start_date&#39;: datetime(2020,8,1),
+    &#39;retries&#39;: 0
+}
+
+
+with DAG(&#39;1_init_once_seed_data&#39;, default_args=default_args, schedule_interval=&#39;@once&#39;) as dag:
+    task_1 = BashOperator(
+        task_id=&#39;load_seed_data_once&#39;,
+        bash_command=&#39;cd /dbt &amp;&amp; dbt seed --profiles-dir .&#39;,
+        env={
+            &#39;dbt_user&#39;: &#39;&#123;&#123; var.value.dbt_user }}&#39;,
+            &#39;dbt_password&#39;: &#39;&#123;&#123; var.value.dbt_password }}&#39;,
+            **os.environ
+        },
+        dag=dag
+    )
+
+task_1  
+</code></pre>
+<p>transform_and_analysis.py</p>
+<pre><code language="language-python" class="language-python">from airflow import DAG
+from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.bash import BashOperator
+from airflow.operators.dummy_operator import DummyOperator
+from datetime import datetime
+
+
+default_args = {
+    &#39;owner&#39;: &#39;airflow&#39;,
+    &#39;depends_on_past&#39;: False,
+    &#39;start_date&#39;: datetime(2020,8,1),
+    &#39;retries&#39;: 0
+}
+
+with DAG(&#39;2_daily_transformation_analysis&#39;, default_args=default_args, schedule_interval=&#39;@once&#39;) as dag:
+    task_1 = BashOperator(
+        task_id=&#39;daily_transform&#39;,
+        bash_command=&#39;cd /dbt &amp;&amp; dbt run --models transform --profiles-dir .&#39;,
+        env={
+            &#39;dbt_user&#39;: &#39;&#123;&#123; var.value.dbt_user }}&#39;,
+            &#39;dbt_password&#39;: &#39;&#123;&#123; var.value.dbt_password }}&#39;,
+            **os.environ
+        },
+        dag=dag
+    )
+
+    task_2 = BashOperator(
+        task_id=&#39;daily_analysis&#39;,
+        bash_command=&#39;cd /dbt &amp;&amp; dbt run --models analysis --profiles-dir .&#39;,
+        env={
+            &#39;dbt_user&#39;: &#39;&#123;&#123; var.value.dbt_user }}&#39;,
+            &#39;dbt_password&#39;: &#39;&#123;&#123; var.value.dbt_password }}&#39;,
+            **os.environ
+        },
+        dag=dag
+    )
+
+    task_1 &gt;&gt; task_2 # Define dependencies
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Running our docker-compose file for Airflow" duration="5">
+        <p>Let&#39;s run our <code>docker-compose up</code> and go to <a href="http://localhost:8080/" target="_blank">http://localhost:8080/</a>. The default username is <code>airflow</code> and password is <code>airflow</code></p>
+<p class="image-container"><img alt="airflow" src="img/3c5867454e0426d7.png"></p>
+<p>We are now going to create 2 variables. Go to <code>admin > Variables</code> and click on the <code>+</code> icon.</p>
+<p class="image-container"><img alt="airflow" src="img/895a8bd6de0ede43.png"></p>
+<p>Let us first create key of <code>dbt_user</code> and value <code>dbt_user</code>.</p>
+<p class="image-container"><img alt="airflow" src="img/6ab54f17b7f0c069.png"></p>
+<p>Now let us create our second key of <code>dbt_password</code> and value <code><ADD IN YOUR PASSWORD></code></p>
+<p class="image-container"><img alt="airflow" src="img/d0b9e76723d5ffd9.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Activating and running our DAGs" duration="0">
+        <p>We will now activate our DAGs. Click on the blue buttons for <code>1_init_once_seed_data</code> and <code>2_daily_transformation_analysis</code></p>
+<p class="image-container"><img alt="airflow" src="img/f2b16e9ea0323b55.png"></p>
+<h2 is-upgraded>Running our 1_init_once_seed_data</h2>
+<p>Now, lets run our <code>1_init_once_seed_data</code>  to seed the data. To run click the play icon under the <code>Actions</code> on the right of the DAG.</p>
+<p class="image-container"><img alt="airflow" src="img/92a97444078fce7f.png"></p>
+<h2 is-upgraded>Viewing Seed data in tables created under public schema</h2>
+<p>If all goes well when we go back to our Snowflake instance, we should see tree tables that have been successfully created in the <code>PUBLIC</code> schema.</p>
+<p class="image-container"><img alt="airflow" src="img/4d7ba239f2c8ee2b.png"></p>
+<h2 is-upgraded>Running our 2_daily_transformation_analysis</h2>
+<p>We will now run our second DAG <code>2_daily_transformation_analysis</code> which will run our <code>transform</code> and <code>analysis</code> models</p>
+<p class="image-container"><img alt="airflow" src="img/c294cb40356b3e3b.png"></p>
+<p>Our <code>Transform</code> and <code>Analysis</code> views have been created successfully!</p>
+<p class="image-container"><img alt="airflow" src="img/549536ac9cffd679.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion" duration="1">
+        <p>Congratulations! You have created your first Apache Airflow with dbt and Snowflake! We encourage you to continue with your free trial by loading your own sample or production data and by using some of the more advanced capabilities of Airflow and Snowflake not covered in this lab.</p>
+<h2 is-upgraded>Additional Resources:</h2>
+<ul>
+<li>Join our <a href="https://www.getdbt.com/community/" target="_blank">dbt community Slack</a> which contains more than 18,000 data practitioners today. We have a dedicated slack channel #db-snowflake to Snowflake related content.</li>
+<li>Quick tutorial on how to write a simple <a href="https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html" target="_blank">Airflow DAG</a></li>
+</ul>
+<h2 is-upgraded>What we&#39;ve covered:</h2>
+<ul>
+<li>How to set up Airflow, dbt &amp; Snowflake</li>
+<li>How to create a DAG and run dbt from our dag</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

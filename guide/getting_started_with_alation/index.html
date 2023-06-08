@@ -1,0 +1,315 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Learn How Alation Powers Data Intelligence on Snowflake</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="getting_started_with_alation"
+                  title="Learn How Alation Powers Data Intelligence on Snowflake"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="1">
+        <p>Does your organization have data intelligence? Can people easily find, understand, and trust data? If not, you&#39;ll want to join this lab to learn how Alation ensures people have reliable and trustworthy data to make confident, data-driven decisions.</p>
+<p>In this expert-led, hands-on lab, you will follow a step-by-step guide utilizing an Alation-provided sample database of a fictitious TV streaming company, Juno. Using this example data, you will learn how the Alation Data Catalog improves productivity with self-service analytics and uses automation and continuous improvement to manage data governance. See why Alation is Snowflake&#39;s <em>2-time Data Governance Partner of the Year</em>.</p>
+<p>During the lab, you&#39;ll kickstart your 14-day free trial of Alation — to which you can connect to your own Snowflake environment and continue to explore the data catalog.</p>
+<h2 is-upgraded>- What You&#39;ll Learn</h2>
+<ul>
+<li>How to create and manage Snowflake access policies directly from Alation</li>
+<li>How to link a data policy to related data assets</li>
+<li>How to protect sensitive data using Snowflake&#39;s role-based masking policies</li>
+<li>How to write trusted SQL queries with guided navigation</li>
+<li>How to visualize column-level lineage for impact analysis</li>
+</ul>
+<h2 is-upgraded>- What You&#39;ll Need</h2>
+<ul>
+<li>A trial <a href="https://signup.snowflake.com/" target="_blank">Snowflake</a> Account with ACCOUNTADMIN access (recommended) or an existing Snowflake accoount (with ACCOUNTADMIN access)</li>
+<li>Alation free trial through Snowflake Partner Connect</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Getting Your Snowflake Trial Account" duration="3">
+        <ul>
+<li>To create a Snowflake trial account, follow <a href="https://signup.snowflake.com" target="_blank">this link</a> and fill out the form before clicking Continue. You&#39;ll be asked to choose a cloud provider and for the purposes of this workshop any of them will do. After checking the box to agree to the terms, click: <code>Get Started</code></li>
+<li>Next you will be prompted for the reason you are signing up for a Snowflake trial account. Choose &#34;Virtual hands-on lab or demo&#34; and any other ones that apply. Click: <code>Submit</code></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Getting your Alation Trial" duration="3">
+        <p><strong>1. Access Partner Connect from your Snowflake trial account.</strong></p>
+<p class="image-container"><img alt="Step1" src="img/e7a6e9ed2696396d.png"></p>
+<ul>
+<li>After you have logged in, access the <code>Admin</code> menu selection from the left navigation bar.</li>
+<li>Then select <code>Partner Connect</code></li>
+<li>Either type in Alation in the search or scroll down to the Security &amp; Governance section.</li>
+</ul>
+<p><img alt="Line1" src="img/9aad6b806c53b1a0.png"><strong>2. Default Objects Created in your Snowflake trial account.</strong><img alt="Step2" src="img/7a77f4385e30aedc.png"></p>
+<ul>
+<li>Click: <code>Connect</code></li>
+</ul>
+<p><img alt="Line2" src="img/9aad6b806c53b1a0.png"><strong>3. Your Partner Connect Account has been Created</strong><img alt="Step3" src="img/c464d6329f8c8bc5.png"></p>
+<ul>
+<li>Click: <code>Activate</code></li>
+</ul>
+<p><img alt="Line3" src="img/9aad6b806c53b1a0.png"><strong>4. Alation Account set up</strong></p>
+<p class="image-container"><img alt="Step4" src="img/8beb089a544a452b.png"></p>
+<ul>
+<li>The email address that you used for your trial Snowflake account will be used as your Alation user id. This is the reason why this field cannot be edited.</li>
+<li>Provide your password.</li>
+<li>Verify your password.</li>
+<li>Click: <code>Start Free Trial</code></li>
+</ul>
+<p><img alt="Line4" src="img/9aad6b806c53b1a0.png"><strong>5. Getting Started User Information</strong></p>
+<p class="image-container"><img alt="Step5" src="img/d22722dec897bdca.png"></p>
+<ul>
+<li>Provide your information in order to start the trial.</li>
+<li>Note: the email provided is how Alation will share addtional infomation throughout the trial.</li>
+<li>Click: <code>Next</code></li>
+</ul>
+<p><img alt="Line5" src="img/9aad6b806c53b1a0.png"><strong>6. Your Account is Ready</strong></p>
+<p class="image-container"><img alt="Step6" src="img/3f0b929d5fcab94.png"></p>
+<ul>
+<li>Your Alation Trial has finished being installed and is ready for use.</li>
+<li>Click: <code>Log in to Alation Account</code></li>
+<li>Note: you will also receive an email with the Alation URL.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Accessing the Lab" duration="2">
+        <p>In this Alation data intelligence lab, you can expect to see how the platform helps to solve problems for roles ranging from business analysts to data engineers. Each section will have discussion points along with exercises to help reinforce each topic.</p>
+<p>Let&#39;s get started!</p>
+<p><strong>1. Log into Alation website.</strong></p>
+<p>Access the URL provided for your Alation trial in your preferred browser, like Chrome.</p>
+<p><strong>2. On the home page scroll down to the bottom and click on Data Governance and Discovery VHOL.</strong></p>
+<p><img alt="VHOL-Screen1" src="img/61635e5ee7170c5b.png"><img alt="VHOL-Border1" src="img/9aad6b806c53b1a0.png"><strong>3. The Data Governance and Discovery Virtual Hands on Lab.</strong></p>
+<p>This is the main page that has the five chapters that will be covered in the lab. Each chapter covers a particular topic.</p>
+<p>Let&#39;s get started with Chapter 01. Establishing a Governance Framework. Please click on the highlighted chapter link.</p>
+<p class="image-container"><img alt="VHOL-Screen2" src="img/6837fcc2bf3a9c0a.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Establishing a Governance Framework" duration="5">
+        <p><strong>Overview</strong></p>
+<p>One of the best parts of using the Alation data intelligence platform is that you get a system to drive data culture and a wealth of knowledge on how to get started. Data Governance doesn&#39;t need to be a daunting undertaking. Let Alation help guide you using an active data governance methodology based on people first.</p>
+<p>This section is all about how to get started and achieve value quickly from Alation—starting with curating assets to understanding common problems that most data organizations want to solve. Some challenges impact a particular role in an organization, and you will see how <strong>all roles</strong> benefit from the data intelligence platform solutions.</p>
+<p><strong>Note</strong> that we will be accessing an Alation-provided Snowflake account for this lab. At the conclusion of the lab, we&#39;ll discuss how to set up Alation to manage your own Snowflake data sources.</p>
+<p class="image-container"><img alt="VHOL-Screen3" src="img/69346ab53200a84a.png"><img alt="VHOL-Border3" src="img/9aad6b806c53b1a0.png"></p>
+<p class="image-container"><img alt="VHOL-Screen4" src="img/e50e5c9e7d0f974.png"></p>
+<p>To continue to the next section, click on the link in the highlighted box at the bottom of the page.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Identifying Policies" duration="10">
+        <p><strong>Overview</strong></p>
+<p>In today&#39;s world of data management, it is common to have policies and procedures that range from data quality and retention to personal data protection. If you are an organization that has policies defined, how difficult is it to find them? Often, policies are in file shares or document systems, making them very hard to discover. With Alation, you can store your policies where your data assets live, which makes them extremely easy to find. The other huge benefit is that data assets associated with the policy can be tracked.</p>
+<p class="image-container"><img alt="VHOL-Screen5" src="img/38e40a8ee7cb1160.png"><img alt="VHOL-Border4" src="img/9aad6b806c53b1a0.png"></p>
+<table>
+<tr><td colspan="2" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p class="image-container"><img style="width: 30.00px" src="img/c81ad910a2fabe5c.png"></p>
+</td><td colspan="1" rowspan="1"><p><strong>Exercise Guidance</strong></p>
+</td></tr>
+</table>
+<ol type="1">
+<li>Policies are part of the Governance App. Click on the dropdown arrow next to Apps.</li>
+<li>Click on the Govern icon.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen6" src="img/88d341cd5f5742f5.png"></p>
+<ol type="1" start="3">
+<li>Click on the Policy Center tile.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen7" src="img/6f866846bbc3e81b.png"></p>
+<ol type="1" start="4">
+<li>Once in Policy Center, you will be able to complete the exercise as outlined.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen8" src="img/6b0badef878ca173.png"></p>
+<p class="image-container"><img alt="VHOL-Border5" src="img/9aad6b806c53b1a0.png"></p>
+<table>
+<tr><td colspan="2" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p class="image-container"><img style="width: 30.00px" src="img/bdb1eb75fe32677c.png"></p>
+</td><td colspan="1" rowspan="1"><p><strong>Benefits</strong></p>
+</td></tr>
+</table>
+<p>Policies as living content centralized with data asset information helps everyone in the organization.</p>
+<p>Now it is time to move on to Search and Discovery!</p>
+<p class="image-container"><img alt="VHOL-Screen9" src="img/62a30c1c2a33f688.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Search &amp; Discovery" duration="10">
+        <p><strong>Overview</strong></p>
+<p>Every organization wants to make data-driven decisions. For this to become a reality, all employees must have the ability to quickly search data assets (databases, files, reports, etc.) to discover trusted data they can understand and use.</p>
+<p>Alation creates an experience that allows users to expand their world of knowledge through curation and collaboration. A community of technical and non-technical producers and consumers helps drive data literacy, leading to better business decisions and success.</p>
+<p class="image-container"><img alt="VHOL-Screen10" src="img/2e5f1d664f2fadc9.png"></p>
+<p class="image-container"><img alt="VHOL-Border6" src="img/9aad6b806c53b1a0.png"></p>
+<table>
+<tr><td colspan="2" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p class="image-container"><img style="width: 30.00px" src="img/c81ad910a2fabe5c.png"></p>
+</td><td colspan="1" rowspan="1"><p><strong>Exercise Guidance</strong></p>
+</td></tr>
+</table>
+<ol type="1">
+<li>The Alation Search bar is always present on the home page in the header and at the top of the other pages.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen11" src="img/e04e31ecb82ba16a.png"></p>
+<ol type="1" start="2">
+<li>As you start to type what you want to search for, Alation provides suggestions.</li>
+<li>Click on All Results to see what the search has found and to filter the results to find what you are looking for quickly.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen12" src="img/b62bae9a4420826e.png"></p>
+<ol type="1" start="4">
+<li>The top filters let you narrow your search by object type like column, articles, terms, etc.</li>
+<li>The left-hand side of the screen has additional filters based on tags, custom fields, and more. This is a compelling way to look for specific items like PII Data Classification.</li>
+<li>Search provides the trust flags to tell if the result item has been endorsed, warned, or deprecated. The star indicates this is an item you marked as one of your favorites.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen13" src="img/d86dfdc03c0128d2.png"></p>
+<p class="image-container"><img alt="VHOL-Border7" src="img/9aad6b806c53b1a0.png"></p>
+<table>
+<tr><td colspan="2" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p class="image-container"><img style="width: 30.00px" src="img/bdb1eb75fe32677c.png"></p>
+</td><td colspan="1" rowspan="1"><p><strong>Benefits</strong></p>
+</td></tr>
+</table>
+<p>Search is core to increasing productivity and data literacy. Spend minutes instead of days finding the data that you need.</p>
+<p>Now it is time to move on to Compose, Alation&#39;s SQL editor!</p>
+<p class="image-container"><img alt="VHOL-Screen14" src="img/11f2794ec44c7d1.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Compose" duration="15">
+        <p><strong>Overview</strong></p>
+<p>In addition to the rich cataloging and governance capabilities, Alation enables users to interact with data stored in cataloged sources. This capability is called Compose and provides a fully integrated and governed SQL development environment.</p>
+<p>Compose is more than your typical SQL editor. Because it is integrated with the catalog, the editor&#39;s IntelliSense can provide suggestions as you type for tables, columns, joins, etc. Another advantage is that active governance will show you when an item is deprecated, so you are not using bad data.</p>
+<p>Queries can be developed by those who know SQL and shared with others in the organization. No worries if you don&#39;t know how to read or write SQL. Queries can be published as forms that allow the business user to fill out some prompts and get answers to the questions they need to be answered.</p>
+<p class="image-container"><img alt="VHOL-Screen15" src="img/ad022ba235f120ee.png"></p>
+<p class="image-container"><img alt="VHOL-Border8" src="img/9aad6b806c53b1a0.png"></p>
+<table>
+<tr><td colspan="2" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p class="image-container"><img style="width: 30.00px" src="img/c81ad910a2fabe5c.png"></p>
+</td><td colspan="1" rowspan="1"><p><strong>Exercise Guidance</strong></p>
+</td></tr>
+</table>
+<p>Queries and Compose are accessible from several places in the application. The following shows how you can navigate to them.</p>
+<ol type="1">
+<li>When viewing a table, you can click on the Queries tab to see all of the queries associated with this table.</li>
+<li>The Compose link is in the upper right of the table view page.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen16" src="img/b241b54dd70c2f90.png"></p>
+<ol type="1" start="3">
+<li>The left-hand navigation provides a Queries selection that can be expanded to see current queries.</li>
+<li>You can click on the arrow to see additional queries and filters.</li>
+<li>You can click on this link to launch the Compose SQL editor application, which will appear in a new tab.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen17" src="img/6f35fb606672354d.png"></p>
+<ol type="1" start="6">
+<li>Since Compose was launched from a table view, a select statement with that table appears. If you were coming to Compose from a query, the query would appear.</li>
+<li>The Connection Settings is where you provide your credentials to connect to the Alation provided Demo Sample Data - data source.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen18" src="img/36d231070b6dfaa4.png"></p>
+<p class="image-container"><img alt="VHOL-Border9" src="img/9aad6b806c53b1a0.png"></p>
+<table>
+<tr><td colspan="2" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p class="image-container"><img style="width: 30.00px" src="img/bdb1eb75fe32677c.png"></p>
+</td><td colspan="1" rowspan="1"><p><strong>Benefits</strong></p>
+</td></tr>
+</table>
+<p>Compose helps spread data literacy in the organization by allowing users to build and share queries that help answer business questions.</p>
+<p>Now it is time to wrap this up; let&#39;s finish with a quick summary!</p>
+<p class="image-container"><img alt="VHOL-Screen19" src="img/25e2b64ef849b8d2.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Summary" duration="3">
+        <p>You did it! In this short period, you have seen how Alation:</p>
+<ul>
+<li>Improves productivity through self-service analytics</li>
+<li>Guides users to make better business decisions with trusted data</li>
+<li>Empowers organizations to continuously improve their data culture</li>
+</ul>
+<p class="image-container"><img alt="VHOL-Screen20" src="img/d0378fd2bcb7b935.png"></p>
+<p class="image-container"><img alt="VHOL-Border10" src="img/9aad6b806c53b1a0.png"></p>
+<h2 is-upgraded>Continue your Alation Journey</h2>
+<p>To get the most out Alation during your trial.</p>
+<ol type="1">
+<li>The Quick Start Tour has self-guided demos on Self-service Analytics, Data Governance, and Compose. In addition, there are some how-to vides.</li>
+<li>Our chat bot allows you to converse with a product specialist on questions you have, set up appointments with a product specialist, and search documentation for questions you have.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen20" src="img/fd4bf20e02e63eda.png"></p>
+<ol type="1" start="3">
+<li>Click on this link to see how to connect your own Snowflake data sources.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen21" src="img/a8a38ac5d35f13d7.png"></p>
+<ol type="1" start="4">
+<li>For additional guided demos and product information, please go to <a href="https://www.alation.com/" target="_blank">Alation.com</a>.</li>
+</ol>
+<p class="image-container"><img alt="VHOL-Screen21" src="img/937d62a8ef5f9210.png"></p>
+<p>Last but not least, please check your email for continued guidance and tips throughout your trial.</p>
+<p>Thanks again for your interest in Alation; we are here for you!</p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

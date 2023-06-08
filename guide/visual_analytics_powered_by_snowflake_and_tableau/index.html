@@ -1,0 +1,867 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Visual Analytics powered by Snowflake and Tableau</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="visual_analytics_powered_by_snowflake_and_tableau"
+                  title="Visual Analytics powered by Snowflake and Tableau"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="0">
+        <p>Join Snowflake and Tableau for an instructor-led hands-on lab to build governed, visual, and interactive analytics quickly and easily.</p>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Familiarity with Snowflake and Tableau</li>
+<li>Familarity with using an IDE</li>
+</ul>
+<h2 class="checklist" is-upgraded>What You&#39;ll Learn</h2>
+<ul class="checklist">
+<li>Load semi-structured data from IoT enabled bikes, geospatial and weather data into Snowflake.</li>
+<li>Integrate and deliver multi-tenant tables and views in Snowflake to Tableau for real-time dashboarding.</li>
+<li>Build visual, intuitive, and interactive data visualizations powered by live data in Snowflake.</li>
+<li>Share production-ready Tableau dashboards by embedding the visualizations into your custom application.</li>
+<li>Showcase your data in the Snowflake Data Marketplace.</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Need</h2>
+<ul>
+<li>A <a href="https://trial.snowflake.com/" target="_blank">Snowflake</a> account or free trial</li>
+<li>A <a href="https://www.tableau.com/products/online/request-trial" target="_blank">Tabelau Online</a> account or free trial</li>
+<li><a href="https://code.visualstudio.com/download" target="_blank">Visual Studio Code</a> editor</li>
+<li>The <a href="https://marketplace.visualstudio.com/items?itemName=techer.open-in-browser" target="_blank">&#34;open in browser&#34;</a> VS code extension from Visual Studio Marketplace</li>
+<li>Get <a href="https://snowflake-workshop-lab.s3.amazonaws.com/citibike-trips-scripts/Tableau+Embedded+Portal.zip" target="_blank">Tableau Embedded Script</a></li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<ul>
+<li>Snowflake objects and data share</li>
+<li>A custom map with advanced spatial data</li>
+<li>A simple Tableau dashboard, which you&#39;ll embed into a portal</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Snowflake Configuration" duration="2">
+        <ol type="1">
+<li>Create a Snowflake enterprise trial account</li>
+<li>Login to your Snowflake account</li>
+<li>We will be using the new UI to get started but you can also switch over to the Classic Console if you would like.</li>
+</ol>
+<p>Classic UI: If you ever want to change from the new UI to the classic one, click on the home button and then Classic Console.</p>
+<h2 is-upgraded>New Login UI</h2>
+<p class="image-container"><img alt="Snowflake Login" src="img/8179fbbefc05bbf1.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Managing Semi-Structured Data" duration="5">
+        <h2 is-upgraded>Download Demo SQL Script</h2>
+<p><a href="https://snowflake-workshop-lab.s3.amazonaws.com/citibike-trips-scripts/Workshop_SQL.sql" target="_blank">Download workload.sql &amp; Create Worksheet from SQL File</a>.</p>
+<p class="image-container"><img alt="Snowflake Login" src="img/a4eb16a6c3b7608d.png"></p>
+<h2 is-upgraded>Create Snowflake Objects</h2>
+<pre><code language="language-sql" class="language-sql">-- Create Database, Schema and Warehouse
+
+USE ROLE ACCOUNTADMIN;
+
+create or replace database VHOL_DATABASE;
+use database VHOL_DATABASE;
+
+create or replace schema  VHOL_DATABASE.VHOL_SCHEMA;
+use schema  VHOL_SCHEMA;
+
+create or replace warehouse VHOL_WH WITH 
+    WAREHOUSE_SIZE = &#39;MEDIUM&#39; 
+    WAREHOUSE_TYPE = &#39;STANDARD&#39; 
+    AUTO_SUSPEND = 60 
+    AUTO_RESUME = TRUE 
+    MIN_CLUSTER_COUNT = 1 
+    MAX_CLUSTER_COUNT = 1 
+    SCALING_POLICY = &#39;STANDARD&#39;;
+  
+-- Change Compute Size Instantly 
+alter warehouse VHOL_WH SET WAREHOUSE_SIZE = &#39;LARGE&#39;;
+alter warehouse VHOL_WH SET WAREHOUSE_SIZE = &#39;SMALL&#39;;
+use warehouse VHOL_WH;
+</code></pre>
+<h2 is-upgraded>Create Stage for hosting files</h2>
+<pre><code language="language-sql" class="language-sql">create or replace STAGE VHOL_STAGE;
+
+show stages;
+
+--External Stage on S3
+create or replace STAGE VHOL_STAGE
+    URL = &#39;s3://snowflake-workshop-lab/citibike-trips-json&#39;;
+
+--Lists Files on the S3 Bucket
+list @VHOL_STAGE/;
+
+CREATE FILE FORMAT &#34;JSON&#34; TYPE=JSON COMPRESSION=GZIP;
+
+show File Formats;
+</code></pre>
+<h2 is-upgraded>Query JSON Data</h2>
+<pre><code language="language-sql" class="language-sql">-- Query all columns from a single row from the Stage
+SELECT * FROM @VHOL_STAGE/2016-08-01/data_01a304b5-0601-4bbe-0045-e8030021523e_005_6_0.json.gz (file_format=&gt;JSON)  limit 1;
+
+-- Create a table with Variant column in Snowflake to load JSON data
+create or replace table vhol_trips
+  (tripid number autoincrement, 
+   v variant)
+  change_tracking = true;
+
+-- Load JSON data into Variant column
+copy into vhol_trips (v) from 
+ (SELECT * FROM @VHOL_STAGE/2022-02-01/data_01a304b5-0601-4bbe-0045-e8030021523e_005_2_7.json.gz (file_format=&gt;JSON));
+</code></pre>
+<h2 is-upgraded>Build Relational Views on JSON</h2>
+<pre><code language="language-sql" class="language-sql">--- Not easy to read JSON, so let&#39;s extract JSON data as relational columns
+create or replace view vhol_trips_vw 
+  as select 
+    tripid,
+    dateadd(year,4,v:STARTTIME::timestamp_ntz) starttime,
+    dateadd(year,4,v:ENDTIME::timestamp_ntz) endtime,
+    datediff(&#39;minute&#39;, starttime, endtime) duration,
+    v:START_STATION_ID::integer start_station_id,
+    v:END_STATION_ID::integer end_station_id,
+    v:BIKE.BIKEID::string bikeid,
+    v:BIKE.BIKE_TYPE::string bike_type,
+    v:RIDER.RIDERID::integer riderid,
+    v:RIDER.FIRST_NAME::string || &#39; &#39; || v:RIDER.LAST_NAME::string rider_name,
+    to_date(v:RIDER.DOB::string, &#39;YYYY-MM-DD&#39;) dob,
+    v:RIDER.GENDER::string gender,
+    v:RIDER.MEMBER_TYPE::string member_type,
+    v:RIDER.PAYMENT.TYPE::string payment,
+    ifnull(v:RIDER.PAYMENT.CC_TYPE::string, 
+      v:RIDER.PAYMENT.PHONE_TYPE::string) payment_type,
+    ifnull(v:RIDER.PAYMENT.PHONE_NUM::string,
+      v:RIDER.PAYMENT.CC_NUM::string) payment_num
+  from vhol_trips;
+
+-- Avg trip duration 
+select date_trunc(&#39;hour&#39;, starttime) as &#34;date&#34;,
+count(*) as &#34;num trips&#34;,
+avg(duration)/60 as &#34;avg duration (mins)&#34; 
+from vhol_trips_vw
+group by 1 order by 1;
+
+-- Trips by day
+select
+    dayname(starttime) as &#34;day of week&#34;,
+    count(*) as &#34;num trips&#34;
+from vhol_trips_vw
+group by 1 order by 2 desc;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Add Weather Data from Snowflake Marketplace" duration="5">
+        <h2 is-upgraded>Click on data marketplace and type <strong>Global Weather &amp; Climate Data for BI</strong> in search toolbar</h2>
+<p class="image-container"><img alt="Search Dataset" src="img/a368fa4e4678b37f.png"></p>
+<h2 is-upgraded>Set database name to WEATHER, grant access to PUBLIC role</h2>
+<p class="image-container"><img alt="Add Database and Role" src="img/b512e70eaf3c0966.png"></p>
+<h2 is-upgraded>Data Ready to Query</h2>
+<p class="image-container"><img alt="Click Done" src="img/e2e15b1e11abba20.png"></p>
+<h2 is-upgraded>Let&#39;s just query Weather data in a specific zipcode</h2>
+<pre><code language="language-sql" class="language-sql">-- Is there rain in the forecast that may impact cycling in a specific area 
+SELECT COUNTRY,DATE_VALID_STD,TOT_PRECIPITATION_IN,tot_snowfall_in AS SNOWFALL,  POSTAL_CODE, DATEDIFF(day,current_date(),DATE_VALID_STD) AS DAY, HOUR(TIME_INIT_UTC) AS HOUR  FROM WEATHER.STANDARD_TILE.FORECAST_DAY WHERE POSTAL_CODE=&#39;32333&#39; AND DAY=7;
+</code></pre>
+<h2 is-upgraded>Convert Kelvin to Celcius</h2>
+<pre><code language="language-sql" class="language-sql">-- UDF to convert Fahrenheit to Celcius
+use database vhol_database;
+use schema vhol_schema;
+use warehouse vhol_wh;
+create or replace function degFtoC(f float)
+returns float
+as
+$$
+  truncate((f - 32) * 5/9, 2)
+$$; 
+</code></pre>
+<h2 is-upgraded>Is there precipitation or snowfall in NY zipcodes</h2>
+<pre><code language="language-sql" class="language-sql">create or replace view vhol_weather_vw as
+  select &#39;New York&#39;                                   state,
+    date_valid_std                                    observation_date,
+    doy_std                                           day_of_year,
+    avg(min_temperature_air_2m_f)                     temp_min_f,
+    avg(max_temperature_air_2m_f)                     temp_max_f,
+    avg(avg_temperature_air_2m_f)                     temp_avg_f,
+    avg(degFtoC(min_temperature_air_2m_f))            temp_min_c,
+    avg(degFtoC(max_temperature_air_2m_f))            temp_max_c,
+    avg(degFtoC(avg_temperature_air_2m_f))            temp_avg_c,
+    avg(tot_precipitation_in)                         tot_precip_in,
+    avg(tot_snowfall_in)                              tot_snowfall_in,
+    avg(tot_snowdepth_in)                             tot_snowdepth_in,
+    avg(avg_wind_direction_100m_deg)                  wind_dir,
+    avg(avg_wind_speed_100m_mph)                      wind_speed_mph,
+    truncate(avg(avg_wind_speed_100m_mph * 1.61), 1)  wind_speed_kph,
+    truncate(avg(tot_precipitation_in * 25.4), 1)     tot_precip_mm,
+    truncate(avg(tot_snowfall_in * 25.4), 1)          tot_snowfall_mm,
+    truncate(avg(tot_snowdepth_in * 25.4), 1)         tot_snowdepth_mm
+  from weather.standard_tile.history_day
+  where postal_code in (&#39;10257&#39;, &#39;10060&#39;, &#39;10128&#39;, &#39;07307&#39;, &#39;10456&#39;)
+  group by 1, 2, 3;
+
+-- Is it clear to cycle today 
+select observation_date, tot_precip_in,  tot_snowfall_in from vhol_weather_vw order by observation_date desc limit 10;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Enrich with Geospatial Station Data" duration="5">
+        <p>We just have station_id, so let&#39;s get geospatial data to locate those stations on map</p>
+<h2 is-upgraded>Access data from AWS API Gateway</h2>
+<pre><code language="language-sql" class="language-sql">-- Integration to AWS API Gateway 
+create or replace api integration fetch_http_data
+  api_provider = aws_api_gateway
+  api_aws_role_arn = &#39;arn:aws:iam::148887191972:role/ExecuteLambdaFunction&#39;
+  enabled = true
+  api_allowed_prefixes = (&#39;https://dr14z5kz5d.execute-api.us-east-1.amazonaws.com/prod/fetchhttpdata&#39;);
+</code></pre>
+<pre><code language="language-sql" class="language-sql">-- External Function call to Lambda to download data 
+
+create or replace external function fetch_http_data(v varchar)
+    returns variant
+    api_integration = fetch_http_data
+    as &#39;https://dr14z5kz5d.execute-api.us-east-1.amazonaws.com/prod/fetchhttpdata&#39;;
+</code></pre>
+<h2 is-upgraded>Flatten JSON data received from API&#39;s</h2>
+<p>Geospatial data is available in a nested json array, let&#39;s flatten that</p>
+<pre><code language="language-sql" class="language-sql">-- use lateral flatten function to flatten nested JSON and load in Snowflake tables
+create or replace table vhol_spatial_data as
+with gbfs as (
+  select $1 type, 
+     fetch_http_data($2) payload
+  from (values
+    (&#39;region&#39;, &#39;https://gbfs.citibikenyc.com/gbfs/en/system_regions.json&#39;),
+    (&#39;station&#39;, &#39;https://gbfs.citibikenyc.com/gbfs/en/station_information.json&#39;),
+    (&#39;neighborhood&#39;, &#39;https://snowflake-demo-stuff.s3.amazonaws.com/neighborhoods.geojson&#39;))
+  )
+  select type, value v
+    from gbfs, lateral flatten (input =&gt; payload:response.data.regions)
+    where type = &#39;region&#39;
+  union all
+  select type, value v
+    from gbfs, lateral flatten (input =&gt; payload:response.data.stations)
+    where type = &#39;station&#39;
+  union all
+  select type, value v
+    from gbfs, lateral flatten (input =&gt; payload:response.features)
+    where type = &#39;neighborhood&#39;;
+    
+    
+    select * from vhol_spatial_data limit 10;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Correlate Trips, Weather and Geospatial Data" duration="5">
+        <h2 is-upgraded>Combine station data with geospatial data</h2>
+<pre><code language="language-sql" class="language-sql">create or replace table vhol_stations as with 
+  -- extract the station data
+    s as (select 
+        v:station_id::string station_id,
+        v:region_id::number region_id,
+        v:name::string station_name,
+        v:lat::float station_lat,
+        v:lon::float station_lon,
+        st_point(station_lon, station_lat) station_geo,
+        v:station_type::string station_type,
+        v:capacity::number station_capacity,
+        v:rental_methods rental_methods,
+        v:legacy_id::string legacy_station_id -- introduced this because citibyke has changed the station_id from numeric to string 
+    from vhol_spatial_data
+
+    where type = &#39;station&#39;),  
+
+    r as (select
+        v:region_id::number region_id,
+        v:name::string region_name
+    from vhol_spatial_data
+    where type = &#39;region&#39;),
+    -- extract the neighborhood data
+    n as (select
+        v:properties.neighborhood::string nhood_name,
+        v:properties.borough::string borough_name,
+        to_geography(v:geometry) nhood_geo
+    from vhol_spatial_data
+    where type = &#39;neighborhood&#39;)   
+-- join it all together using a spatial join
+select station_id, legacy_station_id, station_name, station_lat, station_lon, station_geo,
+  station_type, station_capacity, rental_methods, region_name,
+  nhood_name, borough_name, nhood_geo
+from s inner join r on s.region_id = r.region_id
+       left outer join n on st_contains(n.nhood_geo, s.station_geo);
+
+-- Query station data 
+select * from vhol_stations limit 10;
+</code></pre>
+<h2 is-upgraded>Combine Trips, Geospatial and Stations</h2>
+<p>Let&#39;s combine trip data with geospatial to identify popular routes</p>
+<pre><code language="language-sql" class="language-sql">create or replace view vhol_trips_stations_vw as (
+  with
+    t as (select * from vhol_trips_vw),
+    ss as (select * from vhol_stations),
+    es as (select * from vhol_stations)
+  select 
+    t.tripid, 
+    starttime, endtime, duration, start_station_id,
+    ss.station_name start_station, ss.region_name start_region,
+    ss.borough_name start_borough, ss.nhood_name start_nhood, 
+    ss.station_geo start_geo, ss.station_lat start_lat, ss.station_lon start_lon,
+    ss.nhood_geo start_nhood_geo, 
+    end_station_id, es.station_name end_station, 
+    es.region_name end_region, es.borough_name end_borough, 
+    es.nhood_name end_nhood, es.station_geo end_geo, 
+    es.station_lat end_lat, es.station_lon end_lon,
+    es.nhood_geo end_nhood_geo,
+    bikeid, bike_type, dob, gender, member_type, payment, payment_type, payment_num
+  from t 
+    left outer join ss on start_station_id = ss.legacy_station_id
+    left outer join es on end_station_id = es.legacy_station_id
+    and ss.station_name is not null); 
+    
+
+select * from vhol_trips_stations_vw limit 200;
+</code></pre>
+<h2 is-upgraded>Combine Trip, Geospatial, Stations and Weather data</h2>
+<pre><code language="language-sql" class="language-sql">create or replace view vhol_trips_stations_weather_vw as (
+  select t.*, temp_avg_c, temp_avg_f,
+         wind_dir, wind_speed_mph, wind_speed_kph
+  from vhol_trips_stations_vw t 
+       left outer join vhol_weather_vw w on date_trunc(&#39;day&#39;, starttime) = observation_date);
+
+-- let&#39;s review the integrated data view
+select START_STATION,END_STATION,TEMP_AVG_C,WIND_SPEED_KPH from vhol_trips_stations_weather_vw limit 10;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Login to Tableau Online &amp; Connect to Snowflake" duration="30">
+        <p>Navigate to https://online.tableau.com/ and login to Tableau Cloud (Online) using your login credentials.</p>
+<p class="image-container"><img alt="A" src="img/e012be7496d7d751.png"></p>
+<p>You will be redirected to the Tableau Cloud (Online) Home page. Within the blue &#34;Welcome to your Tableau site&#34; banner, click into the &#34;New&#34; dropdown and select &#34;Workbook&#34;.</p>
+<p class="image-container"><img alt="A" src="img/273b14bf5b3a32f4.png"></p>
+<p>You will be automatically prompted to connect to a data source. Within the &#34;Connect to Data&#34; popup window, select &#34;Connectors&#34;. Find <em>Snowflake</em> in the grid. Note: you may need to use the horizontal bottom scrollbar at the bottom of the window and scroll to the right of the &#34;Connections&#34; tab.</p>
+<p class="image-container"><img alt="A" src="img/c3dafb802e77a599.png"></p>
+<p>Enter the Server name. Change Authentication to &#34;Username and Password&#34;, enter your login credentials, select role ACCOUNTADMIN &amp; then click the blue &#34;Sign in&#34; button.</p>
+<p class="image-container"><img alt="A" src="img/e2e80aebc6e70ef7.png"></p>
+<p>Within the connections pane, make the following selections:</p>
+<ul>
+<li>Warehouse: VHOL_WH</li>
+<li>Database: VHOL_DATABASE</li>
+<li>Schema: VHOL_Schema</li>
+</ul>
+<p>A list of tables will appear:</p>
+<p class="image-container"><img alt="A" src="img/22a5826d3056eca8.png"></p>
+<p>Hover over the border of the Connections pane window until a black icon appears, then drag the &#34;Connections&#34; window to the right to make it wider. Widen the pane until you can read the full table names. Scroll down in the list of available tables until you find a table called &#34;VHOL_Trips_Stations_Weather_VW&#34;.</p>
+<p class="image-container"><img alt="A" src="img/e82a8f638376b456.png"></p>
+<p>Drag that table out onto the main section of the screen, where it says &#34;Drag tables here&#34;.</p>
+<p class="image-container"><img alt="A" src="img/fa66b84275c27648.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Configure Data Source Filters" duration="0">
+        <p>By adding data source filters, we can exclude any outliers that may hinder performance or skew our data. We are going to be adding 3 data source filters total.</p>
+<p>In the top right corner of the screen, locate where it says &#34;Filters&#34;. Under &#34;Filters&#34;, there is a button that says &#34;Add&#34;. Click the &#34;Add&#34; button.</p>
+<p class="image-container"><img alt="A" src="img/c1ae28c27137d44d.png"></p>
+<p>On the bottom left of the pop-up &#34;Edit Data Source Filters&#34; window, click &#34;Add Filter&#34;.</p>
+<p class="image-container"><img alt="A" src="img/a198dca401eba7f2.png"></p>
+<p>Within the pop-up, start typing &#34;Start Station&#34;. Click the &#34;Start Station&#34; field.</p>
+<p class="image-container"><img alt="A" src="img/1f95b378932bc742.png"></p>
+<p>When the list of Station Names appear, click &#34;Null&#34;, then click &#34;Exclude selected values&#34;. After that, click the blue &#34;OK&#34; button in the bottom right of the pop-up.</p>
+<p class="image-container"><img alt="A" src="img/cb949025bea6557c.png"></p>
+<p>Repeat these steps for &#34;End Station&#34;; Add Filter → search &#34;End Station&#34; → click Null → Exclude selected values → OK. <img alt="A" src="img/944d75bfb420efcd.png"></p>
+<p>Lastly, repeat the same steps steps for &#34;Start Borough&#34;; Add Filter → search &#34;Start Borough&#34; → click Null → Exclude selected values → OK.</p>
+<p class="image-container"><img alt="A" src="img/4036e4de89d5509e.png"></p>
+<p>All 3 Data Source filters should appear within the &#34;Edit Data Source Filters&#34; window, and the &#34;Details&#34; column of the table confirms we are excluding Nulls. Once you&#39;ve confirmed the data source filters have been set correctly, click the blue &#34;OK&#34; button in the bottom right of the &#34;Edit Data Source Filters&#34; window.</p>
+<p class="image-container"><img alt="A" src="img/3a15723453556ace.png"></p>
+<p>We have successfully filtered out incomplete trips or trips without a documented start borough.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Visualize Spatial Data" duration="0">
+        <p>Now we are ready to visualize our data! In the bottom left of the screen, click &#34;Sheet 1&#34;.</p>
+<p class="image-container"><img alt="A" src="img/4b17738c0658ac41.png"></p>
+<p>Let&#39;s start by creating a simple calculation to count the number of trips in our data set. In the upper toolbar (the toolbar that contains &#34;File&#34;, locate the &#34;Analysis&#34; tab. Within the &#34;Analysis&#34; dropdown, click &#34;Create Calculated Field...&#34;</p>
+<p class="image-container"><img alt="A" src="img/9fa599ec787e6712.png"></p>
+<p>Change the name of the calculation from &#34;Calculation1&#34; to &#34;Trip Journey&#34;. Click into the blank calculation window below; once a flashing cursor appears, type:</p>
+<pre><code>MAKELINE([Start Geo],[End Geo])
+</code></pre>
+<p>This calculation is creating a line between the station a rider began the ride, and the station a rider ended their ride, effectively plotting the journey they made.</p>
+<p>Locate the new &#34;Trip Journey&#34; field within the left Data pane. Immediately after you close the calculated field window, Trip Journey will be highlighted in blue. When a field is blue in Tableau, it means it is a dimension or, in this case, a categorical geographic field.</p>
+<p class="image-container"><img alt="A" src="img/b69f8a83e96b2b51.png"></p>
+<p>Click and drag the Trip Journey field into the workspace, where it says &#34;drop field here&#34;. Tableau is going to spin for a moment here, but it shouldn&#39;t take more than 45-60 seconds. Not only is this complex spatial data, but it&#39;s the first time Tableau is indexing it or storing it in its cache — this initial ingestion step is the only time it will take this long to render.</p>
+<p>Upon rendering, you&#39;ll notice that Tableau not only automatically creates a map for us, but also plots a line between the start location and the end location.</p>
+<p class="image-container"><img alt="A" src="img/628b3fc969ec57c0.png"></p>
+<p>If you hover over the map, you will notice that Tableau is grouping all of the trips together into one single Mark. By adding layers of detail, we can isolate each individual trip.</p>
+<p>The first Detail we will add is &#34;Start Station&#34;. Locate the &#34;Start Station&#34; field in the Data pane, and drag it onto the &#34;Detail&#34; icon within the Marks card. Tableau will spin for a bit, but it shouldn&#39;t take more than 30-45 seconds to render.</p>
+<p class="image-container"><img alt="A" src="img/8dfaf341d2f8aaf1.png"></p>
+<p>Repeat the steps above with &#34;End Station&#34;. Locate the &#34;End Station&#34; field within the Data pane, then drag it onto Detail. Tableau will spin for a bit, but it shouldn&#39;t take more than 30-45 seconds to render.</p>
+<p class="image-container"><img alt="A" src="img/655520fd7146eaf7.png"></p>
+<p>Now hover over any of the marks on the map. You will see we&#39;ve effectively isolated the different trips, creating a mark for each journey.</p>
+<p class="image-container"><img alt="A" src="img/108745833640b187.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Add KPIs to the Tooltip" duration="0">
+        <p>The white box that appears when you hover over a mark on a view within a Tableau worksheet or Tableau dashboard is called a &#34;Tooltip&#34;. As you build in Tableau, you have the flexibility and autonomy to customize Tooltips as you see fit.</p>
+<p>Currently, our Tooltip only contains <strong>Start Station</strong> and <strong>End Station</strong>, and it isn&#39;t formatted super intuitively. Let&#39;s add a few other interesting metrics, then adjust the formatting to read more like a sentence.</p>
+<p>We&#39;ll begin by writing another calculation. Within the &#34;Analysis&#34; dropdown, click &#34;Create Calculated Field...&#34;</p>
+<p class="image-container"><img alt="A" src="img/9fa599ec787e6712.png"></p>
+<p>Rename the field from &#34;Calculation 1&#34; to &#34;Number of Trips&#34;. Click into the blank calculation window below; once a flashing cursor appears, type:</p>
+<pre><code>CountD([Tripid])
+</code></pre>
+<p>Click the blue &#34;OK&#34; button on the bottom right of the calculated field window.</p>
+<p>Locate the new &#34;Number of Trips&#34; field within the left Data pane. When you close the calculated field window, the &#34;Number of Trips&#34; field will be highlighted in green.</p>
+<p>Click and drag &#34;Number of Trips&#34; onto the &#34;Tooltip&#34; icon within the Marks card.</p>
+<p class="image-container"><img alt="A" src="img/d8c56409eba236d6.png"></p>
+<p>Next, locate the &#34;Duration&#34; field. As you did with &#34;Number of Trips&#34;, drag and drop &#34;Duration&#34; onto the &#34;Tooltip&#34; icon within the Marks card.</p>
+<p>When Duration is dropped on Tooltip,  you&#39;ll notice Tableau sets the aggregation to SUM(). In our case, we actually do not want to find the sum, we want to find the average. Fortunately, Tableau makes it easy to alter the aggregation type. Simply hover over the green SUM(Duration) field within the Marks card until an arrow appears in the right corner of the field. Click that arrow to open a drop-down menu and change &#34;Measure&#34; from <strong>Sum</strong> to <strong>Average</strong>.</p>
+<p class="image-container"><img alt="A" src="img/9d814a52fa8c9a5e.png"></p>
+<p>Now hover over any of the lines on the map. You&#39;ll notice the Tooltip now contains the number of trips taken and the average duration of each trip in minutes.</p>
+<p class="image-container"><img alt="A" src="img/ce554450c442dffd.png"></p>
+<p>As I mentioned, Tooltips can easily be reformatted. Click the Tooltip icon within the Marks card to open a rich text editor.</p>
+<p class="image-container"><img alt="A" src="img/503891712f79b063.png"></p>
+<p>Within the &#34;Edit Tooltip&#34; window, highlight all of the auto-populated text and delete it. (Don&#39;t worry, it isn&#39;t gone forever, we&#39;re just going to present the information differently).</p>
+<p>In the blank window, type or paste:</p>
+<pre><code>&#34;*&lt;AGG(Number of Trips)&gt;* people rode a CitiBike from *&lt;Start Station&gt;* to *&lt;End Station&gt;*.
+On average, this trip took *&lt;AVG(Duration)&gt; minutes* to complete.&#34;
+</code></pre>
+<p>Make sure to bold all of the field names before hitting the blue &#34;OK&#34; button at the bottom of the window.</p>
+<p class="image-container"><img alt="A" src="img/4f1084da1d0a95b4.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Handle Map Layers" duration="0">
+        <p>Now, we can add Map Layers.</p>
+<p>Locate the &#34;Start Geo&#34; field in the Data pane, and drag it into the view, directly on top of our existing map. You&#39;ll notice a &#34;Map Layers&#34; icon appears in the top left corner of the Map. Drag the &#34;Start Geo&#34; field onto that button, making sure to release the field only when the Map Layers icon is highlighted in orange.</p>
+<p class="image-container"><img alt="A" src="img/168abdedfe9e1502.png"></p>
+<p>Repeat this process with the &#34;End Geo&#34; field.</p>
+<p class="image-container"><img alt="A" src="img/c5666bee741358ec.png"></p>
+<p>Let&#39;s pause and assess our map. We now have a line representing the journey each rider took, a dot where they started, and a dot where they ended.</p>
+<p>You&#39;ll notice that within the Marks card, Tableau has isolated all three of our Map layers: Start Geo, End Geo, and Trip Journey.</p>
+<p class="image-container"><img alt="A" src="img/9cda50be26665b29.png"></p>
+<p>We can reorder these layers via simple drag and drop.  Let&#39;s move &#34;Start Geo&#34; above &#34;End Geo&#34;. Click the &#34;Start Geo&#34; tab and drag it above the &#34;End Geo&#34; tab.</p>
+<p class="image-container"><img alt="A" src="img/2fdfc2b11181e93b.png"></p>
+<h2 is-upgraded>Format Map Layers</h2>
+<p>Select the &#34;Start Geo&#34; section of the Marks card, then click the &#34;Color&#34; button within the &#34;Start Geo&#34; Marks card.</p>
+<p class="image-container"><img alt="A" src="img/f8b1a118b7a8cd6a.png"></p>
+<p>At the top of the &#34;Color&#34; pop-up menu, click the lightest shade of <em>blue</em>. At the bottom of the &#34;Color&#34; pop-up, click into the &#34;Halo&#34; drop-down. Within this menu, select the darkest shade of <em>blue</em>. The marks on the map update immediately.</p>
+<p class="image-container"><img alt="A" src="img/4266563272a975f1.png"></p>
+<p>Next, let&#39;s customize the &#34;End Geo&#34; map layer to differentiate the starting point from the ending point.</p>
+<p>Select the &#34;End Geo&#34; section of the Marks card, then click the &#34;Color&#34; icon. At the top of the &#34;Color&#34; pop-up menu, click the lightest shades of <em>orange</em>. At the bottom of the &#34;Color&#34; pop-up, click into the &#34;Halo&#34; drop-down. Within this menu, select the darkest shade of <em>orange</em>. Again, the marks on the map update immediately.</p>
+<p class="image-container"><img alt="A" src="img/9aef17fe6921d564.png"></p>
+<p>The last Map Layer to customize is &#34;Trip Journey&#34;. Select the &#34;Trip Journey&#34; section of the Marks card, then click the &#34;Color&#34; icon. At the top of the &#34;Color&#34; pop-up, click the second to lightest shade of gray.</p>
+<p class="image-container"><img alt="A" src="img/3f94081cb16b7a87.png"></p>
+<p>Now, click the &#34;Size&#34; icon directly to the right of the &#34;Color&#34; icon. Drag the Size slider to the left, decreasing the Mark Size by approximately 50%.</p>
+<p class="image-container"><img alt="A" src="img/d0e7e8801706b2c0.png"></p>
+<h2 is-upgraded>Enhance the Map with Custom Backgrounds</h2>
+<p>Within the top toolbar directly to the right of &#34;Analysis&#34;, click into the &#34;Map&#34; tab.</p>
+<p>Hover over the first option in the pop-up drop-down, &#34;Background Maps&#34;, and change the selection from &#34;Light&#34; to &#34;Normal&#34;. You&#39;ll notice we now have color and shading to help us differentiate streets from water and landmarks.</p>
+<p class="image-container"><img alt="A" src="img/72e26580915cb82.png"></p>
+<p>Go back to the &#34;Map&#34; tab in the top toolbar. This time, click into &#34;Background Layers...&#34;. Tableau comes packaged with a wide variety of background map details for you to enable or disable as you choose. In our case, let&#39;s add &#34;Streets, Highways, Routes&#34; to our view. Simply click that checkbox within the list.</p>
+<p class="image-container"><img alt="A" src="img/2a3f0b1c45a91e06.png"></p>
+<p>Exit the &#34;Background Layers&#34; pane by clicking the &#34;X&#34; on the top right. Clicking this X will bring you back to the familiar Data pane.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Format Worksheet Title &amp; Add Filter" duration="0">
+        <p>Now, let&#39;s format the title of this worksheet! Much like you can do with Tooltips, you have the ability to customize and integrate key fields or metrics in your title as well.</p>
+<p>There are two fields I would like to add to our title that isn&#39;t currently in our view: start time and average temperature.</p>
+<p>To incorporate these fields into the view, start by clicking into the &#34;Start Geo&#34; tab within the Marks card.</p>
+<p class="image-container"><img alt="A" src="img/a1d9fbc9124d5c17.png"></p>
+<p>Locate the &#34;Starttime&#34; field within the Data pane, then drag that field onto the &#34;Detail&#34; icon within the Marks card.</p>
+<p class="image-container"><img alt="A" src="img/7476470046b1635a.png"></p>
+<p>You&#39;ll notice that Tableau automatically groups the dates by year. While rolling up to a yearly level may be helpful in some cases, it isn&#39;t what we want here.</p>
+<p>To alter this, hover over the blue YEAR(Starttime) field within the Marks card until an arrow appears in the right corner of the field. Click that arrow to open a drop-down menu.</p>
+<p>Within the menu, select the <em>second</em> &#34;Month&#34; option from the lower section of the drop-down.</p>
+<p class="image-container"><img alt="A" src="img/992d580b32ea1847.png"></p>
+<p>Next, locate the &#34;Temp Avg F&#34; field within the Data pane, then drag that field onto the &#34;Detail&#34; icon within the Marks card.</p>
+<p>Just like &#34;Duration&#34;, Tableau set the aggregation to sum. To change it to average, simply hover over the green SUM(Temp Avg F) field within the Marks card until an arrow appears in the right corner of the field. Click that arrow to open a drop-down menu and change &#34;Measure&#34; from Sum to Average.</p>
+<p class="image-container"><img alt="A" src="img/3abbc41dd364e805.png"></p>
+<p>Now, double click where it says &#34;Sheet 1&#34; above the map. This will open a rich text editor.</p>
+<p>Delete &#34;Sheet 1&#34; and type or paste:</p>
+<pre><code>CitiBike Bike Rides in &lt;MONTH(Starttime)&gt; (Avg Temp: &lt;AVG(Temp Avg F)&gt; °F) &lt;br&gt;
+The dark gray lines represent *trip* *journeys*, the blue dots represent the *Start Station*, and the orange dots represent the *End Station*. Hover over any line to see the number of trips taken and the average trip time in minutes.
+</code></pre>
+<p>Highlight &#34;CitiBike Bike Rides in &lt;MONTH(Starttime)&gt; (Avg Temp: &lt;AVG(Temp Avg F)&gt; °F)&#34; and change the font size to <em>20</em>.</p>
+<p>Highlight &#34;The dark gray lines represent <em>trip journeys</em>, the blue dots represent the <em>Start Station</em>, and the orange dots represent the <em>End Station</em>. Hover over any line to see the number of trips taken and the average trip time in minutes.&#34; and change the font size to <em>12</em>.</p>
+<p class="image-container"><img alt="A" src="img/3735ec84181437d5.png"></p>
+<p>Finally, let&#39;s add a filter into our view.</p>
+<p>Locate the &#34;Start Borough&#34; field within the Data pane, then drag that field onto the Filters card.</p>
+<p class="image-container"><img alt="A" src="img/71bf59ded1afeb9c.png"></p>
+<p>In the pop-up &#34;Filter [Start Borough]&#34; menu, select (All) then hit the blue &#34;OK&#34; button.</p>
+<p class="image-container"><img alt="A" src="img/24380f3d1fafbb7f.png"></p>
+<p>On the bottom left of the screen, right click where it says &#34;Sheet 1&#34; and select &#34;Rename&#34; from the menu. Update the Sheet name to &#34;Map&#34;.</p>
+<p class="image-container"><img alt="A" src="img/3689c737c540c909.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Publish a Simple Dashboard" duration="0">
+        <p>Click the middle icon on the bottom banner.</p>
+<p>The first thing we are going to do adjust our dashboard size. On the far left of the screen, you&#39;ll notice that the <em>Data</em> pane has been replaced with the <em>Dashboard</em> pane — that&#39;s how you can confirm you are authoring a dashboard, not a worksheet.</p>
+<p>To change the size of the dashboard, find the &#34;Size&#34; section within the Dashboard pane and click where it says &#34;Desktop Browser (1000 x 800)&#34;.</p>
+<p>Alter the dashboard sizing accordingly:</p>
+<ul>
+<li>Width <em>1150</em></li>
+<li>Height <em>700</em></li>
+</ul>
+<p>Locate the &#34;Maps&#34; worksheet under the &#34;Sheets&#34; section of the Dashboard pane. Click and drag that worksheet into the workspace, releasing where it says &#34;Add sheets here&#34;. If we had made more than one worksheet, you would repeat this process until all of the desired sheets were added to your dashboard.</p>
+<p class="image-container"><img alt="A" src="img/ab533c0c3aa2b8e4.png"></p>
+<p>We&#39;re done! Right click on &#34;Dashboard 1&#34; and rename it &#34;CitiBike&#34;. Click the blue &#34;Publish&#34; button at the top of the screen. Name the Workbook &#34;CitiBike&#34; and, under Location, select your &#34;default&#34; folder. When you&#39;re done, hit the blue &#34;Publish&#34; button at the bottom of the screen to.</p>
+<p class="image-container"><img alt="A" src="img/3b6df0d03bd70858.png"></p>
+<p>After it finishes processing your request, the dashboard will load and a pop-up message will appear at the top of the screen. Within that message, click &#34;Go to workbook&#34;.</p>
+<p class="image-container"><img alt="A" src="img/8df5c9b2dfbf1498.png"></p>
+<p>Select &#34;CitiBike&#34; to load the dashboard.</p>
+<p class="image-container"><img alt="A" src="img/31ab44933970291c.png"></p>
+<h2 is-upgraded>Embed the Dashboard into a Web Page</h2>
+<p>Click the white &#34;Share&#34; button at the top right of the screen.</p>
+<p class="image-container"><img alt="A" src="img/edeeafbcc857b2dc.png"></p>
+<p>Under &#34;Share using a link&#34;, click &#34;Copy Link&#34;.</p>
+<p class="image-container"><img alt="A" src="img/519d59e3bb8f3ff8.png"></p>
+<p>As a prerequisite, you were instructed to download a text editor called Visual Studio Code (VS Code). Open that Application.</p>
+<p class="image-container"><img alt="A" src="img/dba7b5aa91e40165.png"></p>
+<p>Locate the  &#34;Tableau Embedded Portal&#34; folder we provided at the begging on this lab.</p>
+<p class="image-container"><img alt="A" src="img/be188980ee66749e.png"></p>
+<p>Open the &#34;Tableau Embedded Portal&#34; folder in VS Code by clicking &#34;Open&#34; on the &#34;Get Started&#34; window and then selecting the folder name, or by simply dragging the folder into the VS Code window.</p>
+<p class="image-container"><img alt="A" src="img/afa8d3b570ed74db.png"></p>
+<p>Once you&#39;ve opened the folder in VS Code, you&#39;ll notice two key files: dashboard.html and embed.js. Within the lefthand &#34;Explorer&#34; pane, click to open the <em>embed.js</em> file.</p>
+<p class="image-container"><img alt="A" src="img/da698e90a4c0f780.png"></p>
+<p>On line 8 where the annotations prompt you to &#34;PASTE LINK HERE&#34;, paste the embed link we copied from Tableau Online. After pasting, save your changes using File → Save.</p>
+<p class="image-container"><img alt="A" src="img/bac06c721c27e5a9.png"></p>
+<p>Now within the &#34;Explorer&#34; pane, right click on &#34;dashboard.html&#34; and select &#34;Open in Default Browser&#34; from the drop-down menu. This will open the webpage you just embedded your Tableau dashboard into.</p>
+<p class="image-container"><img alt="A" src="img/f0b430b57cf30216.png"></p>
+<p>Now we can not only view our Tableau dashboard within an external webpage, but we can actually interact with it!</p>
+<p class="image-container"><img alt="A" src="img/3becc856f26173ba.png"></p>
+<p>Remember when we added the &#34;Start Borough&#34; field into our worksheet in Tableau Online? By doing that, we told Tableau we want to use that field as a filter. This enables us to leverage Tableau&#39;s JavaScript API to translate the selections we make within a webpage into filters within Tableau.</p>
+<p>In the left pane of the webpage, click &#34;Start Borough&#34;. Select &#34;Brooklyn&#34; within the &#34;Start Boroughs&#34; filter menu. That selection will be passed into Tableau.</p>
+<p class="image-container"><img alt="A" src="img/ce7e132e287adef1.png"></p>
+<p>The dashboard will zoom and filter, showing us only trips that started in Brooklyn.</p>
+<p class="image-container"><img alt="A" src="img/63ece2c119887ed.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Secure Data Sharing" duration="5">
+        <pre><code language="language-sql" class="language-sql">create or replace table tenant (
+    tenant_id number,
+    tenant_description string,
+    tenant_account string
+);
+
+--Let&#39;s get your Snowflake Account 
+select current_account(); 
+
+--add tenant for your account
+insert into tenant values (
+    1, &#39;My Account&#39;, current_account()
+);
+
+
+--map tenant to subscribed station beacons
+create or replace table tenant_stations (
+    tenant_id number,
+    station_id number
+);
+
+-- Add start_stations in 200 range for Tenant 1
+insert into tenant_stations values
+    (1, 212),
+  (1, 216),
+  (1, 217),
+  (1, 218),
+  (1, 223),
+  (1, 224),
+  (1, 225),
+  (1, 228),
+  (1, 229),
+  (1, 232),
+  (1, 233),
+  (1, 236),
+  (1, 237),
+  (1, 238),
+  (1, 239),
+  (1, 241),
+  (1, 242),
+  (1, 243),
+  (1, 244),
+  (1, 245),
+  (1, 247),
+  (1, 248),
+  (1, 249),
+  (1, 250),
+  (1, 251),
+  (1, 252),
+  (1, 253),
+  (1, 254),
+  (1, 255),
+  (1, 257),
+  (1, 258),
+  (1, 259),
+  (1, 260),
+  (1, 261),
+  (1, 262),
+  (1, 263),
+  (1, 264),
+  (1, 265),
+  (1, 266),
+  (1, 267),
+  (1, 268),
+  (1, 270),
+  (1, 271),
+  (1, 274),
+  (1, 275),
+  (1, 276),
+  (1, 278),
+  (1, 279),
+  (1, 280),
+  (1, 281),
+  (1, 282),
+  (1, 284),
+  (1, 285),
+  (1, 289),
+  (1, 290),
+  (1, 291),
+  (1, 293),
+  (1, 294),
+  (1, 295),
+  (1, 296),
+  (1, 297),
+  (1, 298)
+;
+</code></pre>
+<h2 is-upgraded>Optional : Control data access based on context</h2>
+<pre><code language="language-sql" class="language-sql">--select *
+select * from tenant_stations;
+
+--select
+set tenant_sv = &#39;1&#39;;
+
+select * from vhol_trips_vw
+join tenant_stations
+    on vhol_trips_vw.start_station_id = tenant_stations.station_id
+join tenant
+    on tenant_stations.tenant_id = tenant.tenant_id
+where
+    tenant.tenant_id = $tenant_sv
+limit 100;
+
+--select bogus
+set tenant_sv = &#39;0&#39;;
+
+select * from vhol_trips_vw
+join tenant_stations
+    on vhol_trips_vw.start_station_id = tenant_stations.station_id
+join tenant
+    on tenant_stations.tenant_id = tenant.tenant_id
+where
+    tenant.tenant_id = $tenant_sv
+limit 100;
+</code></pre>
+<h2 is-upgraded>Create Secure Objects to Share</h2>
+<pre><code language="language-sql" class="language-sql">--secure view
+create or replace secure view  vhol_trips_secure as
+(select --tripduration, 
+ starttime, endtime, start_station_id, bikeid, tenant.tenant_id from vhol_trips_vw
+join tenant_stations
+    on vhol_trips_vw.start_station_id = tenant_stations.station_id
+join tenant
+    on tenant_stations.tenant_id = tenant.tenant_id
+where
+    tenant.tenant_account = current_account());
+
+--current account?
+select current_account();
+
+--select secure view
+
+select * from vhol_trips_secure limit 100;
+</code></pre>
+<h2 is-upgraded>Create Reader Account</h2>
+<pre><code language="language-sql" class="language-sql">--create a reader account for your tenant
+
+DROP MANAGED ACCOUNT IF EXISTS IMP_CLIENT;
+CREATE MANAGED ACCOUNT IMP_CLIENT
+    admin_name=&#39;USER&#39;,
+    admin_password=&#39;P@ssword123&#39;,
+    type=reader,
+    COMMENT=&#39;Testing&#39;; -- Take a note of the Account Name and the URL .. give it a minute before you test url
+
+show managed accounts; 
+--take note of account_locator
+SELECT &#34;locator&#34; FROM TABLE (result_scan(last_query_id(-1))) WHERE &#34;name&#34; = &#39;IMP_CLIENT&#39;;
+</code></pre>
+<p>:::info <strong>Replace </strong></p>
+<p><strong><em>GOA63594 with your locator</em></strong></p>
+<p>:::</p>
+<pre><code language="language-sql" class="language-sql">--Replace ***&#39;GOA63594&#39;*** with your locator for &#39;IMP_CLIENT&#39; from above step
+set account_locator=&#39;GOA63594&#39;;
+
+--add tenant for your big important client via a reader account
+insert into tenant values (
+    1, &#39;Big Important Client, Wink Wink&#39;, $account_locator
+);
+</code></pre>
+<h2 is-upgraded>Share Access to Reader</h2>
+<pre><code language="language-sql" class="language-sql">--create share and share to reader account
+CREATE OR REPLACE SHARE VHOL_SHARE COMMENT=&#39;Creating my Share to Share with my Reader&#39;;
+GRANT USAGE ON DATABASE VHOL_DATABASE TO SHARE VHOL_SHARE;
+GRANT USAGE ON SCHEMA VHOL_SCHEMA TO SHARE VHOL_SHARE;
+GRANT SELECT ON VIEW VHOL_TRIPS_SECURE TO SHARE VHOL_SHARE;
+DESC SHARE VHOL_SHARE;
+
+ALTER SHARE VHOL_SHARE ADD ACCOUNT = $account_locator;
+
+show managed accounts;
+-- Click on reader account url below and login with credentials (USER,P@ssword123) 
+select  $6 as URL FROM table (result_scan(last_query_id())) WHERE &#34;name&#34; = &#39;IMP_CLIENT&#39;;
+
+ 
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Optional: Consumer Access Data" duration="5">
+        <h2 is-upgraded>Login to Reader Account</h2>
+<p class="image-container"><img alt="Reader Account Login" src="img/454e6351deff07c1.png"></p>
+<h2 is-upgraded>Connect to Snowsight</h2>
+<p class="image-container"><img alt="Click Snowsight" src="img/36b79d73df3fa370.png"></p>
+<h2 is-upgraded>Set Role ACCOUNTADMIN &amp; Add Worksheet</h2>
+<p><a href="https://snowflake-workshop-lab.s3.amazonaws.com/citibike-trips-scripts/reader_query.sql" target="_blank">Download reader_query.sql &amp; Create Worksheet from SQL File</a>          <img alt="Change Role to Accountadmin" src="img/f8a7e8e72489f94d.png"></p>
+<pre><code language="language-sql" class="language-sql">-- create database from share in the reader account  
+use role accountadmin;
+create or replace warehouse VHOL_READER WITH 
+    WAREHOUSE_SIZE = &#39;XSMALL&#39; 
+    WAREHOUSE_TYPE = &#39;STANDARD&#39; 
+    AUTO_SUSPEND = 60 
+    AUTO_RESUME = TRUE 
+    MIN_CLUSTER_COUNT = 1 
+    MAX_CLUSTER_COUNT = 1 
+    SCALING_POLICY = &#39;STANDARD&#39;;
+show shares like &#39;VHOL_SHARE%&#39;;
+select  &#34;name&#34; FROM table (result_scan(last_query_id()));
+</code></pre>
+<p>:::info <strong>Replace LKA85298.VHOL_SHARE with your share</strong></p>
+<p>:::</p>
+<pre><code language="language-sql" class="language-sql">&lt;!-- ------------------------ --&gt;
+-- replace your share name ***LKA85298.VHOL_SHARE*** from above query
+CREATE OR REPLACE DATABASE TRIPSDB FROM SHARE LKA85298.VHOL_SHARE;
+USE WAREHOUSE VHOL_READER;
+USE DATABASE TRIPSDB;
+USE SCHEMA VHOL_SCHEMA; 
+
+SELECT * FROM VHOL_SCHEMA.VHOL_TRIPS_SECURE;
+
+&lt;!-- ------------------------ --&gt;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Optional: DevOps in Snowflake" duration="5">
+        <h2 is-upgraded>Clone Table</h2>
+<pre><code language="language-sql" class="language-sql">create table vhol_trips_dev clone vhol_trips;
+
+select * from vhol_trips_dev limit 1;
+</code></pre>
+<h2 is-upgraded>Drop and Undrop Table</h2>
+<pre><code language="language-sql" class="language-sql">drop table vhol_trips_dev; 
+
+-- statement will fail because the object is dropped
+select * from vhol_trips_dev limit 1; 
+
+--thank to Snowflake! we can bring it back to life
+undrop table vhol_trips_dev;
+
+select * from vhol_trips_dev limit 1;
+</code></pre>
+<h2 is-upgraded>Cleanup the Demo Account</h2>
+<p>:::info <strong>Replace AOA45492 with your account</strong></p>
+<p>:::</p>
+<pre><code language="language-sql" class="language-sql">set account_locator = &#39;AOA45492&#39;;
+alter share VHOL_SHARE remove account = $account_locator;
+drop share VHOL_SHARE;
+drop schema vhol_schema;
+drop database vhol_database;
+drop warehouse VHOL_WH;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion" duration="0">
+        <p>Congratulations! you have completed the lab.</p>
+<p>In this lab we captured semi-structured data coming from NewYork Citibikes, enriched that data with geospatial data, and weather data from  Snowflake Data marketplace data to find correlation between demand for bicycles and weather. We visualized the data using Tableau to quickly arrive at relevant insights.</p>
+<p><a href="https://docs.snowflake.com/en/user-guide/semistructured-concepts.html" target="_blank">Semi-structured Data</a><br><br><a href="https://docs.snowflake.com/en/user-guide/data-sharing-intro.html" target="_blank">Secure Data Sharing</a><br><br><a href="https://other-docs.snowflake.com/en/data-marketplace.html" target="_blank">Snowflake Data Marketplace</a><br><br></p>
+<h2 is-upgraded>Video on the Demo</h2>
+<p><a href="https://www.youtube.com/watch?v=9zMtimcooxo" target="_blank">Youtube - Video on the Demo</a></p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

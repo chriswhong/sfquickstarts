@@ -1,0 +1,574 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Tasty Bytes - Zero to Snowflake - Data Governance</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="tasty_bytes_zero_to_snowflake_data_governance"
+                  title="Tasty Bytes - Zero to Snowflake - Data Governance"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Data Governance in Snowflake" duration="1">
+        <p class="image-container"><img src="img/5742958b7c9b65af.png"></p>
+<h2 is-upgraded>Overview</h2>
+<p>Welcome to the Powered by Tasty Bytes - Zero to Snowflake Quickstart focused on Data Governance!</p>
+<p>Within this Quickstart we will learn about Snowflake Roles, Role Based Access Control and deploy both Column and Row Level Security that can scale with your business.</p>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Before beginning, please make sure you have completed the <a href="https://quickstarts.snowflake.com/guide/tasty_bytes_introduction/index.html" target="_blank"><strong>Introduction to Tasty Bytes Quickstart</strong></a> which provides a walkthrough on setting up a trial account and deploying the Tasty Bytes Foundation required to complete this Quickstart.</li>
+</ul>
+<h2 is-upgraded>What You Will Learn</h2>
+<ul>
+<li>What System Defined Roles Exist in Snowflake Accounts</li>
+<li>How to Create a Role</li>
+<li>How to Grant Privileges to a Role</li>
+<li>How to Create a Tag</li>
+<li>How to Create a Masking Policy</li>
+<li>How to Deploy a Tag Based Masking Policy</li>
+<li>How to a Create Row Access Policiy using a Mapping Table</li>
+</ul>
+<h2 is-upgraded>What You Will Build</h2>
+<ul>
+<li>Complete Role Based Access Control for a Test Role</li>
+<li>A Robust Data Governance Foundation Including Row and Column Security</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating a Worksheet and Copying in our SQL" duration="1">
+        <h2 is-upgraded>Overview</h2>
+<p>Within this Quickstart we will follow a Tasty Bytes themed story via a Snowsight SQL Worksheet with this page serving as a side by side guide complete with additional commentary, images and documentation links.</p>
+<p>This section will walk you through logging into Snowflake, Creating a New Worksheet, Renaming the Worksheet, Copying SQL from GitHub, and Pasting the SQL we will be leveraging within this Quickstart.</p>
+<h2 is-upgraded>Step 1 - Accessing Snowflake via URL</h2>
+<ul>
+<li>Open a browser window and enter the URL of your Snowflake Account</li>
+</ul>
+<h2 is-upgraded>Step 2 - Logging into Snowflake</h2>
+<ul>
+<li>Log into your Snowflake account. <ul>
+<li><img style="width: 300.00px" src="img/1346a057955049be.gif"></li>
+</ul>
+</li>
+</ul>
+<h2 is-upgraded>Step 3 - Navigating to Worksheets</h2>
+<ul>
+<li>Click on the Worksheets Tab in the left-hand navigation bar. <ul>
+<li><img style="width: 250.00px" src="img/59d00b2b38a5e06a.png"></li>
+</ul>
+</li>
+</ul>
+<h2 is-upgraded>Step 4 - Creating a Worksheet</h2>
+<ul>
+<li>Within Worksheets, click the &#34;+&#34; button in the top-right corner of Snowsight and choose &#34;SQL Worksheet&#34; <ul>
+<li><img style="width: 200.00px" src="img/62ed63220cd0f07c.png"></li>
+</ul>
+</li>
+</ul>
+<h2 is-upgraded>Step 5 - Renaming a Worksheet</h2>
+<ul>
+<li>Rename the Worksheet by clicking on the auto-generated Timestamp name and inputting &#34;Tasty Bytes - Data Governance&#34; <ul>
+<li><img src="img/38d78f2f0c7c1bbf.gif"></li>
+</ul>
+</li>
+</ul>
+<h2 is-upgraded>Step 6 - Accessing Quickstart SQL in GitHub</h2>
+<ul>
+<li>Click the button below which will direct you to our Tasty Bytes SQL file that is hosted on GitHub. <a href="https://github.com/Snowflake-Labs/sf-samples/blob/main/samples/tasty_bytes/tb_zts_data_governance.sql" target="_blank"><paper-button class="colored" raised>tb_zts_data_governance.sql</paper-button></a></li>
+</ul>
+<h2 is-upgraded>Step 7 - Copying Setup SQL from GitHub</h2>
+<ul>
+<li>Within GitHub navigate to the right side and click &#34;Copy raw contents&#34;. This will copy all of the required SQL into your clipboard. <ul>
+<li><img src="img/886f3ded8c3dec4a.png"></li>
+</ul>
+</li>
+</ul>
+<h2 is-upgraded>Step 8 - Pasting Setup SQL from GitHub into your Snowflake Worksheet</h2>
+<ul>
+<li>Path back to Snowsight and your newly created Worksheet and Paste (<em>CMD + V for Mac or CTRL + V for Windows</em>) what we just copied from GitHub.</li>
+</ul>
+<h2 is-upgraded>Step 9 - Click Next –&gt;</h2>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Exploring Available Roles" duration="1">
+        <h2 is-upgraded>Overview</h2>
+<p>Our Tasty Bytes Adminstrator has been tasked with learning the process of deploying Role Based Access Control (RBAC) and proper Data Governance across our Snowflake Account.</p>
+<p>To begin, let&#39;s first dive into the Snowflake System Defined Roles provided by default in all accounts and learn a bit more on their privileges.</p>
+<h2 is-upgraded>Step 1 - Setting our Context</h2>
+<p>Before we can begin executing queries within the Snowflake Snowsight interface we must first set our context by running <a href="https://docs.snowflake.com/en/sql-reference/sql/use-role" target="_blank">USE ROLE</a> and <a href="https://docs.snowflake.com/en/sql-reference/sql/use-warehouse" target="_blank">USE WAREHOUSE</a> commands or manually setting these in the top-right corner.</p>
+<p>For this step, we will do this by executing our first two queries by highlighting them both and clicking the &#34;▶ Run&#34; button.</p>
+<p>Once complete our results pane will result in a <code>Statement Executed Successfully</code> message.</p>
+<pre><code>USE ROLE accountadmin;
+USE WAREHOUSE tasty_dev_wh;
+</code></pre>
+<p>Once the above queries are executed we can see in the top-right corner the exact role and warehouse we instructed Snowflake to use.</p>
+<p class="image-container"><img src="img/12b32ccdcdc34235.png"></p>
+<p>With our context set, we can continue on our learning journey.</p>
+<h2 is-upgraded>Step 2 - Exploring All Roles in our Account</h2>
+<p>Now let&#39;s run the next query which leverages <a href="https://docs.snowflake.com/en/sql-reference/sql/show-roles" target="_blank">SHOW ROLES</a> to provide a result set consisting of all roles currently deployed in our account.</p>
+<pre><code>SHOW ROLES;
+</code></pre>
+<p class="image-container"><img src="img/b73f1e4b3a3113fd.png"></p>
+<p>If you are operating in a trial account with only Tasty Bytes deployed your result set may match the above screenshot closely, however if you are using an existing Snowflake account your list may be more extensive.</p>
+<p>Thankfully we can filter down this result set which we will cover in the next step.</p>
+<h2 is-upgraded>Step 3 - Using Result Scan to Filter our Result</h2>
+<p>To filter on just the Snowflake System Defined Roles from our previous output please execute the next query which utilizes <a href="https://docs.snowflake.com/en/sql-reference/functions/result_scan" target="_blank">RESULT_SCAN</a> and <a href="https://docs.snowflake.com/en/sql-reference/functions/last_query_id" target="_blank">LAST_QUERY_ID</a> to query our previous SHOW ROLES results as if they were a table giving us the ability to add a WHERE clause.</p>
+<pre><code>SELECT 
+    &#34;name&#34;,
+    &#34;comment&#34;
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()))
+WHERE &#34;name&#34; IN (&#39;ORGADMIN&#39;,&#39;ACCOUNTADMIN&#39;,&#39;SYSADMIN&#39;,&#39;USERADMIN&#39;,&#39;SECURITYADMIN&#39;,&#39;PUBLIC&#39;);
+</code></pre>
+<p class="image-container"><img src="img/fe8b89d8a9449fcc.png"></p>
+<p>In our result set we can see the high-level descriptions of what these Snowflake System Defined Roles have privileges to do.</p>
+<aside class="special"><p><strong>Note:</strong> For additional details on these, please the <a href="https://docs.snowflake.com/en/user-guide/security-access-control-overview#system-defined-roles" target="_blank">Snowflake System Defined Roles</a> documentation.</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating a Role and Granting Privileges" duration="1">
+        <h2 is-upgraded>Overview</h2>
+<p>Now that we understand these System Defined roles, let&#39;s begin leveraging them to create a test role and grant it access to the Customer Loyalty data we will deploy our initial Data Governance features against and also providing the ability to use our <code>tasty_dev_wh</code> Warehouse.</p>
+<h2 is-upgraded>Step 1 - Using the Useradmin Role to Create our Test Role</h2>
+<p>As we saw, a <code>useradmin</code> can create and manage users and roles. Please kick off the next two queries with the first assuming that <code>useradmin</code> role and the second leveraging a <a href="https://docs.snowflake.com/en/sql-reference/sql/create-role" target="_blank">CREATE ROLE</a> command to generate a new <code>tasty_test_role</code> we will use throughout this Quickstart.</p>
+<pre><code>USE ROLE useradmin;
+
+CREATE OR REPLACE ROLE tasty_test_role
+    COMMENT = &#39;test role for tasty bytes&#39;;
+</code></pre>
+<p class="image-container"><img src="img/4ff633326b8f4f4d.png"></p>
+<h2 is-upgraded>Step 2 - Using the Securityadmin Role to Grant Warehouse Privileges</h2>
+<p>With our <code>tasty_test_role</code> in place, we can now begin to use <a href="https://docs.snowflake.com/en/sql-reference/sql/grant-privilege" target="_blank">GRANT</a> statements to give access privileges to required Database objects and our <code>tasty_dev_wh</code> Warehouse.</p>
+<p>To begin, please run the next two queries which will first assume the <code>securityadmin</code> role that we learned can manage security aspects in our account and second grant OPERATE and USAGE on our <code>tasty_dev_wh</code> to our <code>tasty_test_role</code>.</p>
+<p>When completed we will recieve a <code>Statement executed successfully.</code> message.</p>
+<pre><code>GRANT OPERATE, USAGE ON WAREHOUSE tasty_dev_wh TO ROLE tasty_test_role;
+</code></pre>
+<p>For more on Snowflake Warehouse Privilege Grants please see below:</p>
+<aside class="special"><p><strong>MODIFY:</strong> Enables altering any properties of a warehouse, including changing its size.</p>
+<p><strong>MONITOR:</strong> Enables viewing current and past queries executed on a warehouse as well as usage statistics on that warehouse.</p>
+<p><strong>OPERATE:</strong> Enables changing the state of a warehouse (stop, start, suspend, resume). In addition, enables viewing current and past queries executed on a warehouse and aborting any executing queries.</p>
+<p><strong>USAGE:</strong> Enables using a virtual warehouse and, as a result, executing queries on the warehouse. If the warehouse is configured to auto-resume when a SQL statement is submitted to it, the warehouse resumes automatically and executes the statement.</p>
+<p><strong>ALL:</strong> Grants all privileges, except OWNERSHIP, on the warehouse.</p>
+</aside>
+<h2 is-upgraded>Step 3 - Using the Securityadmin Role to Grant Database and Schema Privileges</h2>
+<p>With the Warehouse privileges in place, please execute the next two queries which will provide the <code>tasty_test_role</code> with the USAGE privilege on the <code>frostbyte_tasty_bytes</code> database and all schemas within.</p>
+<p>Once again when completed we will recieve a <code>Statement executed successfully. X objects affected.</code> message.</p>
+<pre><code>GRANT USAGE ON DATABASE frostbyte_tasty_bytes TO ROLE tasty_test_role;
+GRANT USAGE ON ALL SCHEMAS IN DATABASE frostbyte_tasty_bytes TO ROLE tasty_test_role;
+</code></pre>
+<p>For more on Snowflake Database and Schema Grants please see below:</p>
+<aside class="special"><p><strong>MODIFY:</strong> Enables altering any settings of a database.</p>
+<p><strong>MONITOR:</strong> Enables performing the DESCRIBE command on the database.</p>
+<p><strong>USAGE:</strong> Enables using a database, including returning the database details in the SHOW DATABASES command output. Additional privileges are required to view or take actions on objects in a database.</p>
+<p><strong>ALL:</strong> Grants all privileges, except OWNERSHIP, on a database.</p>
+</aside>
+<h2 is-upgraded>Step 4 - Using the Securityadmin Role to Grant Table and View Privileges</h2>
+<p>As we will be testing several Data Governance features as our <code>tasty_test_role</code> let&#39;s ensure it can run SELECT statements across our entire Data Model.</p>
+<p>Please now execute the next three queries of this section which will once again result in a <code>Statement executed successfully. X objects affected.</code> message.</p>
+<pre><code>GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_customer TO ROLE tasty_test_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA frostbyte_tasty_bytes.raw_pos TO ROLE tasty_test_role;
+GRANT SELECT ON ALL VIEWS IN SCHEMA frostbyte_tasty_bytes.analytics TO ROLE tasty_test_role;
+</code></pre>
+<p>For more on Snowflake View and Table Privilege Grants please see below:</p>
+<aside class="special"><p><strong>SELECT:</strong> Enables executing a SELECT statement on a table/view. Note that this privilege is sufficient to query a view.</p>
+<p><strong>INSERT:</strong> Enables executing an INSERT command on a table.</p>
+<p><strong>UPDATE:</strong> Enables executing an UPDATE command on a table.</p>
+<p><strong>TRUNCATE:</strong> Enables executing a TRUNCATE TABLE command on a table.</p>
+<p><strong>DELETE:</strong> Enables executing a DELETE command on a table.</p>
+</aside>
+<h2 is-upgraded>Step 5 - Using the Securityadmin Role to Grant our Role to our User</h2>
+<p>With our <code>tasty_test_role</code> properly privileged, let&#39;s now execute the last two queries of this section. Here we will first <a href="https://docs.snowflake.com/en/sql-reference/sql/set" target="_blank">SET</a> a SQL Variable called <code>my_user_var</code> equal to our <a href="https://docs.snowflake.com/en/sql-reference/functions/current_user" target="_blank">CURRENT_USER</a>.</p>
+<p>The second query will then grant our role to our user we are logged in as which has been stored in our <code>$my_user_var</code>.</p>
+<p>As we&#39;ve seen before, our query will result in a <code>Statement executed successfully</code> message.</p>
+<pre><code>SET my_user_var  = CURRENT_USER();
+GRANT ROLE tasty_test_role TO USER identifier($my_user_var);
+</code></pre>
+<p><strong>Awesome!</strong> We now have a <code>tasty_test_role</code> with required Database Object and Warehouse privileges and our user is able to leverage it.</p>
+<h2 is-upgraded>Step 6 - Click Next –&gt;</h2>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating and Attaching Tags to our PII Columns" duration="2">
+        <h2 is-upgraded>Overview</h2>
+<p>The first Data Governance feature set we want to deploy and test will be Snowflake Tag Based Dynamic Data Masking. This feature will allow us to mask PII data in  columns at query run time from our test role but leave it exposed to more privileged roles.</p>
+<p>Before we can begin masking data, let&#39;s first explore what PII exists in our Customer Loyalty data.</p>
+<h2 is-upgraded>Step 1 - Finding our PII Columns</h2>
+<p>Thanks to our last step, we can now officially use our <code>tasty_test_role</code> Role and leverage the <code>tasty_dev_wh</code> Warehouse from that role.</p>
+<p>Please execute the next three queries which will first handle setting that context. With the context in place the third query will explore our <code>raw_customer.customer_loyalty</code> which we ingest from the Tasty Bytes Customer Loyalty Program provider.</p>
+<pre><code>USE ROLE tasty_test_role;
+USE WAREHOUSE tasty_dev_wh;
+
+SELECT 
+    cl.customer_id,
+    cl.first_name,
+    cl.last_name,
+    cl.e_mail,
+    cl.phone_number,
+    cl.city,
+    cl.country
+FROM frostbyte_tasty_bytes.raw_customer.customer_loyalty cl;
+</code></pre>
+<p class="image-container"><img src="img/21ce475e65ae9cf7.png"></p>
+<p><strong>Woah!!</strong> there is a lot of PII we need to take care before our users can touch this data. Luckily we can use Snowflakes native Tag-Based Masking functionality to do just this.</p>
+<aside class="special"><p> A <a href="https://docs.snowflake.com/en/user-guide/tag-based-masking-policies" target="_blank">Tag-based Masking Policy</a> combines the object tagging and masking policy features to allow a masking policy to be set on a tag using an ALTER TAG command. When the data type in the masking policy signature and the data type of the column match, the tagged column is automatically protected by the conditions in the masking policy.</p>
+</aside>
+<h2 is-upgraded>Step 2 - Creating Tags</h2>
+<p>To begin our masking process, please run this steps three <a href="https://docs.snowflake.com/en/sql-reference/sql/create-tag" target="_blank">CREATE TAG</a> queries.</p>
+<p>Within these queries we are creating:</p>
+<ul>
+<li>A <code>pii_name_tag</code> for attaching to our <code>first_name</code> and <code>last_name</code> columns.</li>
+<li>A <code>pii_phone_number_tag</code> for attaching to our <code>phone_number</code> column.</li>
+<li>A <code>pii_email_tag</code> for attaching to our <code>e_mail</code> column.</li>
+</ul>
+<pre><code>USE ROLE accountadmin;
+
+CREATE OR REPLACE TAG frostbyte_tasty_bytes.raw_customer.pii_name_tag
+    COMMENT = &#39;PII Tag for Name Columns&#39;;
+</code></pre>
+<p class="image-container"><img src="img/d97a23a915339761.png"></p>
+<pre><code>CREATE OR REPLACE TAG frostbyte_tasty_bytes.raw_customer.pii_phone_number_tag
+    COMMENT = &#39;PII Tag for Phone Number Columns&#39;;
+</code></pre>
+<p class="image-container"><img src="img/a2c3a62d371babf0.png"></p>
+<pre><code>CREATE OR REPLACE TAG frostbyte_tasty_bytes.raw_customer.pii_email_tag
+    COMMENT = &#39;PII Tag for E-mail Columns&#39;;
+</code></pre>
+<p class="image-container"><img src="img/ec5b854a83106bbd.png"></p>
+<aside class="special"><p> Tags enable data stewards to track sensitive data for compliance, discovery, protection, and resource usage use cases through either a centralized or decentralized data governance management approach.</p>
+</aside>
+<h2 is-upgraded>Step 3 - Applying Tags</h2>
+<p>With the Tags in place, let&#39;s now execute the next four queries one by one which use <a href="https://docs.snowflake.com/en/sql-reference/sql/alter-table-column" target="_blank">ALTER TABLE... MODIFY COLUMN</a> to set our tags to each respective column.</p>
+<p>Each of these queries will result in a <code>Statement executed successfully.</code> message.</p>
+<pre><code>ALTER TABLE frostbyte_tasty_bytes.raw_customer.customer_loyalty 
+    MODIFY COLUMN first_name 
+        SET TAG frostbyte_tasty_bytes.raw_customer.pii_name_tag = &#39;First Name&#39;;
+
+ALTER TABLE frostbyte_tasty_bytes.raw_customer.customer_loyalty 
+    MODIFY COLUMN last_name 
+        SET TAG frostbyte_tasty_bytes.raw_customer.pii_name_tag = &#39;Last Name&#39;;
+
+ALTER TABLE frostbyte_tasty_bytes.raw_customer.customer_loyalty 
+    MODIFY COLUMN phone_number 
+        SET TAG frostbyte_tasty_bytes.raw_customer.pii_phone_number_tag = &#39;Phone Number&#39;;
+
+ALTER TABLE frostbyte_tasty_bytes.raw_customer.customer_loyalty 
+    MODIFY COLUMN e_mail
+        SET TAG frostbyte_tasty_bytes.raw_customer.pii_email_tag = &#39;E-mail Address&#39;;
+</code></pre>
+<h2 is-upgraded>Step 4 - Exploring Tags on a Table</h2>
+<p>With our Tags created and applied to Columns, please kick off the next query where we leverage the <a href="https://docs.snowflake.com/en/sql-reference/functions/tag_references_all_columns" target="_blank">TAG_REFERENCES_ALL_COLUMNS</a> function to validate the work we just completed.</p>
+<pre><code>SELECT 
+    tag_database,
+    tag_schema,
+    tag_name,
+    column_name,
+    tag_value 
+FROM TABLE(frostbyte_tasty_bytes.information_schema.tag_references_all_columns
+    (&#39;frostbyte_tasty_bytes.raw_customer.customer_loyalty&#39;,&#39;table&#39;));
+</code></pre>
+<p class="image-container"><img src="img/42320bd632765651.png"></p>
+<p><strong>Perfect!</strong> Just as desired, we see all of our created tags are associated to the PII columns we will look to mask in the next section.</p>
+<h2 is-upgraded>Step 5 - Click Next –&gt;</h2>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating Masking Policies and Applying to Tags" duration="3">
+        <h2 is-upgraded>Overview</h2>
+<p>With our Tag foundation in place, we can now begin to develop Dynamic Masking Policies to support different masking requirements for our name, phone number and e-mail columns.</p>
+<h2 is-upgraded>Step 1 - Creating Masking Policies</h2>
+<p>For the three different column types we are looking to mask, we want to address the following:</p>
+<ul>
+<li><strong>Names:</strong> Complete masking for any role that is not <code>accountadmin</code> or <code>sysadmin</code></li>
+<li><strong>Phone Numbers</strong>: Partial masking with only the first three numbers exposed to any role that is not <code>accountadmin</code> or <code>sysadmin</code>.</li>
+<li><strong>E-mail Addresses</strong>: Partial masking with only the email provider information available to any role that is not <code>accountadmin</code> or <code>sysadmin</code>.</li>
+</ul>
+<p>Please now execute the four queries in this step one by one, which will first set our <code>sysadmin</code> Role context and then create the three Masking Policies necessary to address the masking requirements above.</p>
+<p>Along the way we will see the use of <a href="https://docs.snowflake.com/en/sql-reference/sql/create-masking-policy" target="_blank">CREATE MASKING POLICY</a> as well as the other Snowflake feature functions required to complete the partial masking including <a href="https://docs.snowflake.com/en/sql-reference/functions/current_role" target="_blank">CURRENT_ROLE</a>, <a href="https://docs.snowflake.com/en/sql-reference/functions/concat" target="_blank">CONCAT</a>, <a href="https://docs.snowflake.com/en/sql-reference/functions/left" target="_blank">LEFT</a>, and <a href="https://docs.snowflake.com/en/sql-reference/functions/split_part" target="_blank">SPLIT_PART</a>.</p>
+<pre><code>USE ROLE sysadmin;
+
+CREATE OR REPLACE MASKING POLICY frostbyte_tasty_bytes.raw_customer.name_mask AS (val STRING) RETURNS STRING -&gt;
+    CASE 
+        WHEN CURRENT_ROLE() IN (&#39;SYSADMIN&#39;, &#39;ACCOUNTADMIN&#39;) THEN val
+    ELSE &#39;**~MASKED~**&#39;
+END;
+</code></pre>
+<p class="image-container"><img src="img/9c6d0fb0fdfeb00a.png"></p>
+<pre><code>CREATE OR REPLACE MASKING POLICY frostbyte_tasty_bytes.raw_customer.phone_mask AS (val STRING) RETURNS STRING -&gt;
+    CASE
+        WHEN CURRENT_ROLE() IN (&#39;SYSADMIN&#39;, &#39;ACCOUNTADMIN&#39;) THEN val
+    ELSE CONCAT(LEFT(val,3), &#39;-***-****&#39;)
+END;
+</code></pre>
+<p class="image-container"><img src="img/f1fba2b475ce934.png"></p>
+<pre><code>CREATE OR REPLACE MASKING POLICY frostbyte_tasty_bytes.raw_customer.email_mask AS (val STRING) RETURNS STRING -&gt;
+    CASE 
+        WHEN CURRENT_ROLE() IN (&#39;SYSADMIN&#39;, &#39;ACCOUNTADMIN&#39;) THEN val
+    ELSE CONCAT(&#39;**~MASKED~**&#39;,&#39;@&#39;, SPLIT_PART(val, &#39;@&#39;, -1))
+END;
+</code></pre>
+<p class="image-container"><img src="img/af894b10769629af.png"></p>
+<h2 is-upgraded>Step 2 - Applying Masking Policies to Tags</h2>
+<p>With each Tag now having a Masking Policy let&#39;s apply those Masking Policies to our Tags which have already been applied to our PII columns.</p>
+<p>Please now execute the four queries in this step which sets the <code>accountadmin</code> Role context and applies each Masking Policy to the appropriate Tag using <a href="https://docs.snowflake.com/en/sql-reference/sql/alter-tag" target="_blank">ALTER TAG... SET MASKING POLICY</a> command.</p>
+<p>With each query we will recieve a <code>Statement executed successfully.</code> message indicating the association is successful.</p>
+<pre><code>USE ROLE accountadmin;
+
+ALTER TAG frostbyte_tasty_bytes.raw_customer.pii_name_tag 
+    SET MASKING POLICY frostbyte_tasty_bytes.raw_customer.name_mask;
+    
+ALTER TAG frostbyte_tasty_bytes.raw_customer.pii_phone_number_tag
+    SET MASKING POLICY frostbyte_tasty_bytes.raw_customer.phone_mask;
+    
+ALTER TAG frostbyte_tasty_bytes.raw_customer.pii_email_tag
+    SET MASKING POLICY frostbyte_tasty_bytes.raw_customer.email_mask;
+</code></pre>
+<p>We can now officially say we have deployed Tag Based Masking Policies. Let&#39;s move on to the next step where we will validate our work.</p>
+<h2 is-upgraded>Step 3 - Click Next –&gt;</h2>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Testing our Tag Based Masking Policies" duration="2">
+        <h2 is-upgraded>Overview</h2>
+<p>With deployment of our Tag Based Masking Policies in place let&#39;s validate what we have conducted so far to confirm we were successful in meeting Tasty Bytes Customer Loyalty PII Data Masking requirements.</p>
+<h2 is-upgraded>Step 1 - Testing our Masking Policy in a non-Admin Role</h2>
+<p>Putting together what we have done so far, let&#39;s once again assume our <code>tasty_test_role</code> Role, leverage the <code>tasty_test_wh</code> Warehouse and query the <code>raw_customer.customer_loyalty</code> Table directly.</p>
+<p>Go ahead and kick off the next three queries to complete this.</p>
+<pre><code>USE ROLE tasty_test_role;
+USE WAREHOUSE tasty_dev_wh;
+
+SELECT 
+    cl.customer_id,
+    cl.first_name,
+    cl.last_name,
+    cl.phone_number,
+    cl.e_mail,
+    cl.city,
+    cl.country
+FROM frostbyte_tasty_bytes.raw_customer.customer_loyalty cl
+WHERE cl.country IN (&#39;United States&#39;,&#39;Canada&#39;,&#39;Brazil&#39;);
+</code></pre>
+<p class="image-container"><img src="img/b6718374f8421780.png"></p>
+<p><strong>Amazing work!</strong> Exactly as we have been tasked to do, we have successfully dynamically masked our PII from our <code>tasty_test_role</code>.</p>
+<h2 is-upgraded>Step 2 - Testing our Masking Policy Downstream</h2>
+<p>Since we reference this <code>raw_customer.customer_loyalty</code> Table in downstream Views let&#39;s see if this Masking Policy impacts us there as well.</p>
+<p>Please kick off the next query which calculates our Customer Loyalty members <code>lifetime_sales_usd</code> totals and sorts them in descending order by this amount.</p>
+<pre><code>SELECT TOP 10
+    clm.customer_id,
+    clm.first_name,
+    clm.last_name,
+    clm.phone_number,
+    clm.e_mail,
+    SUM(clm.total_sales) AS lifetime_sales_usd
+FROM frostbyte_tasty_bytes.analytics.customer_loyalty_metrics_v clm
+WHERE clm.city = &#39;San Mateo&#39;
+GROUP BY clm.customer_id, clm.first_name, clm.last_name, clm.phone_number, clm.e_mail
+ORDER BY lifetime_sales_usd DESC;
+</code></pre>
+<p class="image-container"><img src="img/73cc22dd95001b5b.png"></p>
+<p><strong>Awesome!</strong> Exactly as we expected these Masking Policies are truly dynamic and scalable.</p>
+<h2 is-upgraded>Step 3 - Testing our Masking Policy in an Admin Role</h2>
+<p>To finish our testing, let&#39;s now kick off the next two queries which will run the same query as above but this time as our most privileged <code>accountadmin</code> Role.</p>
+<pre><code>USE ROLE accountadmin;
+
+SELECT TOP 10
+    clm.customer_id,
+    clm.first_name,
+    clm.last_name,
+    clm.phone_number,
+    clm.e_mail,
+    SUM(clm.total_sales) AS lifetime_sales_usd
+FROM frostbyte_tasty_bytes.analytics.customer_loyalty_metrics_v clm
+WHERE 1=1
+    AND clm.city = &#39;San Mateo&#39;
+GROUP BY clm.customer_id, clm.first_name, clm.last_name, clm.phone_number, clm.e_mail
+ORDER BY lifetime_sales_usd DESC;
+</code></pre>
+<p class="image-container"><img src="img/429056c8900d2c42.png"></p>
+<p><strong>Yay!</strong> Once again this is working as exactly as desired. Our Admin Roles have access to PII but nobody else in the company will ever be able to see this data in its raw form.</p>
+<h2 is-upgraded>Step 4 - Click Next –&gt;</h2>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Deploying and Testing Row Level Security" duration="3">
+        <h2 is-upgraded>Overview</h2>
+<p>Happy with our Tag Based Dynamic Masking controlling masking at the Column level, we will now look to restrict access at the Row level for our Test Role.</p>
+<p>Within our Customer Loyalty table, our Test Role should only see Customers who are based in Tokyo. Thankfully, Snowflake has another powerful native Data Governance feature that can handle this at scale called <a href="https://docs.snowflake.com/en/user-guide/security-row-intro" target="_blank">Row Access Policies</a>.</p>
+<p>For our use case, we will leverage the mapping table approach.</p>
+<aside class="special"><p> Snowflake supports row-level security through the use of Row Access Policies to determine which rows to return in the query result. The row access policy can be relatively simple to allow one particular role to view rows, or be more complex to include a mapping table in the policy definition to determine access to rows in the query result.</p>
+</aside>
+<h2 is-upgraded>Step 1 - Creating a Mapping Table</h2>
+<p>To begin our Row Level Security journey we will start by creating a <code>row_policy_map</code> table that will serve as our Mapping Table which a Row Access Policy condition can reference to filter the query result set.</p>
+<p>Let&#39;s now kick off the first two queries in this section which will assume the <code>sysadmin</code> Role and create our Mapping Table that will accept Roles and the City they should have permission to see.</p>
+<pre><code>USE ROLE sysadmin;
+
+CREATE OR REPLACE TABLE frostbyte_tasty_bytes.public.row_policy_map
+    (role STRING, city_permissions STRING);
+</code></pre>
+<p class="image-container"><img src="img/5548cc756602823d.png"></p>
+<h2 is-upgraded>Step 2 - Inserting Mapping Records</h2>
+<p>With our <code>row_policy_map</code> in place, please kick off the next query which will <a href="https://docs.snowflake.com/en/sql-reference/sql/insert" target="_blank">INSERT</a> a record that maps our <code>tasty_test_role</code> to Tokyo.</p>
+<pre><code>INSERT INTO frostbyte_tasty_bytes.public.row_policy_map
+    VALUES (&#39;TASTY_TEST_ROLE&#39;,&#39;Tokyo&#39;);
+</code></pre>
+<p class="image-container"><img src="img/6c3ab554cd3a44c.png"></p>
+<h2 is-upgraded>Step 3 - Creating a Row Access Policy</h2>
+<p>Now that we have a record in our <code>row_policy_map</code> Table, we can kick off our next query to create our Row Access Policy.</p>
+<p>Within this query we are using <a href="https://docs.snowflake.com/en/sql-reference/sql/create-row-access-policy" target="_blank">CREATE ROW ACCESS POLICY</a> that will allow our Admin and Tasty Workload Roles to see all rows but if a user is using a Role that is seen in our Mapping Table they will only be allowed to see the rows relevant to the City they are mapped to.</p>
+<pre><code>CREATE OR REPLACE ROW ACCESS POLICY frostbyte_tasty_bytes.public.customer_city_row_policy
+    AS (city STRING) RETURNS BOOLEAN -&gt;
+       CURRENT_ROLE() IN 
+       (
+           &#39;ACCOUNTADMIN&#39;,&#39;SYSADMIN&#39;, &#39;TASTY_ADMIN&#39;, &#39;TASTY_DATA_ENGINEER&#39;, 
+           &#39;TASTY_DATA_APP&#39;,&#39;TASTY_BI&#39;,&#39;TASTY_DATA_SCIENTIST&#39;,&#39;TASTY_DEV&#39;
+       ) 
+        OR EXISTS 
+            (
+            SELECT rp.role 
+                FROM frostbyte_tasty_bytes.public.row_policy_map rp
+            WHERE 1=1
+                AND rp.role = CURRENT_ROLE()
+                AND rp.city_permissions = city
+            );
+</code></pre>
+<p class="image-container"><img src="img/8e22c2f4d12407b0.png"></p>
+<h2 is-upgraded>Step 4 - Applying a Row Access Policy to a Table</h2>
+<p>Please kick off the next query which will associate our Row Access Policy to our <code>city</code> Column within the <code>customer_loyalty</code> table.</p>
+<p>Once complete we will recieve a <code>Statement executed successfully.</code> message indicating our policy is applied.</p>
+<pre><code>ALTER TABLE frostbyte_tasty_bytes.raw_customer.customer_loyalty
+    ADD ROW ACCESS POLICY frostbyte_tasty_bytes.public.customer_city_row_policy ON (city);
+</code></pre>
+<h2 is-upgraded>Step 5 - Testing our Row Access Policy in a Non-Privileged Role</h2>
+<p>With everything in place, we can begin to test that our Row Access Policy is operating as expected. Please now kick off the next two queries which set our <code>tasty_test_role</code> Role context and query the <code>customer_loyalty</code> table to return a list of our Customer Loyalty members including a calculated <code>age</code> Column that leverages <a href="https://docs.snowflake.com/en/sql-reference/functions/datediff" target="_blank">DATEDIFF</a> and <a href="https://docs.snowflake.com/en/sql-reference/functions/current_date" target="_blank">CURRENT_DATE</a> functions.</p>
+<pre><code>USE ROLE tasty_test_role;
+
+SELECT 
+    cl.customer_id,
+    cl.first_name,
+    cl.last_name,
+    cl.city,
+    cl.marital_status,
+    DATEDIFF(year, cl.birthday_date, CURRENT_DATE()) AS age
+FROM frostbyte_tasty_bytes.raw_customer.customer_loyalty cl
+GROUP BY cl.customer_id, cl.first_name, cl.last_name, cl.city, cl.marital_status, age;
+</code></pre>
+<p class="image-container"><img src="img/162bd0366acb47a1.png"></p>
+<p><strong>Yay!</strong> Our Row Access Policy is working as expected and we are also seeing our masking in place since we are using the <code>tasty_test_role</code>.</p>
+<p>One cool Snowsight feature is the query stats pane which will automatically appear when clicking within a Column. In the screenshot above you can see how this was leveraged to confirm 100% of the records returned were for Tokyo.</p>
+<h2 is-upgraded>Step 6 - Testing our Row Access Policy Downstream</h2>
+<p>As we did previously, let&#39;s now confirm our Row Access Policy is in effect when we query our downstream Analytics <code>customer_loyalty_metrics_v</code> View by running the next query.</p>
+<pre><code>SELECT 
+    clm.city,
+    SUM(clm.total_sales) AS total_sales_usd
+FROM frostbyte_tasty_bytes.analytics.customer_loyalty_metrics_v clm
+GROUP BY clm.city;
+</code></pre>
+<p class="image-container"><img src="img/4444e72fec3945a8.png"></p>
+<p>Just as expected, our Data Governance features are seen downstream despite only having to define them once and apply them to the Raw Tables our Analytics Views retrieve query results from.</p>
+<h2 is-upgraded>Step 7 - Testing our Row Access Policy in a Privileged Role</h2>
+<p>To conclude things, let&#39;s make sure a privileged user is once again able to see all records.</p>
+<p>Please kick off the next two queries which switches our Role context back to <code>sysadmin</code> and runs the same SQL we saw filtered down only to Tokyo for our <code>tasty_test_role</code> earlier.</p>
+<pre><code>USE ROLE sysadmin;
+
+SELECT 
+    cl.customer_id,
+    cl.first_name,
+    cl.last_name,
+    cl.city,
+    cl.marital_status,
+    DATEDIFF(year, cl.birthday_date, CURRENT_DATE()) AS age
+FROM frostbyte_tasty_bytes.raw_customer.customer_loyalty cl
+GROUP BY cl.customer_id, cl.first_name, cl.last_name, cl.city, cl.marital_status, age;
+</code></pre>
+<p class="image-container"><img src="img/f57930c7e213afe3.png"></p>
+<p><strong>Remarkable!</strong> We have now successfully learned what an end to end Data Governance workflow can look like in Snowflake showcasing the ease of use and scalability our Column Masking and Row Level Security functionality can provide.</p>
+<h2 is-upgraded>Step 8 - Click Next –&gt;</h2>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion and Next Steps" duration="1">
+        <h2 is-upgraded>Conclusion</h2>
+<p>Fantastic work! You have successfully completed the Tasty Bytes - Zero to Snowflake - Data Governance Quickstart.</p>
+<p>By doing so you have now:</p>
+<ul>
+<li>Learned System Defined Roles Exist in Snowflake Accounts</li>
+<li>Created a Role</li>
+<li>Granted Privileges to a Role</li>
+<li>Create a Tag</li>
+<li>Created a Masking Policy</li>
+<li>Deployed a Tag Based Masking Policy</li>
+<li>Created a Row Access Policy using a Mapping Table</li>
+</ul>
+<p>If you would like to re-run this Quickstart please leverage the Reset scripts in the bottom of your associated Worksheet.</p>
+<h2 is-upgraded>Next Steps</h2>
+<p>To continue your journey in the Snowflake Data Cloud, please now visit the link below to see all other Powered by Taste Bytes - Quickstarts available to you.</p>
+<ul>
+<li><h2 is-upgraded><a href="https://quickstarts.snowflake.com/guide/tasty_bytes_introduction/index.html#3" target="_blank">Powered by Tasty Bytes - Quickstarts Table of Contents</a></h2>
+</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

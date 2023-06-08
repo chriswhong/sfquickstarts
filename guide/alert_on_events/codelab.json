@@ -1,0 +1,31 @@
+{
+  "environment": "web",
+  "format": "../../../claat/render/template.html",
+  "prefix": "https://quickstarts.snowflake.com/elements",
+  "mainga": "UA-41491190-9",
+  "updated": "2023-06-06T14:18:17-04:00",
+  "id": "alert_on_events",
+  "duration": 24,
+  "title": "Getting Started with Event Tables and Alerts",
+  "authors": "Brad Culberson",
+  "summary": "Getting Started with Event Tables and Alerts",
+  "source": "alert_on_events/alert_on_events.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "featured",
+    "getting-started",
+    "data-engineering",
+    "app-development"
+  ],
+  "tags": [
+    "dataapplications",
+    "dataengineering",
+    "gettingstarted",
+    "web"
+  ],
+  "feedback": "https://github.com/Snowflake-Labs/sfguides/issues",
+  "url": "alert_on_events"
+}

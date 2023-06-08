@@ -1,0 +1,26 @@
+{
+  "environment": "web",
+  "format": "../../../claat/render/template.html",
+  "prefix": "https://quickstarts.snowflake.com/elements",
+  "mainga": "UA-41491190-9",
+  "updated": "2023-06-06T14:18:24-04:00",
+  "id": "secure_audience_overlaps",
+  "duration": 9,
+  "title": "Simple and Secure Audience Overlaps",
+  "summary": "This Quickstart shows how to do a simple audience overlap with a partner before setting up a more permanent clean room.",
+  "source": "secure_audience_overlaps/secure_audience_overlaps.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "solution-examples"
+  ],
+  "tags": [
+    "adtech",
+    "gettingstarted",
+    "web"
+  ],
+  "feedback": "https://github.com/Snowflake-Labs/sfguides/issues",
+  "url": "secure_audience_overlaps"
+}

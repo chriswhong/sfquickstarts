@@ -1,0 +1,32 @@
+{
+  "environment": "web",
+  "format": "../../../claat/render/template.html",
+  "prefix": "https://quickstarts.snowflake.com/elements",
+  "mainga": "UA-41491190-9",
+  "updated": "2023-06-06T14:18:25-04:00",
+  "id": "tour_of_ingest",
+  "duration": 66,
+  "title": "Tour of Ingest",
+  "authors": "Brad Culberson",
+  "summary": "Learn how to ingest data into Snowflake with Python Connector, Streaming SDK, Snowpipe, Snowpark, and Kafka",
+  "source": "tour_of_ingest/tour_of_ingest.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "featured",
+    "getting-started",
+    "data-engineering"
+  ],
+  "tags": [
+    "dataapplications",
+    "dataengineering",
+    "datascience",
+    "gettingstarted",
+    "ingest",
+    "web"
+  ],
+  "feedback": "https://github.com/Snowflake-Labs/sfguides/issues",
+  "url": "tour_of_ingest"
+}

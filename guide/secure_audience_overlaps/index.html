@@ -1,0 +1,208 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Simple and Secure Audience Overlaps</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="secure_audience_overlaps"
+                  title="Simple and Secure Audience Overlaps"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="1">
+        <p>Many customers use a <a href="https://quickstarts.snowflake.com/guide/build_a_data_clean_room_in_snowflake/index.html" target="_blank">Data Clean Room (DCR)</a> built on Snowflake to collaborate with partners in a secure manner.  However, before they do, they often want to see if a clean room is worthwhile.  To understand whether two partners are a good fit for each other, it may make sense for them to understand the size of the overlap of their customer base or audiences.</p>
+<p>In this guide, we will show how two Snowflake accounts can measure the size of their overlap securely, without setting up a full data clean room.</p>
+<h2 class="checklist" is-upgraded>What You&#39;ll Learn</h2>
+<ul class="checklist">
+<li>How to perform a secure audience overlap using data sharing</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Need</h2>
+<ul>
+<li>Access to two Snowflake accounts in the same region</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<ul>
+<li>SQL statements to generate example data</li>
+<li>A data share</li>
+<li>SQL statements to perform the overlap</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Provider account set-up" duration="2">
+        <p>The first step is to set up the provider account, with the first customer data set.</p>
+<h2 is-upgraded>Account set up</h2>
+<p>Run the following to create the warehouse, database, and schema to store the demo customer data.</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+CREATE WAREHOUSE AUD_OVERLAP_DEMO_WH WITH WAREHOUSE_SIZE=&#39;XSmall&#39;  STATEMENT_TIMEOUT_IN_SECONDS=15    STATEMENT_QUEUED_TIMEOUT_IN_SECONDS=15;
+USE WAREHOUSE AUD_OVERLAP_DEMO_WH;
+CREATE DATABASE AUD_OVERLAP_DEMO;
+CREATE SCHEMA AUD_OVERLAP_DEMO.DEMO;
+</code></pre>
+<h2 is-upgraded>Data generation</h2>
+<p>Next, we create a table with test data.</p>
+<pre><code language="language-sql" class="language-sql">USE AUD_OVERLAP_DEMO.DEMO;
+CREATE OR REPLACE TABLE customers_rap AS
+SELECT &#39;user&#39;||seq4()||&#39;_&#39;||uniform(1, 3, random(1))||&#39;@email.com&#39; as email,
+  replace(to_varchar(seq4() % 999, &#39;000&#39;) ||&#39;-&#39;||to_varchar(seq4() % 888, &#39;000&#39;)||&#39;-&#39;||to_varchar(seq4() % 777, &#39;000&#39;)||uniform(1, 10, random(2)),&#39; &#39;,&#39;&#39;) as phone,
+  case when uniform(1,10,random(3))&gt;3 then &#39;MEMBER&#39;
+       when uniform(1,10,random(4))&gt;5 then &#39;SILVER&#39;
+       when uniform(1,10,random(5))&gt;7 then &#39;GOLD&#39;
+else &#39;PLATINUM&#39; end as status,
+round(18+uniform(0,10,random(6))+uniform(0,50,random(7)),-1)+5*uniform(0,1,random(8)) as age_band
+  FROM table(generator(rowcount =&gt; 1000000));
+</code></pre>
+<p>We can verify the data by running the following.</p>
+<pre><code language="language-sql" class="language-sql">SELECT * FROM customers_rap;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Consumer account set-up" duration="3">
+        <p>Similar to the provider account, we need to set up the consumer account and similarly create data.</p>
+<h2 is-upgraded>Account set up</h2>
+<p>Run the following to create the warehouse, database, and schema to store the demo customer data.</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+CREATE WAREHOUSE AUD_CONSUMER_DEMO_WH WITH WAREHOUSE_SIZE=&#39;XSmall&#39;  STATEMENT_TIMEOUT_IN_SECONDS=15    STATEMENT_QUEUED_TIMEOUT_IN_SECONDS=15;
+USE WAREHOUSE AUD_CONSUMER_DEMO_WH;
+CREATE DATABASE AUD_CONSUMER_DEMO;
+CREATE SCHEMA AUD_CONSUMER_DEMO.DEMO;
+</code></pre>
+<h2 is-upgraded>Data generation</h2>
+<p>We want to create another customer table.  It will also have email addresses, and we want those emails to overlap sometimes, but not all of the time.  In addition, we want the schema of the table to be a bit different.</p>
+<pre><code language="language-sql" class="language-sql">// create table with sample data
+USE AUD_CONSUMER_DEMO.DEMO;
+CREATE OR REPLACE TABLE customers as
+SELECT &#39;user&#39;||seq4()||&#39;_&#39;||uniform(1, 3, random(2))||&#39;@email.com&#39; as email,
+  sha1(uniform(1, 1000000, random(3)))::varchar(40) as user_id
+FROM table(generator(rowcount =&gt; 1000000));
+</code></pre>
+<p>We can verify the data by running the following.</p>
+<pre><code language="language-sql" class="language-sql">SELECT * FROM customers;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Provider share set-up" duration="0">
+        <p>The provider wants to share their customer list with the consumer, but only to count the rows.</p>
+<h2 is-upgraded>Create the row access policy</h2>
+<p>In order to prevent leaking data when we create the share, we will first create a row access policy.  Run the following.</p>
+<pre><code language="language-sql" class="language-sql">CREATE OR REPLACE ROW ACCESS POLICY agg_rap AS (email varchar) returns boolean -&gt;
+    current_role() IN (&#39;ACCOUNTADMIN&#39;)
+      or (current_statement()=&#39;select count(distinct c.email) from AUD_OVERLAP_PROV.DEMO.CUSTOMERS_RAP r
+ inner join AUD_CONSUMER_DEMO.DEMO.CUSTOMERS c on c.email=r.email;&#39; );
+--apply row access policy
+alter table customers_rap add row access policy agg_rap on (email);
+</code></pre>
+<p>Notice we have to be very specific about the way the share is mounted in the allowed SQL, so the consumer must follow these directions specifically.</p>
+<h2 is-upgraded>Create the share</h2>
+<p>Next, we share the table with the consumer account.  For this, you will need the ID of the consumer account.</p>
+<pre><code language="language-sql" class="language-sql">CREATE SHARE audience_overlap;
+grant usage on database AUD_OVERLAP_DEMO to share audience_overlap;
+grant usage on schema AUD_OVERLAP_DEMO.DEMO to share audience_overlap;
+grant select on AUD_OVERLAP_DEMO.DEMO.customers_rap to share audience_overlap;
+alter share audience_overlap add accounts=&lt;account id of consumer here&gt;;
+</code></pre>
+<p>You can check to make sure the correct grants were make to the share as follows.</p>
+<pre><code language="language-sql" class="language-sql">show grants to share audience_overlap;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Consumer share set-up and querying" duration="2">
+        <p>The consumer must mount the share, and then can query the data.</p>
+<h2 is-upgraded>Mounting the share</h2>
+<p>To see what shares are available, the consumer can run the following.</p>
+<pre><code language="language-sql" class="language-sql">show shares;
+</code></pre>
+<p>The name column should show the share created in the other count, ending in AUDIENCE_OVERLAP.  Copy and paste that share name, and mount it as follows.</p>
+<pre><code language="language-sql" class="language-sql">CREATE DATABASE AUD_OVERLAP_PROV FROM SHARE &lt;account info&gt;.AUDIENCE_OVERLAP;
+</code></pre>
+<p>If you are using Snowsight, on the left you will now see the database mounted.  If you open to the table section, you will see the CUSTOMERS_RAP table available.</p>
+<p class="image-container"><img alt="Mounted shared DB" src="img/193ebb52c735e49a.png"></p>
+<h2 is-upgraded>Querying the shared data</h2>
+<p>Try running the following to look at the shared data.</p>
+<pre><code language="language-sql" class="language-sql">select * from AUD_OVERLAP_PROV.DEMO.CUSTOMERS_RAP r;
+select * from AUD_OVERLAP_PROV.DEMO.CUSTOMERS_RAP r
+ inner join AUD_CONSUMER_DEMO.DEMO.CUSTOMERS c on c.email=r.email;
+</code></pre>
+<p>Because these SQL statements are not allowed by the row access policy, both return no rows.  Now try the following.</p>
+<pre><code language="language-sql" class="language-sql">select count(distinct c.email) from AUD_OVERLAP_PROV.DEMO.CUSTOMERS_RAP r
+ inner join AUD_CONSUMER_DEMO.DEMO.CUSTOMERS c on c.email=r.email;
+</code></pre>
+<p>Because this is the only SQL statement allowed by the row access policy, this statement works, returning a count of 332,912.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion" duration="1">
+        <p>Clean rooms are a powerful tool for collaboration between multiple parties in Snowflake.  However, many organizations may want to test an overlap before committing to a full-fledged clean room relationships.  Fortunately, using row level access policies and data sharing, this is possible in Snowflake today.</p>
+<h2 class="checklist" is-upgraded>What we&#39;ve covered</h2>
+<ul class="checklist">
+<li>Creating test data</li>
+<li>Creating a row level access policy</li>
+<li>Creating a share</li>
+<li>Mounting the share and querying the shared data</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

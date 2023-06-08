@@ -1,0 +1,30 @@
+{
+  "environment": "web",
+  "format": "../../../claat/render/template.html",
+  "prefix": "https://quickstarts.snowflake.com/elements",
+  "mainga": "UA-41491190-9",
+  "updated": "2023-06-06T14:18:25-04:00",
+  "id": "tasty_bytes_zero_to_snowflake_data_governance",
+  "duration": 15,
+  "title": "Tasty Bytes - Zero to Snowflake - Data Governance",
+  "summary": "Tasty Bytes - Zero to Snowflake - Data Governance Quickstart",
+  "source": "tasty_bytes_zero_to_snowflake_data_governance/tb_zts_data_governance.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "tasty-bytes",
+    "getting-started",
+    "featured"
+  ],
+  "tags": [
+    "datagovernance",
+    "gettingstarted",
+    "tastybytes",
+    "web",
+    "zerotosnowflake"
+  ],
+  "feedback": "https://github.com/Snowflake-Labs/sfguides/issues",
+  "url": "tasty_bytes_zero_to_snowflake_data_governance"
+}

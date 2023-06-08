@@ -1,0 +1,31 @@
+{
+  "environment": "web",
+  "format": "../../../claat/render/template.html",
+  "prefix": "https://quickstarts.snowflake.com/elements",
+  "mainga": "UA-41491190-9",
+  "updated": "2023-06-06T14:18:25-04:00",
+  "id": "time_series_forecasting_zepl",
+  "duration": 66,
+  "title": "Time Series Forecasting with Zepl",
+  "authors": "Zepl",
+  "summary": "Time Series Forecasting with Zepl",
+  "source": "time_series_forecasting_with_zepl/time_series_forecasting_with_zepl.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "data-science-\u0026-ml",
+    "partner-integrations"
+  ],
+  "tags": [
+    "dataengineering",
+    "datascience",
+    "financialservices",
+    "gettingstarted",
+    "modeling",
+    "web"
+  ],
+  "feedback": "https://github.com/Snowflake-Labs/devlabs/issues",
+  "url": "time_series_forecasting_zepl"
+}

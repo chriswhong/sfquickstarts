@@ -1,0 +1,269 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Secure Crosswalks for Advertising Measurement</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="secure-crosswalks-for-advertising-measurement"
+                  title="Secure Crosswalks for Advertising Measurement"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="1">
+        <p>With the loss of historically common advertising identifiers, such as cookies and Mobile Advertising Identifiers (MAIDs), much of the advertising measurement ecosystem has moved to the use of panels. With a panel, an advertiser or publisher can use shared PII to perform measurement. However, because of privacy concerns and legislation such as GDPR and CCPA, many companies want to perform this match without directly sharing PII.</p>
+<p>This process, a translation between one company&#39;s internal identifier to another company&#39;s internal identifier using shared PII, is known as a crosswalk. Snowflake allows this process to take place natively, without requiring a trusted third-party or the movement of data, and without exposing any PII.</p>
+<p>This process can take place within a <a href="https://www.snowflake.com/blog/data-clean-room-explained/" target="_blank">Clean Room</a> or will soon be made easier with <a href="https://medium.com/@alex.lei/embarking-on-the-snowflake-data-clean-room-dcf9fac23c21" target="_blank">Projection Constraints</a>. However, this can also take place today, using only data sharing.  This Quickstart will walk through an example of this process.</p>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Familiarity with Snowflake and SQL</li>
+</ul>
+<h2 class="checklist" is-upgraded>What You&#39;ll Learn</h2>
+<ul class="checklist">
+<li>How to set up an example measurement company with test data</li>
+<li>How to set up an example measurement customer with test data</li>
+<li>How to set up a crosswalk between the two parties</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Need</h2>
+<ul>
+<li>Access to two Snowflake accounts, in the same cloud and region</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<ul>
+<li>A secure crosswalk for sharing ad exposure data</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Measurement company account set-up" duration="4">
+        <p>Before we can set up the shares to implement the crosswalk, we need to prepare the measurement company account and generate example data.</p>
+<h2 is-upgraded>Account set-up</h2>
+<p>Run the following to set up a warehouse, database, and schema for use with the example data.</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+CREATE WAREHOUSE MEASUREMENT_CO_WH WITH WAREHOUSE_SIZE=&#39;XSmall&#39; STATEMENT_TIMEOUT_IN_SECONDS=15    STATEMENT_QUEUED_TIMEOUT_IN_SECONDS=15;
+USE WAREHOUSE MEASUREMENT_CO_WH;
+CREATE DATABASE CROSSWALK_MEASUREMENT_CO_DEMO;
+CREATE SCHEMA CROSSWALK_MEASUREMENT_CO_DEMO.DEMO;
+</code></pre>
+<h2 is-upgraded>Data generation</h2>
+<p>Here we generate a table containing the panel data.  In this case, the panel is just a user ID and a random, generated email address.</p>
+<pre><code language="language-sql" class="language-sql">USE CROSSWALK_MEASUREMENT_CO_DEMO.DEMO;
+
+CREATE OR REPLACE TABLE my_panel AS
+SELECT sha1(seq4()) as user_id,
+  &#39;user&#39;||seq4()||&#39;_&#39;||uniform(1, 3, random(1))||&#39;@email.com&#39; as email
+  FROM table(generator(rowcount =&gt; 100000));
+</code></pre>
+<p>We can then verify the generated data with the following.</p>
+<pre><code language="language-sql" class="language-sql">SELECT * FROM my_panel;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Measurement customer account set-up" duration="4">
+        <p>In this example, the customer of the measurement company has the ad exposure data.  We start by setting up the account and created the example data.</p>
+<h2 is-upgraded>Account set-up</h2>
+<p>Run the following to create the warehouse, database, and schema to hold the example data for the measurement customer.</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+CREATE OR REPLACE WAREHOUSE MEASUREMENT_CUST_WH WITH WAREHOUSE_SIZE=&#39;XSmall&#39;  STATEMENT_TIMEOUT_IN_SECONDS=15 STATEMENT_QUEUED_TIMEOUT_IN_SECONDS=15;
+USE WAREHOUSE MEASUREMENT_CUST_WH;
+CREATE DATABASE CROSSWALK_MEASUREMENT_CUST_DEMO;
+CREATE SCHEMA CROSSWALK_MEASUREMENT_CUST_DEMO.DEMO;
+
+USE CROSSWALK_MEASUREMENT_CUST_DEMO.DEMO;
+</code></pre>
+<h2 is-upgraded>Data generation</h2>
+<p>Now we create the ad impression data that the customer wants to measure.  One table contains the audience we are advertising to. This, like the panel data, contains the user ID for the customer and an email address.  The other table contains the ad impressions served to the audience.</p>
+<pre><code language="language-sql" class="language-sql">USE CROSSWALK_MEASUREMENT_CUST_DEMO.DEMO;
+
+CREATE OR REPLACE TABLE my_audience AS
+SELECT sha1(seq4()||&#39;cust&#39;) as user_id,
+  &#39;user&#39;||seq4()||&#39;_&#39;||uniform(1, 3, random(2))||&#39;@email.com&#39; as email
+  FROM table(generator(rowcount =&gt; 1000000));
+
+CREATE OR REPLACE TABLE impressions AS
+SELECT sha1(uniform(1, 1000000, random(3))||&#39;cust&#39;)::varchar(40) as user_id
+  ,dateadd(second, uniform(1, 2592000, random(4)), (&#39;2022-09-01&#39;::timestamp)) as event_time
+  ,&#39;174631&#39; as campaign_id
+  ,uniform(200001,202000,random(5))::varchar(10) as placement_id
+  ,uniform(300001,301000,random(6))::varchar(10) as creative_id
+FROM table(generator(rowcount=&gt;2000000));
+</code></pre>
+<p>You can verify the generated data with the following.</p>
+<pre><code language="language-sql" class="language-sql">SELECT * FROM impressions i
+ INNER JOIN my_audience a on a.user_id=i.user_id;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Aligning on PII masking or hashing" duration="1">
+        <p>In this example, we do not require that the ad measurement company expose even the number of panelists to the customer.  Nor do we require that the customer expose even the total number of impressions nor the size of their audience to the ad measurement company. Even still, because the customer will be calling a secure UDF created by the measurement company, we need the two parties to align on a masking or hashing algorithm.</p>
+<p>This could be something like <a href="https://quickstarts.snowflake.com/guide/python_camouflage/index.html?index=..%2F..index#3" target="_blank">Python Camouflage</a>, or it could be something much simpler, like a salted hash.  We would not want to use something like a raw hash, because in theory that could be used to join with hashed PII from another customer of the measurement company.  For this example, and to keep this simple, both the measurement company account and the customer account should run the following.</p>
+<pre><code language="language-sql" class="language-sql">CREATE OR REPLACE FUNCTION secure_hashed_email(email varchar)
+RETURNS VARCHAR 
+as
+$$
+sha1(email||&#39;our_salt&#39;)
+$$
+;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Measurement company lookup function" duration="4">
+        <p>The measurement company provides a function that takes in a hashed email, and returns the measurement company&#39;s internal user ID. This function will be used by the customer.</p>
+<h2 is-upgraded>Function creation</h2>
+<p>We use the following function to lookup the user ID from the hashed email.  We create it as a secure function to avoid leaking the underlying schema to the customer.</p>
+<pre><code language="language-sql" class="language-sql">CREATE OR REPLACE SECURE FUNCTION lookup_hashed_email(hashed_input_email varchar)
+RETURNS VARCHAR
+AS
+$$
+select nvl((select any_value(user_id)
+                    from my_panel
+                    where secure_hashed_email(email) = hashed_input_email),
+                    null)
+$$
+;
+</code></pre>
+<p>We can then test the function as follows.  First, we can find a value to test with by running the following.</p>
+<pre><code language="language-sql" class="language-sql">SELECT user_id, email, secure_hashed_email(email) FROM my_panel;
+</code></pre>
+<p>Taking one of the values, we can run the following.</p>
+<pre><code language="language-sql" class="language-sql">select lookup_hashed_email(&#39;26a3df1964012d8fb9b1bb9e7f0e189e3adcd74d&#39;);
+select lookup_hashed_email(&#39;foobar&#39;);
+</code></pre>
+<p>The first statement returns the user ID associate with this hashed email.  The second should return null.</p>
+<h2 is-upgraded>Sharing the function</h2>
+<p>The measurement company can be shared with the customer with the following.</p>
+<pre><code language="language-sql" class="language-sql">-- create share for secure udf
+CREATE SHARE measurement_co_share;
+GRANT USAGE ON DATABASE CROSSWALK_MEASUREMENT_CO_DEMO TO SHARE measurement_co_share;
+GRANT USAGE ON SCHEMA CROSSWALK_MEASUREMENT_CO_DEMO.DEMO TO SHARE measurement_co_share;
+GRANT USAGE ON FUNCTION CROSSWALK_MEASUREMENT_CO_DEMO.DEMO.lookup_hashed_email(varchar) TO SHARE measurement_co_share;
+ALTER SHARE measurement_co_share ADD accounts=&lt;account_id&gt;;
+</code></pre>
+<p>The final statement needs the customer&#39;s Snowflake account ID inserted.</p>
+<h2 is-upgraded>Customer mounting the share</h2>
+<p>The customer can mount the share as follows.</p>
+<pre><code language="language-sql" class="language-sql">SHOW SHARES;
+
+CREATE DATABASE MEASUREMENT_CO FROM SHARE &lt;account info&gt;.MEASUREMENT_CO_SHARE;
+</code></pre>
+<p>First, the customer runs the first statement to get the name of the share.  They then mount it using the second statement. The customer can now call the function provided by the measurement company.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Table of impressions for customer" duration="5">
+        <p>Using the function shared by the measurement company, the customer can now make a table for the impression data that includes only those in the measurement company panel.</p>
+<h2 is-upgraded>Creating the table</h2>
+<p>The table to be shared from the customer to the measurement company will be keyed off of the measurement company&#39;s internal identifier, using the secure UDF shared from the measurement company.  It also should hold only those impressions for campaigns that this measurement company is measuring.</p>
+<pre><code language="language-sql" class="language-sql">-- create a view of data the measurement company should see
+CREATE OR REPLACE TABLE measurement_co_impressions AS
+SELECT MEASUREMENT_CO.DEMO.LOOKUP_HASHED_EMAIL(secure_hashed_email(a.email)) as user_id,
+ i.event_time, i.campaign_id, i.placement_id, i.creative_id
+FROM CROSSWALK_MEASUREMENT_CUST_DEMO.DEMO.impressions i
+ INNER JOIN CROSSWALK_MEASUREMENT_CUST_DEMO.DEMO.my_audience a on a.user_id=i.user_id
+WHERE MEASUREMENT_CO.DEMO.LOOKUP_HASHED_EMAIL(secure_hashed_email(a.email)) is not null
+ and i.campaign_id=&#39;174631&#39;;
+</code></pre>
+<p>We can verify that it includes impressions only for the overlap by running the following.</p>
+<pre><code language="language-sql" class="language-sql">SELECT count(1) FROM measurement_co_impressions;
+</code></pre>
+<h2 is-upgraded>Sharing the table</h2>
+<p>Now that we have created the table to hold the data, we create the share to share this data back to the measurement company as follows.</p>
+<pre><code language="language-sql" class="language-sql">-- create share of impressions to measurement co
+CREATE SHARE measurement_cust_share;
+GRANT USAGE ON DATABASE CROSSWALK_MEASUREMENT_CUST_DEMO TO SHARE measurement_cust_share;
+GRANT USAGE ON SCHEMA CROSSWALK_MEASUREMENT_CUST_DEMO.DEMO TO SHARE measurement_cust_share;
+GRANT SELECT ON CROSSWALK_MEASUREMENT_CUST_DEMO.DEMO.measurement_co_impressions TO SHARE measurement_cust_share;
+ALTER SHARE measurement_cust_share ADD accounts=&lt;customer snowflake account&gt;;
+</code></pre>
+<p>The customer&#39;s Snowflake account ID should be placed in the last statement.</p>
+<h2 is-upgraded>Customer mounting the shared table</h2>
+<p>Finally, to complete the crosswalk, the measurement company should mount the share.</p>
+<pre><code language="language-sql" class="language-sql">-- mount share from customer
+SHOW SHARES;
+
+CREATE DATABASE MEASUREMENT_CUST FROM SHARE &lt;account info&gt;.MEASUREMENT_CUST_SHARE;
+</code></pre>
+<p>As before, the name of the share should be placed into the final statement.</p>
+<p>To test the share, and to show that it is, in fact, keyed off of the measurement company ID, run the following statement.</p>
+<pre><code language="language-sql" class="language-sql">SELECT *
+FROM MEASUREMENT_CUST.DEMO.MEASUREMENT_CO_IMPRESSIONS i
+ INNER JOIN my_panel p on p.user_id=i.user_id;
+</code></pre>
+<p>Now, as we can see with the result of this statement, the measurement company can see the impressions, but only for those in the measurement company&#39;s panel. In addition, the key of the table is the measurement company&#39;s own ID, not the shared PII.  Further, the impression data still sits in the customer&#39;s account, and has not been moved to the measurement company&#39;s account.  They can now complete their measurement using their panel, and provide the results to their customer.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion" duration="1">
+        <p>Advertising measurement companies often need to join data about their panel to the ad exposure data provided by the customer to perform their measurement.  Snowflake, using its unique data sharing capabilities that do not require movement of data nor a trusted third-party, can be used to perform the necessary crosswalk.</p>
+<h2 class="checklist" is-upgraded>What we&#39;ve covered</h2>
+<ul class="checklist">
+<li>Set-up of customer and measurement company accounts, with example data</li>
+<li>Set-up of data share and secure functions</li>
+<li>Execution of crosswalk logic and functionality</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

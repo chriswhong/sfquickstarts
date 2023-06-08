@@ -1,0 +1,27 @@
+{
+  "environment": "web",
+  "format": "../../../claat/render/template.html",
+  "prefix": "https://quickstarts.snowflake.com/elements",
+  "mainga": "UA-41491190-9",
+  "updated": "2023-06-06T14:18:24-04:00",
+  "id": "secure-crosswalks-for-advertising-measurement",
+  "duration": 20,
+  "title": "Secure Crosswalks for Advertising Measurement",
+  "summary": "Share ad exposure data without sharing PII for advertising measurement.",
+  "source": "secure-crosswalks-for-advertising-measurement/secure-crosswalks-for-advertising-measurement.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "data-science-\u0026-ml",
+    "solution-examples"
+  ],
+  "tags": [
+    "adtech",
+    "gettingstarted",
+    "web"
+  ],
+  "feedback": "https://github.com/Snowflake-Labs/sfguides/issues",
+  "url": "secure-crosswalks-for-advertising-measurement"
+}

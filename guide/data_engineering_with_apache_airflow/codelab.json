@@ -1,0 +1,30 @@
+{
+  "environment": "web",
+  "format": "../../../claat/render/template.html",
+  "prefix": "https://quickstarts.snowflake.com/elements",
+  "mainga": "UA-41491190-9",
+  "updated": "2023-06-06T14:18:18-04:00",
+  "id": "data_engineering_with_apache_airflow",
+  "duration": 36,
+  "title": "Data Engineering with Apache Airflow, Snowflake \u0026 dbt",
+  "summary": "This is a sample Snowflake Guide",
+  "source": "data_engineering_with_apache_airflow/data_engineering_with_apache_airflow.md",
+  "theme": "",
+  "status": [
+    "published"
+  ],
+  "category": [
+    "data-engineering",
+    "architecture-patterns",
+    "partner-integrations"
+  ],
+  "tags": [
+    "airflow",
+    "dataengineering",
+    "dbt",
+    "gettingstarted",
+    "web"
+  ],
+  "feedback": "https://github.com/Snowflake-Labs/sfguides/issues",
+  "url": "data_engineering_with_apache_airflow"
+}

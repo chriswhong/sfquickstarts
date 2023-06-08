@@ -1,0 +1,932 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Cloud Native Data Engineering with Matillion and Snowflake</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="cloud_native_data_engineering_with_matillion_and_snowflake"
+                  title="Cloud Native Data Engineering with Matillion and Snowflake"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="1">
+        <p>Modern businesses need modern analytics. Businesses that fail to capture data and transform it into timely and valuable information will struggle to stay competitive and viable. Snowflake and Matillion help agile enterprises convert raw data into actionable, analytics-ready data in the cloud in minutes for new insights and better business decisions.</p>
+<p>Let&#39;s get started.</p>
+<h2 is-upgraded>What You&#39;ll Use</h2>
+<ul>
+<li>A <a href="https://trial.snowflake.com/" target="_blank">trial Snowflake Account</a> with <code>ACCOUNTADMIN</code> access</li>
+<li>A Matillion account, provisioned through snowflake&#39;s <a href="https://docs.snowflake.com/en/user-guide/ecosystem-partner-connect.html" target="_blank">partner connect</a></li>
+</ul>
+<h2 class="checklist" is-upgraded>What You&#39;ll Learn</h2>
+<ul class="checklist">
+<li>How to source 3rd party data from Snowflake data marketplace</li>
+<li>How to use Matillion&#39;s GUI to build end-to-end transformation pipeline</li>
+<li>How to use Matillion to extract real time data from public APIs</li>
+<li>How to leverage Matillion scale up/down Snowflake&#39;s virtual warehouses</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<ul>
+<li>An end to end data transformation pipeline for Financial Services data leveraging Matillion and Snowflake, leveraging different data sources - joining, transforming, orchestrating them all through user friendly, and easily managed GUI services</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Lab Scenario" duration="2">
+        <p>You are a stock portfolio manager of a team of 10 traders !!! Each of your traders trade stocks in 10 separate industries. You have with you available 10 years of historical data of trades that your team performed, sitting in an S3 bucket - you know what stocks they traded (BUY or SELL), and at what price.</p>
+<p>You would like to aggregate their Profit &amp; Loss, and even get a real time aggregated view of total realized and unrealized gains/loss of each of your traders. To accomplish this, we will follow the following steps:</p>
+<ol type="1">
+<li>Acquire stocks historical data, freely provided by <a href="https://www.snowflake.com/datasets/zepl-us-stock-market-data-for-data-science/" target="_blank">Zepl</a>, from snowflake data marketplace. This will create a new database in your snowflake account.</li>
+<li>Launch a Matillion ETL instance through snowflake partner connect.</li>
+<li>Use Matillion to :</li>
+</ol>
+<ul>
+<li>Ingest your traders&#39; historical data sitting in a S3 bucket, into a Snowflake table.</li>
+<li>Develop a transformation pipeline to create each trader&#39;s PnL as of today, by joining with stock data from Zepl</li>
+<li>Leverage Yahoo Finance API to get real time stock data</li>
+</ul>
+<p>The 10,000 foot view of what we will build today:</p>
+<p class="image-container"><img alt="2_Lab_Overview" src="img/b1f5e672e576f7c6.png"></p>
+<p>Sneak Peek of the orchestration job that will accomplish all this, nested with 2 transformation jobs within it:</p>
+<p class="image-container"><img alt="2_sneak_peek" src="img/6ab3cffd4906ecb1.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Let&#39;s Get Started With Snowflake" duration="10">
+        <p>Login to your snowflake account. For a detailed UI walkthrough, please refer <a href="https://docs.snowflake.com/en/user-guide/ui-snowsight-gs.html#getting-started-with-snowsight" target="_blank">here</a>.</p>
+<p>As the <code>ACCOUNTADMIN</code> role, navigate to Marketplace, and search for &#34;zepl&#34;. Click on the tile.</p>
+<p class="image-container"><img alt="3_zepl" src="img/7df3b3cd5d3e272.png"></p>
+<p>Next:</p>
+<ol type="1">
+<li>Click on &#34;Get Data&#34; on the right.</li>
+<li>A pop-up screen opens: prefix the database name with &#34;ZEPL_&#34; so the name becomes <code>ZEPL_US_STOCKS_DAILY</code></li>
+<li>Click on &#34;Get Data&#34; in the center.</li>
+</ol>
+<p class="image-container"><img alt="3_get_zepl" src="img/b30bec2644806631.png"></p>
+<p>So what is happening here? Zepl has granted access to this data from their Snowflake account to yours. You&#39;re creating a new database in your account for this data to live - but the best part is that no data is going to move between accounts! When you query, you&#39;ll really be querying the data that lives in the Zepl account. If they change the data, you&#39;ll automatically see those changes. No need to define schemas, move data, or create a data pipeline either!</p>
+<p>Click on Query Data to access the newly created database.</p>
+<p class="image-container"><img alt="3_query_datal" src="img/9a1e704c08b0498c.png"></p>
+<p>A new worksheet tab opens up, pre-populated with sample queries. The newly created database has 3 tables. Feel free to click on them and browse what their schema looks like, and preview the data they have.</p>
+<p class="image-container"><img alt="3_zepl_worksheet" src="img/1c58c4dea0a7ae76.png"></p>
+<p>Congrats ! You now have decades worth of stock data acquired in minutes !</p>
+<p>One more thing: we need to locate and note down our snowflake account information for subsequent steps. To locate snowflake account information, navigate to <strong>Admin → Accounts</strong>, and click on the link icon next to the Account name to copy the account name URL to your clipboard (The <strong>text that prefixes .snowflakecomputing.com</strong> is the account information needed to connect Matillion to Snowflake). Paste it in your worksheet, we will need it in section 5.</p>
+<p>In the screenshot below, the account text we are look for is: <code>bjjihzu-ji91805</code></p>
+<p class="image-container"><img alt="3_account_id" src="img/957de33389ff03fd.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Launching Matillion ETL from Partner Connect" duration="5">
+        <ol type="1">
+<li>Navigate to Admin –&gt; Partner Connect, then click on the <strong>&#34;Matillion ETL&#34;</strong> tile</li>
+</ol>
+<p class="image-container"><img alt="4_pc_metl" src="img/1eb7640851486007.png"></p>
+<ol type="1" start="2">
+<li>All fields are pre-populated, <strong>give additional ‘Optional Grant&#39; to </strong><strong><code>ZEPL_US_STOCKS_DAILY</code></strong><strong> database</strong> (created in previous section), then <strong>click Connect</strong></li>
+</ol>
+<p class="image-container"><img alt="4_og" src="img/e835da2be4d2fd5f.png"></p>
+<p class="image-container"><img alt="4_metl_connect" src="img/6d52b20daef2358b.png"></p>
+<ol type="1" start="3">
+<li>Once the partner account has been created, <strong>Click Activate</strong></li>
+</ol>
+<p class="image-container"><img alt="4_activate" src="img/a79d2df285d6372.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Matillion ETL- Creating a New Project" duration="10">
+        <p>You will be redirected to the Matillion ETL web console. Your username and password will be auto-generated and sent to the same email you provided to launch your Snowflake trial account.</p>
+<ol type="1">
+<li>Once logged in to Matillion, you will be prompted to join a project. Click <strong>Create Project</strong> to get started.</li>
+</ol>
+<p class="image-container"><img alt="5_metl_cp" src="img/723cc487e021b4ac.png"></p>
+<ol type="1" start="2">
+<li>Within the <strong>Project Group</strong> dropdown select <strong>&#34;Partner Connect&#34;</strong>, add a new name for the project (for the purpose of this lab we will name it <strong>&#34;TraderPnL&#34;</strong>). You can leave Project Description blank, and the check-box&#39;s with the default settings. Click <strong>Next</strong></li>
+</ol>
+<p class="image-container"><img alt="5_project_name" src="img/99694e39a1842b4b.png"></p>
+<ol type="1" start="3">
+<li>In the <strong>AWS Connection</strong> set the <strong>&#34;Environment Name&#34;</strong> (for the purpose of this lab we will name it <strong>&#34;Lab&#34;</strong>). Click Next</li>
+</ol>
+<p class="image-container"><img alt="5_lab" src="img/4ab46ec2ae897066.png"></p>
+<ol type="1" start="4">
+<li>Enter your Snowflake Connection details here. The Account field is the same text you saved from Snowflake UI in section 3. Also enter your Snowflake account &#34;Username&#34; and &#34;Password&#34;. Click Next.</li>
+</ol>
+<p class="image-container"><img alt="5_metl_sf_connect" src="img/cc1d9b816b4daa48.png"></p>
+<ol type="1" start="5">
+<li>Now we will set the Snowflake Defaults. Select the following default values:<br> Default Role:       <code>ACCOUNTADMIN</code><br> Default Warehouse:  <code>PC_MATILLION_WH</code><br> Default Database:   <code>PC_MATILLION_DB</code><br> Default Schema:     <code>PUBLIC</code></li>
+</ol>
+<p>Click <strong>Test</strong>, to test and verify the connection. Once you receive <strong>success</strong> response, you are properly connected to Snowflake. Click <strong>Finish</strong>, and now the real fun begins!</p>
+<p class="image-container"><img alt="5_sf_defaults" src="img/d056887d3e828fdd.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating an Orchestration Job" duration="20">
+        <p>We will now create our first orchestration job. The job will consist of first loading the trading history from AWS S3 to a single Snowflake table. To efficiently work with the data, we will modify the warehouse to the appropriate size using the Alter Warehouse component. We will then create two separate transformation jobs to perform complex calculations and joins and create new tables back in Snowflake. Finally, we will scale down our warehouse when job completes. By the end of it, the orchestration job should look like this:</p>
+<p class="image-container"><img alt="2_sneak_peek" src="img/6ab3cffd4906ecb1.png"></p>
+<p>Lets get started!!</p>
+<p>Within the Project Explorer on the left hand side, right-click and select <strong>Add Orchestration Job</strong>.</p>
+<p class="image-container"><img alt="6_add_orch" src="img/8b00e4dff080a142.png"></p>
+<p>Name your job <strong>&#34;VHOL_orchestration&#34;</strong> and click &#34;OK&#34;. You will be prompted to switch to the new job, click <strong>&#34;Yes&#34;</strong>. You should now see a blank workspace (new tab)</p>
+<p class="image-container"><img alt="6_orch_name" src="img/2999220ebcca2859.png"></p>
+<p>The following steps will walk through adding different components to the workspace to build our data pipeline. The first step is to load trading data from S3 using the <strong>S3 Load Generator</strong> component.</p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/6411982" target="_blank">S3 Load Generator</a></h2>
+<ol type="1">
+<li>From the Components section on the left hand side, expand the Wizards folder. Find the S3 Load Generator component.</li>
+</ol>
+<p class="image-container"><img alt="6_s3_lg" src="img/c92a5bb214543d54.png"></p>
+<ol type="1" start="2">
+<li>Drag and drop the S3 Load Generator component onto the workspace as the first step after the Start component.</li>
+<li>A S3 Load Generator menu will automatically pop up. Click the ... button to explore S3 bucket</li>
+<li>Copy and paste the S3 bucket into the wizard: <code>s3://mtln-techworkshops/VHOL_Trades/</code></li>
+</ol>
+<p>Click <strong>Go</strong> to explore the contents of the bucket, you should see several CSV files - these are trade history data of 10 traders, trading in 10 different industries. Highlight the file name <code>ARYA_SWINFRA.csv</code> and click <strong>Ok</strong>.</p>
+<p class="image-container"><img alt="6_s3_files" src="img/a245c78b755b4fba.png"></p>
+<ol type="1" start="5">
+<li>You can now sample the dataset by clicking <strong>Get Sample</strong>, it will return a 50 row sample of the dataset. Click <strong>Next</strong>.</li>
+<li>Matillion will guess the schema on the dataset, you can make any modifications to the configuration. For the purpose of this lab, we will keep the configuration settings as <strong>Default</strong>. Click <strong>Next</strong></li>
+</ol>
+<p class="image-container"><img alt="6_file_schema" src="img/608638c0f10a961d.png"></p>
+<ol type="1" start="7">
+<li>Click <strong>Create &amp; Run</strong>, this will render two components on the VHOL_orchestration canvas (Create Table and S3 Load).</li>
+</ol>
+<p class="image-container"><img alt="6_create_run" src="img/4322e103833ee82f.png"></p>
+<p><em>Note if you click test you may receive a permission error on the S3 bucket. You can ignore this for the lab, and move on to the next step. Don&#39;t worry about any errors at this point, we will resolve them in the upcoming steps.</em></p>
+<ol type="1" start="8">
+<li>Link the <strong>Start</strong> component to the <strong>Create Table</strong> component.</li>
+</ol>
+<p class="image-container"><img alt="6_start_ct" src="img/475d29a56bb53eb2.png"></p>
+<ol type="1" start="9">
+<li>Click on the <strong>Create Table</strong> component, in the Properties Tab you will see several parameters. Note the <strong>Create/Replace</strong> parameter by default is set to Create. Click the ... button and change it to <code>Replace</code> from the dropdown menu.</li>
+</ol>
+<p class="image-container"><img alt="6_replace" src="img/ac7967305a9b53a9.png"></p>
+<ol type="1" start="10">
+<li>Now we will modify the size of each column. In the properties tab, click on the ... button for the <strong>Columns</strong> parameter. Update the Size for each Column name as shown in figure below, then click Ok.</li>
+</ol>
+<p class="image-container"><img alt="6_column_size" src="img/128a45ec50628004.png"></p>
+<ol type="1" start="11">
+<li>Change the component name and table name to <code>TRADES_HISTORY</code>, by clicking on the ... button in the Properties tab</li>
+</ol>
+<p class="image-container"><img alt="6_comp_name_TH" src="img/288e2485a0686cce.png"></p>
+<ol type="1" start="12">
+<li>Right click on the TRADES_HISTORY component and select <strong>Run Component</strong>. This will create a new table in your Snowflake account !</li>
+</ol>
+<p class="image-container"><img alt="6_run_comp" src="img/685e60b7e24682f5.png"></p>
+<ol type="1" start="13">
+<li>Next, Select the S3 Load component, and change the Name in the Properties tab to <strong>LOAD TRADES_HISTORY</strong>.</li>
+<li>Change the <strong>S3 Object Prefix</strong> by clicking on the ... button to select the VHOL_Trades directory, and then click OK.</li>
+</ol>
+<p class="image-container"><img alt="6_s3_prefix" src="img/5a30e29286e0b459.png"></p>
+<ol type="1" start="15">
+<li>Change the <strong>Pattern</strong> parameter bu clicking on the ... button, and change to <code>.*</code>. Click OK.</li>
+<li>Change the <strong>Target Table</strong> parameter by clicking on ... button, and select TRADES_HISTORY from the drop down, click OK.</li>
+<li>The LOAD TRADE_HISTORY component Properties should now reflect as shown below, all other fields should be left as default.</li>
+</ol>
+<p class="image-container"><img alt="6_load_history" src="img/ab3546a00e896789.png"></p>
+<ol type="1" start="18">
+<li>Right click on the LOAD TRADE_HISTORY component and run it by clicking <strong>Run Component</strong>.</li>
+<li>Check back in your Snowflake console to confirm the TRADES_HISTORY table was created, and data loaded - 1.7 million rows, and compressed to &lt; 10 MB !</li>
+</ol>
+<p class="image-container"><img alt="6_sf_th" src="img/f5a7ac8e0e1f056.png"></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/2800970" target="_blank">Alter Warehouse</a></h2>
+<p>The next step of the orchestration is to scale up Snowflake&#39;s Virtual Warehouse to accommodate resource heavy transformation jobs.</p>
+<ol type="1">
+<li>Find the Alter Warehouse component from the Components pane.</li>
+<li>Drag and drop the component as the last step, connected to the LOAD TRADES_HISTORY component. Click on the component to edit its Properties.</li>
+<li>Rename of the component to <code>Size Up Warehouse to M</code>.</li>
+<li>Change the <strong>Command Type</strong> to Set.</li>
+<li>A new field will appear, edit Properties to add a new line with Property set to <strong>WAREHOUSE_SIZE</strong> and Value set to <code>MEDIUM</code>.</li>
+</ol>
+<p class="image-container"><img alt="6_WH_M" src="img/34acabb07f4701fa.png"></p>
+<ol type="1" start="6">
+<li>Your orchestration job should now look like this:</li>
+</ol>
+<p class="image-container"><img alt="6_end" src="img/7052078b5d1fd28d.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating a Transformation Job to determine the Current Position" duration="30">
+        <p>The trading history data from S3 gives a listing of ten traders with both BUY and SELL actions.  In this transformation job, the transactions will be aggregated to find out the number of shares bought/sold and for how much. With those figures, the net # of shares and value will be calculated, and a table will be created, enriched with each traders&#39; average price for each stock. The below figure shows the end product of the transformation pipeline we will create in this section:</p>
+<p class="image-container"><img alt="7_1_job_view" src="img/8b2ae10b17529cef.png"></p>
+<h2 is-upgraded>Let&#39;s get started!</h2>
+<ol type="1">
+<li>Within the Project Explorer, right-click and select <strong>Add Transformation Job</strong>.</li>
+</ol>
+<p class="image-container"><img alt="7_2_add_tran" src="img/45d71811a8f6fe2d.png"></p>
+<ol type="1" start="2">
+<li>Set the title to <code>VHOL_CURRENT_POSITION</code>, and click Ok.</li>
+<li>Next prompt will ask you to switch to the new job, click NO.</li>
+<li>From the explorer, drop the newly created job as the next step after the Alter Warehouse component within the previously created orchestration job (VHOL_orchestration) and complete the connection, as shown below:</li>
+</ol>
+<p class="image-container"><img alt="7_3_orch_view" src="img/ea92d3476b4fe2fa.png"></p>
+<ol type="1" start="5">
+<li>Double click the  new transformation job VHOL_CURRENT_POSITION. A new tab gets opened with a blank canvas. We will now build a transformation pipeline.</li>
+</ol>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991918" target="_blank">Table Input</a> - Read TRADES_HISTORY</h2>
+<p>Find/search the <strong>Table Input</strong> component in the component palette under Data &gt; Read folder and drop it on the blank canvas, then set it up with the appropriate properties below:</p>
+<p>Name: <code>TRADES_HISTORY</code><br> Database: [Environment Default]<br> Schema: [Environment Default]<br> Target Table: <code>TRADES_HISTORY</code><br> Column Names: Select all columns by clicking the ... button</p>
+<p class="image-container"><img alt="7_4_Table_Input" src="img/6a67438fcc68d033.png"></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991641" target="_blank">Filter</a> - Filter Buy actions</h2>
+<p>Now, let&#39;s add a second step to filter the data based on the type action.</p>
+<ol type="1">
+<li>Find/Search the Filter component in the component list under Data &gt; Transform folder and drop it on the canvas, connect it to the TRADES_HISTORY component.</li>
+<li>Click on the component and update the <strong>Name</strong> property to <code>ACTION = BUY</code></li>
+<li>Then use the Filter Conditions property wizard, add a line with the following settings:</li>
+</ol>
+<p>Input Column: <code>ACTION</code> Qualifier: <code>Is</code> Comparator: <code>Equal to</code> Value: <code>BUY</code></p>
+<p>Your Transformation Job should now look like this:</p>
+<p class="image-container"><img alt="7_5_Filter" src="img/e0b9d300723c6237.png"></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991925" target="_blank">Calculator</a></h2>
+<p>Now we will add a calculator to calculate the amount of investment in each buy transaction:</p>
+<ol type="1">
+<li>Find/Search the CALCULATOR component under <strong>Data &gt; Transform</strong> folder and link it to the ACTION = BUY component created in the previous step.</li>
+<li>Click on the component and name it <code>TOTAL_PAID</code></li>
+<li>Edit the Calculations property and use the expression builder to create the calculation:</li>
+</ol>
+<ul>
+<li>Add a new field with &#34;+&#34; button, name it TOTAL_PAID</li>
+<li>Build the expression:  <code>-("NUM_SHARES" * "PRICE")</code></li>
+</ul>
+<p class="image-container"><img alt="7_6_Calc" src="img/bc4705398322dacb.png"></p>
+<p>Clicl OK. Your transformation job should now look like this:</p>
+<p class="image-container"><img alt="7_7_calc_view" src="img/6fab7f96398927c7.png"></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991880" target="_blank">Aggregate</a></h2>
+<p>Next we will sum up the investments made in each stock by aggregating.</p>
+<ol type="1">
+<li>Let&#39;s add an Aggregate component from the palette under <strong>Data &gt; Transform</strong> folder and link it to the previous Calculator component.</li>
+<li>Click on the component to edit the Properties:<br> Name: <code>BUY_AGG</code><br> Groupings: <code>TRADER, SYMBOL</code></li>
+<li>Open the Aggregations field wizard and add 2 lines then configure them like this:<br><strong>Source Column: Aggregation Type<br></strong> TOTAL_PAID: <code>Sum</code><br> NUM_SHARES: <code>Sum</code></li>
+</ol>
+<p class="image-container"><img alt="7_8_agg" src="img/4c661dcec10a0ec0.png"></p>
+<p>Clicl OK. Your transformation job should now look like this:</p>
+<p class="image-container"><img alt="7_9_agg_view" src="img/10503546f793be54.png"></p>
+<h2 is-upgraded>We will now copy &amp; paste the Filter, Calculator, and Aggregate components to create a similar pipeline, but for SELL filter.</h2>
+<ol type="1">
+<li>Right-click on each of the components and select copy.</li>
+<li>Paste the component by right clicking on a blank area in the canvas, and selecting paste. Connect the new components as shown below. Your Transformation Job show now looks like this:</li>
+</ol>
+<p class="image-container"><img alt="7_10_cp" src="img/3fb96ed41cb93447.png"></p>
+<ol type="1" start="3">
+<li>Update the properties of the new components with the information below:<br> 3.1 Filter:</li>
+</ol>
+<ul>
+<li>Name: <code>ACTION = SELL</code></li>
+<li>Filter Conditions: <ul>
+<li>Input Column: <code>ACTION</code></li>
+<li>Qualifier: <code>Is</code></li>
+<li>Comparator: <code>Equal to</code></li>
+<li>Value: <code>BUY</code></li>
+</ul>
+</li>
+</ul>
+<p class="image-container"><img alt="7_11_filter" src="img/97cc470a8f9348b9.png"></p>
+<p>3.2 Calculator:</p>
+<ul>
+<li>Name: <code>TOTAL_GAIN</code></li>
+<li>Add a new field with &#34;+&#34; button, name it TOTAL_GAIN</li>
+<li>Build the expression:  <code>("NUM_SHARES" * "PRICE")</code></li>
+</ul>
+<p class="image-container"><img alt="7_12_calc" src="img/675e36f4e252d185.png"></p>
+<p>3.3 Aggregate:</p>
+<ul>
+<li>Name: <code>SELL_AGG</code></li>
+<li>Groupings: <code>TRADER, SYMBOL</code></li>
+<li>Aggregations: <code>TOTAL_GAIN, Sum, NUM_SHARES, Sum</code></li>
+</ul>
+<p class="image-container"><img alt="7_13_agg" src="img/ddc99ecf5939b81e.png"></p>
+<p>We are now going to join the 2 flows together.</p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991923" target="_blank">Join</a> - Join the BUY and SELL aggregations into a single dataset</h2>
+<ol type="1">
+<li>Find/Search the Join component under Data &gt; Join folder and drag and drop it as the last step of the job. Connect the Join component to both the BUY_AGG and SELL_AGG.</li>
+<li>Click on the Join component to edit the Properties:</li>
+</ol>
+<ul>
+<li>Name: <code>Join BUY and SELL Transactions</code></li>
+<li>Main Table: <code>BUY_AGG</code></li>
+<li>Main Table Alias: <code>buy</code></li>
+<li>Joins: <code>SELL_AGG, sell, Inner</code></li>
+<li>Join Expressions –&gt; buy_Inner_sell: <code>"buy"."TRADER" = "sell"."TRADER" and "buy"."SYMBOL" = "sell"."SYMBOL"</code></li>
+<li>Output Columns: <ul>
+<li>buy.TRADER: <code>TRADER</code></li>
+<li>buy.SYMBOL: <code>SYMBOL</code></li>
+<li>buy.sum_TOTAL_PAID: <code>sum_INVESTMENT</code></li>
+<li>buy.sum_NUM_SHARES: <code>sum_SHARESBOUGHT</code></li>
+<li>sell.sum_TOTAL_GAIN: <code>sum_RETURN</code></li>
+<li>sell.sum_NUM_SHARES: <code>sum_SHARESSOLD</code></li>
+</ul>
+</li>
+</ul>
+<p class="image-container"><img alt="7_14_join" src="img/5757c588d3950ddd.png"></p>
+<p>Your Transformation Job should now look like this.</p>
+<p class="image-container"><img alt="7_15_join_view" src="img/bb178dd949e1bc49.png"></p>
+<h2 is-upgraded>Calculate the amount of investment in each buy transaction</h2>
+<p>Add a new Calculator component to the canvas and set up with the below values (<em>use the same steps than in previous Calculator components to set up the expressions</em>).</p>
+<ul>
+<li>Name: <code>NET_SHARES NET_VALUE</code></li>
+<li>Include Input Columns: Yes</li>
+<li>Expressions: <ul>
+<li>NET_SHARES: <code>"sum_SHARESBOUGHT" - "sum_SHARESSOLD"</code></li>
+<li>NET_VALUE: <code>"sum_INVESTMENT" + "sum_RETURN"</code></li>
+</ul>
+</li>
+</ul>
+<p class="image-container"><img alt="7_16_calc" src="img/ad48b242be0ce688.png"></p>
+<h2 is-upgraded>Calculate the average price of stocks traded</h2>
+<p>Add another Calculator component to the job and configure it as follows.</p>
+<ul>
+<li>Name: <code>AVG_PRICE</code></li>
+<li>Include Input Columns: Yes</li>
+<li>Expressions: <ul>
+<li>AVG_PRICE: <code>-("NET_VALUE" / "NET_SHARES")</code></li>
+</ul>
+</li>
+</ul>
+<p class="image-container"><img alt="7_17_avg" src="img/102d970fed398583.png"></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991941" target="_blank">Rewrite Table</a></h2>
+<p>Add a last component to the job to write the result of the transformation to the CURRENT_POSITION table.</p>
+<p>Find/Search the Rewrite Table component and drag and drop it as the last component in the flow. Connect to the AVG_PRICE calculator, and edit the properties as below:</p>
+<ul>
+<li>Target Table: <code>CURRENT_POSITION</code></li>
+<li>Warehouse: [Environment Default]</li>
+<li>Database: [Environment Default]</li>
+<li>Schema: [Environment Default]</li>
+<li>Target Table: <code>CURRENT_POSITION</code></li>
+</ul>
+<p class="image-container"><img alt="7_18_table" src="img/7b8775b8e93d97e9.png"></p>
+<p>The job flow should look like this now:</p>
+<p class="image-container"><img alt="7_19_flow" src="img/3932c2f70db72d17.png"></p>
+<h2 is-upgraded>Execute this job</h2>
+<p>Right click anywhere on the job and select <strong>Run Job</strong>. To preview the result of the job:</p>
+<ul>
+<li>Click on the last component (Write to CURRENT_POSITION)</li>
+<li>Open the Sample tab</li>
+<li>Hit the <strong>Data</strong> button</li>
+<li>Data will be sampled and previewed in the pane below</li>
+</ul>
+<p class="image-container"><img alt="7_20_sample" src="img/d3a592c091fb0097.png"></p>
+<p>You can now go back and validate the CURRENT_POSITION table is generated in Snowflake:</p>
+<p class="image-container"><img alt="7_21_sf" src="img/485f2dd56c4d7276.png"></p>
+<p>Congratulations, you&#39;re done with building and running the first transformation job!</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Creating a Transformation Job: Profit &amp; Loss Calculation" duration="41">
+        <p>The previous Transformation job provided a snapshot of every trader, based on the BUY and SELL transactions which took place. This job will take it a step further by calculating the profit or loss each trader is experiencing by stock, as well as the cumulative profit or loss, based on their entire portfolio. The below figure shows the end product of the transformation pipeline we will create in this section.</p>
+<p class="image-container"><img alt="8_flow" src="img/67f32a4278c7d7dd.png"></p>
+<p>Let&#39;s get started!</p>
+<ol type="1">
+<li>Within the Projects Explorer, right click and select <strong>Add Transformation Job</strong>, title it <strong>VHOL_PNL_xform</strong> and drop it as the last step step after the <strong>VHOL_CURRENT_POSITION</strong> transformation component in the VHOL_orchestration job.</li>
+<li>Double click on the newly created <strong>VHOL_PNL_xform</strong> component to wwitch back to the new workspace to start building the job.</li>
+</ol>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991918" target="_blank">Table Input</a> - Read <strong>STOCK_HISTORY</strong></h2>
+<ol type="1">
+<li>Find the Table Input component and drop it into the canvas. Click on the component to configure as per the table below.</li>
+</ol>
+<p>Note that we are switching database to point to <strong>ZEPL_US_STOCKS_DAILY</strong> to get the <strong>STOCK_HISTORY</strong> table.</p>
+<p>Name:           <code>STOCK_HISTORY</code><br> Database:       <code>ZEPL_US_STOCKS_DAILY</code><br> Target Table:   <code>STOCK_HISTORY</code><br> Column Names:   <code>Select all columns</code></p>
+<p class="image-container"><img alt="8_stock_history" src="img/5bb16536eb3e8243.png"></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991641" target="_blank">Filter</a> - Only include the most recent close date for the stock</h2>
+<p>We will filter to only include the most recent clost date for the stock.</p>
+<ol type="1">
+<li>Right-click on the canvas and select Manage Job Variables.</li>
+</ol>
+<p class="image-container"><img alt="8_filter" src="img/e4486dea467a8fe6.png"></p>
+<ol type="1" start="2">
+<li>Fill out the Manage Job Variables as follows, using the  <img alt="8_add" src="img/f1842e625a7c5b73.png"> to add a new variable as follows:</li>
+</ol>
+<p>Name:       <code>yest_date</code><br> Type:       <code>DateTime</code><br> Behavior:   <code>Shared</code><br> Visibility: <code>Public</code><br> Value:      <code>1900-01-01</code></p>
+<p class="image-container"><img alt="8_stock_jv" src="img/3ee7ba3403f8be26.png"></p>
+<ol type="1" start="3">
+<li>Click <strong>Ok</strong></li>
+<li>Drag and drop a filter component as the next step after the STOCK_HISTORY table input. Fill out the filter properties as follows:</li>
+</ol>
+<p>Name: <code>FILTER ON YEST_DATE</code></p>
+<ol type="1" start="5">
+<li>Update the Filter Conditions and Combine Conditions as follows:</li>
+</ol>
+<p><strong>FILTER CONDITIONS:</strong></p>
+<p>Input Column:   <code>DATE</code><br> Qualifier:      <code>Is</code><br> Comparartor:    <code>Equal to</code><br> Value:          <code>${yest_date.now().add("days", -1).format("yyyy-MM-dd")} </code></p>
+<p><strong>Note</strong> If you are doing this lab offline (not on the webinar day), subtracting -1 days may or may not work. You basically have to subtract enough days so that the resultant date is a date when the stock market was open. So if you&#39;re doing this lab on Monday, subtract -3 days so that the date becomes Friday (assuming the stock market was open on Friday)</p>
+<p>Combine Conditions: <code>AND</code></p>
+<p><strong>Note</strong> that we entered sets the variable yest_date to yesterday&#39;s date, in a yyyy-mm-dd format.</p>
+<p class="image-container"><img alt="8_yest_date" src="img/2154c83d4b8c9b4.png"></p>
+<ol type="1" start="6">
+<li><strong>Sample</strong> the data by switching to the Sample tab and clicking <img alt="8_data" src="img/acb3315db2bfb254.png"> to validate the filter is working correctly, with the DATE field reflecting yesterday&#39;s date.</li>
+</ol>
+<p class="image-container"><img alt="8_sample.png" src="img/13c324ab8b46966c.png"></p>
+<ol type="1" start="7">
+<li>Locate the Table Input component and drag and drop it to the above-right of the FILTER ON YEST_DATE Filter component. Click on the component and edit the Properties as follows:</li>
+</ol>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991918" target="_blank">Table Input</a> - Read CURRENT_POSITION</h2>
+<p>Name:   <code>CURRENT_POSITION</code><br> Target Table:   <code>CURRENT_POSITION</code><br> Column Names:   <code>Select all columns</code></p>
+<p class="image-container"><img alt="8_current_pos" src="img/3db8b4094ece23dd.png"></p>
+<ol type="1">
+<li>Locate the Join component, drag and drop into the workspace and connect the previous Filter and Table Input components. The flow should look like this:</li>
+</ol>
+<p class="image-container"><img alt="8_flow_join" src="img/825e5e20a663e30d.png"></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991923" target="_blank">Join</a> - Join yestserday&#39;s stock close with the CURRENT_POSITION dataset</h2>
+<ol type="1">
+<li>Click on the Join component to edit its properties as follows:</li>
+</ol>
+<p>Name:   <code>Join CURRENT_POSITION and STOCK_HISTORY</code><br> Main Table:   <code>CURRENT_POSITION</code><br> Main Table Alias:   <code>current_position</code><br> Joins:    <code>FILTER ON YEST_DATE</code> , <code>stock_history</code> , <code>Left</code></p>
+<ol type="1" start="2">
+<li>Edit the Join Expressions property to add the following:</li>
+</ol>
+<p><strong>Join Expressions:<br></strong> current_position_Left_stock_history:    <code>"current_position"."SYMBOL" = "stock_history"."SYMBOL"</code></p>
+<p class="image-container"><img alt="8_join_expressions" src="img/b4935bb3ab5313d9.png"></p>
+<ol type="1" start="3">
+<li>Update the Output Columns property to add the following:</li>
+</ol>
+<p><strong>Output Columns:<br></strong> current_position.TRADER:            <code>TRADER</code><br> current_position.SYMBOL:            <code>SYMBOL</code><br> current_position.sum_INVESTMENT:    <code>sum_INVESTMENT</code><br> current_position.sum_SHARESBOUGHT:  <code>sum_SHARESBOUGHT</code><br> current_position.sum_RETURN:        <code>sum_RETURN</code><br> current_position.sum_SHARESSOLD:    <code>NET_SHARES</code><br> current_position.NET_SHARES:        <code>NET_SHARES</code><br> current_position.NET_VALUE:         <code>NET_VALUE</code><br> current_position.AVG_PRICE:         <code>AVG_PRICE</code><br> stock_history.CLOSE:                <code>CLOSE</code></p>
+<p class="image-container"><img alt="8_output_col" src="img/9e79c28f0fcd666b.png"></p>
+<ol type="1" start="4">
+<li>Click <strong>OK</strong></li>
+</ol>
+<p class="image-container"><img alt="8_join_prop" src="img/f135639ac5ebadd8.png"></p>
+<p>The job flow now looks like this:</p>
+<p class="image-container"><img alt="8_join_flow" src="img/454b220a21d331cb.png"></p>
+<p>Let&#39;s now calculate the realized and unrealized gains/losses for each trader.</p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991925" target="_blank">Calculator</a> - Calculate Realized &amp; Unrealized Gains</h2>
+<ol type="1">
+<li>Locate the calculator component. Drag and drop it to the end of the flow and connect it to the Join component.</li>
+</ol>
+<p class="image-container"><img alt="8_calc" src="img/f2b83b0ee78c1676.png"></p>
+<ol type="1" start="2">
+<li>Click on the Calculator component and edit the Properties as follows:</li>
+</ol>
+<p>Name:                     <code>GAINS</code><br> Include Input Columns:    <code>Yes</code></p>
+<ol type="1" start="3">
+<li>Edit the Calculations property, and add the following expressions.</li>
+</ol>
+<p><strong>Expressions:<br></strong> UNREAL_GAINS:         <code>("NET_SHARES" * "CLOSE") - ("NET_SHARES" * "AVG_PRICE")</code><br> REAL_GAINS:           <code>CASE WHEN "NET_SHARES" = 0 THEN "NET_VALUE" ELSE "sum_INVESTMENT" - ("sum_SHARESSOLD" * "AVG_PRICE") END</code></p>
+<p class="image-container"><img alt="8_real" src="img/840df72141cade66.png"></p>
+<p class="image-container"><img alt="8_unreal" src="img/31e28b3febc55e30.png"></p>
+<p class="image-container"><img alt="8_gains_flow" src="img/10d819d6d40c6368.png"></p>
+<p>The flow should now look like this:</p>
+<p class="image-container"><img alt="8_gains_flow2" src="img/ca3afeb44d959e37.png"></p>
+<ol type="1" start="4">
+<li>Now, let&#39;s write the results to a new table called TRADER_PNL_TODAY using the Rewrite Table component.</li>
+</ol>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991941" target="_blank">Rewrite Table</a></h2>
+<ol type="1">
+<li>Locate the Rewrite Tablecomponent and drag and drop into the workspace. Link it to the GAINS calculator, and click to edit the Properties as follows:</li>
+</ol>
+<p>Name:           <code>TRADER_PNL_TODAY</code><br> Target Table:   <code>TRADER_PNL_TODAY</code></p>
+<p class="image-container"><img alt="8_pnl_today" src="img/97fc2fb743b910ef.png"></p>
+<p>The flow should now look like this:</p>
+<p class="image-container"><img alt="8_pnl_flow" src="img/94be05cb7cd20b16.png"></p>
+<ol type="1" start="2">
+<li>Now, locate a Aggregate component to it connect to the Calculator GAINS component, creating a parallel flow.</li>
+</ol>
+<p class="image-container"><img alt="8_para_flow" src="img/87b1baecd56fe139.png"></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1991880" target="_blank">Aggregate</a> - Sum up the gains, both realized and unrealized by each trader</h2>
+<ol type="1">
+<li>Click on the Aggregate component and edit the Properties as follows:</li>
+</ol>
+<p>Name:               <code>SUM GAINS PER TRADER</code><br> Groupings:          <code>TRADER</code><br> Aggregations:       <code>UNREAL_GAINS, Sum</code> , <code>REAL_GAINS, Sum</code></p>
+<p class="image-container"><img alt="8_agg_prop" src="img/6d20d3bdec3f220d.png"></p>
+<p>The flow should now look like this:</p>
+<p class="image-container"><img alt="8_agg_flow" src="img/33851c3d1280b46d.png"></p>
+<p>Finally, we are going to create a view to store this last aggregation result.</p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/2387025" target="_blank">Create View</a> - Write the trader and gains fields to a new view in Snowflake</h2>
+<ol type="1">
+<li>Locate the Rewrite Table component and drag and drop it to connect to the SUM GAINS PER TRADER Aggregate component.</li>
+<li>Click on the component and edit the Properties as follows:</li>
+</ol>
+<p>Name:                 <code>TRADER_PNL_TOTAL_VIEW</code><br> Target Table:         <code>TRADER_PNL_TOTAL_VIEW</code></p>
+<p class="image-container"><img alt="8_rewrite_today" src="img/f939023a9c89942d.png"></p>
+<p>The final flow of the job, should look like this:</p>
+<p class="image-container"><img alt="8_today_flow" src="img/80aedfa14afe8b36.png"></p>
+<p>You can check the datasets either with the Matillion sample function or go to Snowflake UI. There should be two tables created TRADER_PNL_TODAY and TRADER_PNL_TOTAL_VIEW.</p>
+<p class="image-container"><img alt="8_snowflake_today" src="img/685d0e9406528b16.png"></p>
+<h2 is-upgraded>Completing the Orchestration Job:</h2>
+<p>Return back to the VHOL_orchestration job, and drag and drop an <strong>Alter Warehouse</strong> component as the final step, linked to the VHOL_PNL_xform Transformation component.</p>
+<p><em>Pro tip: you can also COPY and PASTE the other Alter Warehouse component to just edit it.</em></p>
+<p>Edit the component to reflect as follows:</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p>Name:</p>
+</td><td colspan="1" rowspan="1"><p><code>Size Down Warehouse to XS</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>CommandType:</p>
+</td><td colspan="1" rowspan="1"><p><code>Set</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Properties:</p>
+</td><td colspan="1" rowspan="1"><p><code>WAREHOUSE_SIZE XSMALL</code></p>
+</td></tr>
+</table>
+<p>This will scale down your Virtual Warehouse after the orchestration job is completed.</p>
+<p class="image-container"><img alt="8_alter_final" src="img/7cb4f003b7a32680.png"></p>
+<p>Your final pipeline result should now look like this:</p>
+<p class="image-container"><img alt="8_final_flow" src="img/f690b9e561624a9f.png"></p>
+<p>Right click anywhere on the workspace click <strong>Run Job</strong> to run the job and enjoy seeing the data being loaded, transformed, while scaling up and down Snowflake warehouse dynamically!</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="BONUS - Daily Updates from Yahoo! Finance" duration="20">
+        <p>The portfolio manager wants up-to-date stock information to know exactly where their realized and unrealized gains stand. Utilizing Matillion&#39;s Universal Connectivity feature they can pull real-time market prices and make the calculation.</p>
+<ol type="1">
+<li>Begin by right-clicking in the Project Explorer and select Add Orchestration job to create a new Orchestration job. Name it Yahoo_Orch.</li>
+<li>Righ click on the canvas, and click Manage Grid Variables.</li>
+</ol>
+<p class="image-container"><img alt="9_1" src="img/c3c2bcaa2f4ca536.png"></p>
+<ol type="1" start="3">
+<li>Create a <a href="https://documentation.matillion.com/docs/2917841" target="_blank">Grid Variable</a> called <code>gv_tickers</code>, with a single column (<code>gvc_tickers</code>) populated with: AAPL and SBUX.</li>
+</ol>
+<p class="image-container"><img alt="9_2" src="img/88da76d2d5e81e81.png"></p>
+<ol type="1" start="4">
+<li>Click <strong>Next</strong> to add the columns AAPL and SBUX.</li>
+</ol>
+<p class="image-container"><img alt="9_3" src="img/b9541276fc8c9b3a.png"></p>
+<ol type="1" start="5">
+<li>Click on <strong>Project</strong> dropdown and select <strong>Manage Environment Variables</strong></li>
+</ol>
+<p class="image-container"><img alt="9-4" src="img/484755b649f020a9.png"></p>
+<ol type="1" start="6">
+<li>Create a <a href="https://documentation.matillion.com/docs/2943424" target="_blank">Environment Variable</a> called <code>ev_tickerlist</code> using the following properties:</li>
+</ol>
+<table>
+<tr><td colspan="1" rowspan="1"><p>Name:</p>
+</td><td colspan="1" rowspan="1"><p><code>ev_tickerlist</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Type:</p>
+</td><td colspan="1" rowspan="1"><p><code>text</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Behavior:</p>
+</td><td colspan="1" rowspan="1"><p><code>Copied</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Value:</p>
+</td><td colspan="1" rowspan="1"><p><code>AAPL%2CGOOG</code></p>
+</td></tr>
+</table>
+<p class="image-container"><img alt="9-5" src="img/2430cc3be45837fa.png"></p>
+<ol type="1" start="6">
+<li>Drag and drop the <strong>Query Result to Grid</strong> component as the first  step in the flow. Fill out the component as follows:</li>
+</ol>
+<table>
+<tr><td colspan="1" rowspan="1"><p>Name:</p>
+</td><td colspan="1" rowspan="1"><p><code>Tickers to Grid</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Basic/Advanced</p>
+</td><td colspan="1" rowspan="1"><p><code>Advanced</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>SQL Query</p>
+</td><td colspan="1" rowspan="1"><p><code>SELECT DISTINCT("SYMBOL") FROM "TRADES_HISTORY" WHERE "TRADER" = 'CERSEI' LIMIT 10</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Grid Variable</p>
+</td><td colspan="1" rowspan="1"><p><code>gv_tickers</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Grid Variable Mapping</p>
+</td><td colspan="1" rowspan="1"><p><code>gvc_tickers: SYMBOL</code></p>
+</td></tr>
+</table>
+<p class="image-container"><img alt="9-6" src="img/aec9e543be46ff85.png"></p>
+<p class="image-container"><img alt="9-7" src="img/c653bf7eeeeb1945.png"></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/2234735" target="_blank">Python Script</a></h2>
+<p>We will incorporate a Python script to &#34;unpack&#34; the Grid Variable set in the next step. With the stock symbols saved to a variable called loc_TICKERS, a loop will be performed to reformat a query parameter needed for a call to the <a href="https://www.yahoofinanceapi.com/" target="_blank">Yahoo! Finance quote endpoint</a>.</p>
+<ol type="1">
+<li>Locate the <strong>Python Script</strong> component and drop as the last step in the flow:</li>
+</ol>
+<p class="image-container"><img alt="9-8" src="img/96d7734e2973fb80.png"></p>
+<ol type="1" start="2">
+<li>Update the Python Script component with the following:</li>
+</ol>
+<p><strong>Script</strong>:</p>
+<pre><code>print (context.getGridVariable(&#39;gv_tickers&#39;))
+loc_TICKERS = context.getGridVariable(&#39;gv_tickers&#39;)
+
+api_param = &#39;&#39;
+
+for layer1 in loc_TICKERS:
+  for each in layer1:
+    api_param = api_param + each + &#39;%2C&#39;
+    #print(each) validate unpackaging of array
+    
+api_param = api_param[:-3]
+print(api_param)
+
+context.updateVariable(&#39;ev_tickerlist&#39;, api_param)
+
+print(ev_tickerlist)
+
+</code></pre>
+<p><strong>Interpeter: </strong><code>Python 3</code></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/1959484" target="_blank">API-Extract</a> - Pull Current Stock Price Data</h2>
+<ol type="1">
+<li>From the Projects drop down in the top left, select <strong>Manage API Profiles</strong> &gt; <strong>Manage Extract Profiles</strong>.</li>
+</ol>
+<p class="image-container"><img alt="9-9" src="img/ef97964206fea6ab.png"></p>
+<ol type="1" start="2">
+<li>Add a new <strong>Extract Profile</strong> using the information below:</li>
+</ol>
+<p><strong>Profile Name: </strong><code>YahooFinance</code></p>
+<p class="image-container"><img alt="9-10" src="img/380a675037b2e99.png"></p>
+<ol type="1" start="3">
+<li>Click <strong>Ok</strong> and select <strong>New Endpoint</strong>, and update with the following information:</li>
+</ol>
+<p><strong>Endpoint Name: </strong><code>QuotesByTicker</code></p>
+<ol type="1" start="4">
+<li>Click <strong>Next</strong>.</li>
+<li>Set the Endpoint Configuration GET to the following URI: <code>https://yfapi.net/v6/finance/quote</code></li>
+<li>Select the <strong>Params</strong> tab and update with the following:</li>
+</ol>
+<p><strong>Params:</strong></p>
+<table>
+<tr><td colspan="3" rowspan="1"></td><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>lang</code></p>
+</td><td colspan="1" rowspan="1"><p><code>en</code></p>
+</td><td colspan="1" rowspan="1"><p><code>Query</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>region</code></p>
+</td><td colspan="1" rowspan="1"><p><code>US</code></p>
+</td><td colspan="1" rowspan="1"><p><code>Query</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>symbols</code></p>
+</td><td colspan="1" rowspan="1"><p><code>AAPL,BTC-USD,EURUSD=X</code></p>
+</td><td colspan="1" rowspan="1"><p><code>Query</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>X-API-KEY</code></p>
+</td><td colspan="1" rowspan="1"><p><strong><code>SEE NOTE BELOW</code></strong></p>
+</td><td colspan="1" rowspan="1"><p><code>Header</code></p>
+</td></tr>
+</table>
+<p><strong>NOTE:</strong> Your X-API-KEY must be obtained from Yahoo Finance API (This can be retrieved by following the instructions <a href="https://www.yahoofinanceapi.com/tutorial" target="_blank">HERE</a>)</p>
+<ol type="1" start="7">
+<li>Click <strong>Next</strong> and <strong>Finish</strong> to complete creating the Endpoint.</li>
+<li>Locate the <strong>API Extract</strong> component and place is after the <strong>Python Script</strong> component.</li>
+</ol>
+<p class="image-container"><img alt="9-11" src="img/3042a46d57099184.png"></p>
+<ol type="1" start="9">
+<li>Update the component as follows:</li>
+</ol>
+<table>
+<tr><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Profile</p>
+</td><td colspan="1" rowspan="1"><p><code>YahooFinance</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Data Source</p>
+</td><td colspan="1" rowspan="1"><p><code>QuotesByTicker</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Query Params</p>
+</td><td colspan="1" rowspan="1"><p><code>lang - en</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p><code>region - US</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p><code>symbols - ${ev_tickerlist}</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Header Params</p>
+</td><td colspan="1" rowspan="1"><p><strong><code>YOUR API KEY</code></strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Location</p>
+</td><td colspan="1" rowspan="1"><p><code>Select the default S3 bucket provided by Partner Connect</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Table</p>
+</td><td colspan="1" rowspan="1"><p><code>VHOL_YAHOORAW</code></p>
+</td></tr>
+</table>
+<ol type="1" start="10">
+<li>Now we will create a new Transformation Job - Yahoo Transform - which will sit as the next step after the Yahoo Orchestration job just worked on.</li>
+</ol>
+<h2 is-upgraded>Transformation - Yahoo Transform</h2>
+<ol type="1">
+<li>Within the Projects Explorer, right click and select <strong>Add Transformation Job</strong>. Name it Yahoo_transform.</li>
+<li>Create a new Table Input component and update as follows:</li>
+</ol>
+<table>
+<tr><td colspan="3" rowspan="1"></td><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Name</p>
+</td><td colspan="2" rowspan="1"><p><code>VHOL_YAHOORAW</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Target Table</p>
+</td><td colspan="2" rowspan="1"><p><code>VHOL_YAHOORAW</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Column Names</p>
+</td><td colspan="2" rowspan="1"><p><code>Data Value</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+</table>
+<p class="image-container"><img alt="9-12" src="img/dde0ba6bcb71152d.png"></p>
+<h2 is-upgraded><a href="https://documentation.matillion.com/docs/2978311" target="_blank">Extract Nested Data</a> - We will flatten the semi structured format &amp; extract the values needed</h2>
+<ol type="1">
+<li>Find the <strong>Extract Nested Data</strong> Component and drag and drop it after the Table Input.</li>
+<li>Update the component as follows:</li>
+</ol>
+<table>
+<tr><td colspan="3" rowspan="1"></td><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Name</p>
+</td><td colspan="2" rowspan="1"><p><code>Extract Nested Data</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Include Input Column</p>
+</td><td colspan="2" rowspan="1"><p><code>No</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+</table>
+<p>Columns: Select <strong>Autofill</strong>, to populate all the available columns and select the following values:</p>
+<p><code>displayName, regularMarketPrice, symbol</code></p>
+<p class="image-container"><img alt="9-13" src="img/9c53a0db92e6a2bd.png"></p>
+<h2 is-upgraded>We will now read TRADER_PNL_TODAY from our previous transformation job.</h2>
+<ol type="1">
+<li>Locate the <strong>Table Input</strong> component and place is underneath the previous Table Input. And update the properties as follows:</li>
+</ol>
+<table>
+<tr><td colspan="3" rowspan="1"></td><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Name:</p>
+</td><td colspan="2" rowspan="1"><p><code>TRADER_PNL_TODAY</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Target Table:</p>
+</td><td colspan="2" rowspan="1"><p><code>TRADER_PNL_TODAY</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Column Names:</p>
+</td><td colspan="2" rowspan="1"><p>Select all columns</p>
+</td><td colspan="1" rowspan="1"></td></tr>
+</table>
+<p class="image-container"><img alt="9-14" src="img/7978daf98bbbc8d4.png"></p>
+<h2 is-upgraded>Now we will only filter for Cersei&#39;s trades by using the Filter component.</h2>
+<ol type="1">
+<li>Locate the <strong>Filter</strong> component and connect it to the table input from the previous step. And update the properties as follows:</li>
+</ol>
+<table>
+<tr><td colspan="3" rowspan="1"></td><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Name:</p>
+</td><td colspan="2" rowspan="1"><p><code>Cersei's Trades</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Input Column:</p>
+</td><td colspan="2" rowspan="1"><p><code>Trader</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Qualifier:</p>
+</td><td colspan="2" rowspan="1"><p><code>Is</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Comparator:</p>
+</td><td colspan="2" rowspan="1"><p><code>Value</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Value:</p>
+</td><td colspan="2" rowspan="1"><p><code>CERSEI</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+</table>
+<p class="image-container"><img alt="9-15" src="img/275517d293c0bb53.png"></p>
+<h2 is-upgraded>Now we will join Cersei&#39;s trades with the Yahoo API data using the Join component.</h2>
+<ol type="1">
+<li>Locate the <strong>Join</strong> component and connect to the Extract Nested Data and Cersei&#39;s Trades, and update the properties as follows:</li>
+</ol>
+<table>
+<tr><td colspan="3" rowspan="1"></td><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Name:</p>
+</td><td colspan="2" rowspan="1"><p>Join</p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Main Table:</p>
+</td><td colspan="2" rowspan="1"><p><code>Cersei's Trades</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Main Table Alias:</p>
+</td><td colspan="2" rowspan="1"><p><code>cersei</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Joins:</p>
+</td><td colspan="2" rowspan="1"><p><code>Joins Table - Extract Nested Data</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"></td><td colspan="2" rowspan="1"><p><code>Join Alias - trades</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"></td><td colspan="2" rowspan="1"><p><code>Join Type - Inner</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+</table>
+<p><strong>Join Expressions:</strong></p>
+<table>
+<tr><td colspan="3" rowspan="1"></td><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>cersei_inner_trades</p>
+</td><td colspan="2" rowspan="1"><p><code>"cersei"."SYMBOL" = "trades"."symbol"</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+</table>
+<p><strong>Output Columns:</strong></p>
+<table>
+<tr><td colspan="3" rowspan="1"></td><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>cersei.TRADER</code></p>
+</td><td colspan="2" rowspan="1"><p><code>TRADER</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>cersei.SYMBOL</code></p>
+</td><td colspan="2" rowspan="1"><p><code>SYMBOL</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>trades.regularMarketPrice</code></p>
+</td><td colspan="2" rowspan="1"><p><code>MARKETPRICE</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>cersei.AVG_PRICE</code></p>
+</td><td colspan="2" rowspan="1"><p><code>AVG_PRICE</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>cersei.NET_SHAERES</code></p>
+</td><td colspan="2" rowspan="1"><p><code># SHARES</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+</table>
+<p class="image-container"><img alt="9-16" src="img/a3d6c668821cf179.png"></p>
+<h2 is-upgraded>Calculate the Win / Loss Logic</h2>
+<ol type="1">
+<li>Drag and drop the Calculator component as the last step of the flow and update as follows:</li>
+</ol>
+<table>
+<tr><td colspan="3" rowspan="1"></td><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Name:</p>
+</td><td colspan="2" rowspan="1"><p><code>Calculator</code></p>
+</td><td colspan="1" rowspan="1"></td></tr>
+</table>
+<table>
+<tr><td colspan="2" rowspan="1"><p>Expressions:</p>
+</td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>MARKET_VALUE</code></p>
+</td><td colspan="1" rowspan="1"><p><code>"# SHARES" * "MARKETPLACE"</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>PORTFOLIO_VALUE</code></p>
+</td><td colspan="1" rowspan="1"><p><code>"AVG_PRICE" * "# SHARES"</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>UNREALIZED_GAINS</code></p>
+</td><td colspan="1" rowspan="1"><p><code>("AVG_PRICE" * "# SHARES") - ("# SHARES" * "MARKETPLACE")</code></p>
+</td></tr>
+</table>
+<p class="image-container"><img alt="9-17" src="img/3c4ed37d880514d0.png"></p>
+<p>Finally, we will write Cersei&#39;s profits back to Snowflake using the <strong>Rewrite</strong> component, and update as follows:</p>
+<table>
+<tr><td colspan="2" rowspan="1"></td><td colspan="1" rowspan="1"></td></tr>
+<tr><td colspan="1" rowspan="1"><p>Name:</p>
+</td><td colspan="1" rowspan="1"><p><code>CERSEI PROFITS</code></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>Target Table:</p>
+</td><td colspan="1" rowspan="1"><p><code>CERSEI PROFITS</code></p>
+</td></tr>
+</table>
+<p>Your final flow should now look like this:</p>
+<p class="image-container"><img alt="9-18" src="img/11195aa9fed71ac9.png"></p>
+<p>What this shows is the stock, quantity, and the real time average price of each stock. The resulting table is how much realized gains Cersei can expect based on the quantity of shares she owns. You can check the data in Snowflake to see that it was written correctly:</p>
+<p class="image-container"><img alt="9-19" src="img/4dede8527eccfc61.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion" duration="1">
+        <p>Congrats! You have successfully developed a well-orchestrated data engineering pipeline!</p>
+<h2 is-upgraded>What we have covered</h2>
+<ul>
+<li>Source 3rd party data from Snowflake data marketplace</li>
+<li>Use Matillion&#39;s GUI to build end-to-end transformation pipeline</li>
+<li>Leverage Matillion scale up/down Snowflake&#39;s virtual warehouses</li>
+</ul>
+<p>Using Matillion ETL for Snowflake we were able to easily extract data from S3, perform complex joins, filter and aggregate through an intuitive, browser based, easy to use UI.  If we were to have used traditional ETL tools, it would have required a lot code, resources, and time to complete.</p>
+<p>Matillion ETL makes data engineering easier by allowing you to build your data pipelines more efficiently with a low-code/no-code platform built for the Data Cloud. We can build complex data pipelines to scale up and down within Snowflake based on your workload profile.</p>
+<h2 is-upgraded>Related Resources</h2>
+<ul>
+<li><a href="https://docs.snowflake.com/" target="_blank">Snowflake Docs</a></li>
+<li><a href="https://documentation.matillion.com/" target="_blank">Matillion Docs</a></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

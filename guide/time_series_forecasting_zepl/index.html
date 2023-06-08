@@ -1,0 +1,549 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Time Series Forecasting with Zepl</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="time_series_forecasting_zepl"
+                  title="Time Series Forecasting with Zepl"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/devlabs/issues">
+    
+      <google-codelab-step label="Overview" duration="1">
+        <p>In this guide, we&#39;ll be walking you through how to build a time series forecasting model using Zepl&#39;s data science notebook with data loaded from Snowflake&#39;s Data Marketplace! We will be forecasting on stock market close values. <em>Please note:</em> This walk through is not to be used for investing purposes. This is intended to be used as a guide to demonstrate an example of how to use Zepl and Snowflake.</p>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Familiarity with Python</li>
+<li>Familiarity with SQL</li>
+</ul>
+<h2 class="checklist" is-upgraded>What You&#39;ll Learn</h2>
+<ul class="checklist">
+<li>How to use Zepl&#39;s fully managed data science notebook</li>
+<li>How to clone data from the Data Marketplace in Snowflake</li>
+<li>How to accessing Python libraries in Zepl</li>
+<li>Introduction to <a href="https://facebook.github.io/prophet/docs/quick_start.html#python-api" target="_blank">Facebook&#39;s Prophet library</a> for time series forecasting</li>
+<li>Notebook style reporting with built in data visualizations</li>
+<li>How to write forecasted results from Zepl to Snowflake</li>
+</ul>
+<p class="image-container"><img src="img/24b7e76fcb181989.png"></p>
+<h2 is-upgraded>What You&#39;ll Need</h2>
+<ul>
+<li>A cup of coffee and your brain</li>
+<li><em>There are no downloads required for this guide!!</em></li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<ul>
+<li>A model to predict 15 days into the future of close values for the JNJ stock ticker</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Get US Stock Market data in Snowflake" duration="10">
+        <h2 is-upgraded>Create a Snowflake Account:</h2>
+<p><a href="https://signup.snowflake.com/" target="_blank">Sign up for free</a></p>
+<h2 is-upgraded>Clone data from Snowflake&#39;s Data Marketplace</h2>
+<ol type="1">
+<li>Login to Snowflake &gt; Open the Data Marketplace</li>
+<li>Search for the ‘US Stock Market Data for Data Science&#39; <br> <img style="width: 200.00px" src="img/a811d0ba6a9ad267.png"></li>
+<li>Select ‘Get Data&#39;. This user must have <code>ACCOUNTADMIN</code> privileges</li>
+<li>Assign a database name and roles for who should have access to this database</li>
+<li>Select Create Database &gt; View Database <br> <img src="img/ac2d45b08f8b7097.png"></li>
+</ol>
+<aside class="special"><p>You must have <code>ACCOUNTADMIN</code> privileges to clone this data set</p>
+</aside>
+<h3 is-upgraded><em>Troubleshooting</em></h3>
+<p>Check if the database was created properly</p>
+<pre><code language="language-sql" class="language-sql">SELECT * FROM &#34;ZEPL_US_STOCKS_DAILY&#34;.&#34;PUBLIC&#34;.&#34;STOCK_HISTORY&#34; LIMIT 10
+</code></pre>
+<p>Check if privileges are set correctly: This database needs to have <code>SELECT</code> privileges for a Role that your user has access to. Setting the <code>SELECT</code> privilege for the PUBLIC role will allow all users to read data from this database.</p>
+<ul>
+<li>View privilege: <a href="https://docs.snowflake.com/en/sql-reference/sql/show-grants.html" target="_blank">Doc</a></li>
+<li>Assign privileges: <a href="https://docs.snowflake.com/en/sql-reference/sql/grant-privilege.html" target="_blank">Doc</a></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Connect Zepl to Snowflake" duration="5">
+        <h2 is-upgraded>Create a Zepl Account:</h2>
+<p><a href="https://new-docs.zepl.com/docs/getting-started/sign-up-for-zepl#snowflake-partner-connect" target="_blank">Sign up for free using Partner Connect</a></p>
+<h2 is-upgraded>Connect to the US Stock Market Database</h2>
+<p><a href="https://new-docs.zepl.com/docs/connect-to-data/snowflake" target="_blank">Zepl Documentation</a></p>
+<ol type="1">
+<li>Login to Zepl</li>
+<li>Select <em>Resources</em> &gt; <em>Data Sources</em> &gt; <em>Snowflake<br> </em><img src="img/2fabd10d54cca996.png"></li>
+<li>Enter the required information below &gt; Select <em>Add</em>: <br><br> <img style="width: 600.00px" src="img/b6c7bf90c83d6827.png"></li>
+</ol>
+<ul>
+<li><strong>Account Details:</strong> Account, Warehouse, Database, and Schema should all match the values entered in Step 2</li>
+<li><strong>Credentials:</strong> Username, and Password and should match the Snowflake user and role with permissions to query this database</li>
+<li><strong>ROLE:</strong> Be sure this role has permissions to run the specified WAREHOUSE</li>
+<li><strong>Credential Type:</strong> Private</li>
+<li><a href="https://new-docs.zepl.com/docs/connect-to-data/zepl-data-sources#data-source-security" target="_blank">Learn more here</a></li>
+</ul>
+<h3 is-upgraded><em>Troubleshooting</em></h3>
+<p>Use the <em>Test Connection</em> button to validate the user credentials and ROLE. Below is a table of example outputs:</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong>Error Message</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>Action</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>Failed: Invalid credentials provided for the datasource</code></p>
+</td><td colspan="1" rowspan="1"><p>Your credentials were entered incorrectly</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><code>Failed: failed to run the test query: 390189 (08004): Role 'PRIVATE' specified in the connect string does not exist or not authorized. Contact your local system administrator, or attempt to login with another role, e.g. PUBLIC.</code></p>
+</td><td colspan="1" rowspan="1"><p>Enter a new Snowflake ROLE</p>
+</td></tr>
+</table>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Create a new notebook" duration="5">
+        <h2 is-upgraded>Creating a blank notebook</h2>
+<p><a href="https://new-docs.zepl.com/docs/using-the-zepl-notebook/zepl-notebook-experience/create-new-notebook" target="_blank">Zepl Documentation</a></p>
+<ol type="1">
+<li>From any screen, Select <em>Add New</em> (upper left)</li>
+<li>Select <em>+ New Notebook</em></li>
+<li>Enter Notebook Details:</li>
+</ol>
+<ul>
+<li>Select a <strong>Medium (16GB) or Large (32GB)</strong> Resource <br><img style="width: 550.00px" src="img/8a480f56ec21d6b8.png"></li>
+</ul>
+<h2 is-upgraded>Understanding Zepl&#39;s Notebook Options</h2>
+<p><strong>Resource Type: </strong><a href="https://new-docs.zepl.com/docs/configure-infrastructure/container-resource" target="_blank">Doc</a></p>
+<p>Zepl Containers are isolated environments that are used to execute code. Paired with an Image, these Containers provide a private runtime for a notebook when it spins up. Each of these Containers has a single CPU core and varies in the memory allocated to the notebook session. These Containers can be quickly scaled up or down in the notebook settings for larger or smaller workloads. Each Container has a default time out period of 30 minutes.</p>
+<p><strong>Image: </strong><a href="https://new-docs.zepl.com/docs/configure-infrastructure/images" target="_blank">Doc</a></p>
+<p>Zepl Images can help you and your team save significant time by creating reproducible environments for all notebooks to access. The Zepl Image builds all of the libraries required to run a notebook so your users don&#39;t have to worry about long wait times for installing libraries at the beginning of every notebook and hoping that each notebook environment is configured the same.</p>
+<p><strong>Spaces: </strong><a href="https://new-docs.zepl.com/docs/manage-your-organization/spaces" target="_blank">Doc</a></p>
+<p>A Zepl Space is a collection of notebooks that can be shared with built-in access controls.  The &#34;My Notebooks&#34; space is a private space dedicated to your user only. Typically, new spaces are created for a specific project or working group; it&#39;s a place for a group of people who are working together on a set of data science problems.</p>
+<h2 is-upgraded>Importing an existing notebook (optional)</h2>
+<p><a href="https://new-docs.zepl.com/docs/using-the-zepl-notebook/zepl-notebook-experience/importing-notebooks" target="_blank">Zepl Documentation</a></p>
+<ol type="1">
+<li>From any screen, Select <em>Add New</em> (upper left)</li>
+<li>Select <em>+ Import Notebook</em></li>
+<li>Type: <em>Fetch From URL</em></li>
+<li>Paste either link in the text field labeled <em>Link to your notebook</em>:</li>
+</ol>
+<ul>
+<li>link from Zepl&#39;s Published Notebook:</li>
+</ul>
+<pre><code>https://app.zepl.com/api/v1/viewer/fetch?url=bm90ZTovL3pzaGFpbnNreUB6ZXBsLmNvbS8xZjNiMjQwZTFjZjQ0MDk4YTU0Njc1MDM3MTMwNThlZC9ub3RlLmpzb24
+</code></pre>
+<ul>
+<li>link from Github repository:</li>
+</ul>
+<pre><code>https://raw.githubusercontent.com/zshainsky/Getting_Started_on_Zepl/master/Snowflake%20Guide%20Stock%20Time%20Series%20Forecasting.zpln
+</code></pre>
+<ol type="1">
+<li>Apply</li>
+</ol>
+<aside class="special"><p>Complete notebook code can be found here: <a href="https://app.zepl.com/viewer/notebooks/bm90ZTovL3pzaGFpbnNreUB6ZXBsLmNvbS8xZjNiMjQwZTFjZjQ0MDk4YTU0Njc1MDM3MTMwNThlZC9ub3RlLmpzb24" target="_blank">Notebook</a></p>
+</aside>
+<p class="image-container"><img src="img/973a8b685c3dc79d.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Query Snowflake" duration="5">
+        <h2 is-upgraded>Attach Snowflake Data Source</h2>
+<p><a href="https://new-docs.zepl.com/docs/connect-to-data/zepl-data-sources#attaching-a-data-source" target="_blank">Zepl Documentation</a></p>
+<ol type="1">
+<li>In your notebook, select the Data Source icon <img style="width: 35.00px" src="img/d8a28f67129dde5d.png"> on the right hand side of the screen.</li>
+<li>Select the plus icon next to the data source labeled ‘US_STOCKS_DAILY&#39; which you created in step 3. <br><img style="width: 350.00px" src="img/3c7fba7e76ef5100.png"></li>
+</ol>
+<h2 is-upgraded>In the Zepl Notebook:</h2>
+<p>First, add this code to the first paragraph</p>
+<pre><code language="language-python" class="language-python">%python
+import pandas as pd
+
+# Create a Snowflake Cursor Object
+cur = z.getDatasource(&#34;US_STOCKS_DAILY&#34;)
+
+# Un-comment if warehouse is not specified in the Data Source
+# cur.execute(&#34;USE WAREHOUSE COMPUTE_WH&#34;)
+
+# execute query
+cur.execute(&#34;&#34;&#34;SELECT * FROM ZEPL_US_STOCKS_DAILY.PUBLIC.STOCK_HISTORY LIMIT 100&#34;&#34;&#34;)
+
+# convert datasource into pandas dataframe
+df_100 = cur.fetch_pandas_all()
+
+# print dataframe as table
+z.show(df_100)
+</code></pre>
+<p>Second, select &#34;Run Paragraph&#34; <br><img src="img/30655686c9d734b8.png"></p>
+<h3 is-upgraded>Code Explained</h3>
+<p><code>import pandas as pd</code> <br> Zepl&#39;s General Purpose Image pre-installed the pandas library so all you have to do is import.</p>
+<p><code>cur = z.getDatasource("US_STOCKS_DAILY")</code><br> This function is used to access any data source that is attached to the notebook. A <a href="https://docs.snowflake.com/en/user-guide/python-connector-api.html#object-cursor" target="_blank">Cursor object</a> is returned to the <code>cur</code> variable. The specific data source is specified by setting the string input to the corresponding name of your data source. Lastly, the data source must be attached to the notebook before starting the container.</p>
+<p><code>cur.execute("""SELECT * FROM ZEPL_US_STOCKS_DAILY.PUBLIC.STOCK_HISTORY LIMIT 100""")</code><br> This will execute a specified query in Snowflake.</p>
+<p><code>df_100 = cur.fetch_pandas_all()</code><br> Return a Pandas DataFrame to the <code>df_100</code> variable using. See documentation for more details <a href="https://docs.snowflake.com/en/user-guide/python-connector-api.html#fetch_pandas_all" target="_blank">here</a></p>
+<h2 is-upgraded>Troubleshooting:</h2>
+<ul>
+<li>A data source must be attached to the notebook while the container is <em>Stopped</em>.</li>
+<li>Stop the container anytime you make changes to the data source, such as updating Account Details or Credentials.</li>
+<li><code>ProgrammingError: 000606 (57P03): No active warehouse selected in the current session.  Select an active warehouse with the 'use warehouse' command.</code></li>
+<li>Resolution: Stop container &gt; Uncomment code to set warehouse, <code>USE WAREHOUSE <warehouse name></code></li>
+<li><code>ProgrammingError: 251005: User is empty.</code></li>
+<li>Resolution: Stop container &gt; Check to make sure the Username value was saved successfully in Step 3</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Install and Import Python Libraries" duration="5">
+        <h2 is-upgraded>Overview</h2>
+<p>Zepl provides several options for loading libraries. The two most used are Custom Images and install during notebook run time. For this guide we will use the python package manager <code>pip</code> to install all of our required libraries. Learn more about <a href="https://new-docs.zepl.com/docs/configure-infrastructure/images" target="_blank">Custom Images</a> and how to get <a href="https://new-docs.zepl.com/docs/getting-started/trial-and-billing#activate-your-organization" target="_blank">activate your account</a> to access this feature.</p>
+<h2 is-upgraded>In the Zepl Notebook:</h2>
+<p>Add this code to the first paragraph and select &#34;Run Paragraph&#34;:</p>
+<pre><code language="language-sh" class="language-sh">%python
+# Install fbprophet Dependencies
+!pip install pystan~=2.14 Cython&gt;=0.22 cmdstanpy==0.9.68 numpy&gt;=1.15.4 pandas&gt;=1.0.4 matplotlib&gt;=2.0.0 LunarCalendar&gt;=0.0.9 convertdate&gt;=2.1.2 holidays&gt;=0.10.2 setuptools-git&gt;=1.2 python-dateutil&gt;=2.8.0 tqdm&gt;=4.36.1
+
+# Install fbprophet Library
+!pip install fbprophet==0.7.1
+</code></pre>
+<aside class="special"><p>This code may take several minutes to complete execution. <br> <br> The container must start, download, and install all of the libraries. This is one reason to build your own images using our Custom Image builder so notebooks start up instantly with all of the required libraries!</p>
+</aside>
+<h3 is-upgraded>Code Explained</h3>
+<p><code>!pip install pystan~=2.14 Cython>=0.22 cmdstanpy==0.9.68 numpy>=1.15.4 pandas>=1.0.4 matplotlib>=2.0.0 LunarCalendar>=0.0.9 convertdate>=2.1.2 holidays>=0.10.2 setuptools-git>=1.2 python-dateutil>=2.8.0 tqdm>=4.36.1</code><br></p>
+<p>This statement uses the `!` to access the container CLI and calls the `pip install` linux command to install the required libraries that support the facebook prophet library. Each version is specified to ensure the notebook runs consistently. </p>
+<p><code>!pip install fbprophet==0.7.1</code><br></p>
+<p>This statement installs the fbprophet library with a specific version.</p>
+<h3 is-upgraded>Add new paragraph</h3>
+<p>Add this code to next open paragraph in your notebook and select run paragraph:</p>
+<pre><code language="language-python" class="language-python">%python
+# Import Libraries
+from fbprophet import Prophet
+</code></pre>
+<h3 is-upgraded>Code Explained</h3>
+<p>We must also import the libraries that were just installed in the previous paragraph.</p>
+<h3 is-upgraded>Full output of code:</h3>
+<p class="image-container"><img src="img/679a6c40314cf299.png"></p>
+<h2 is-upgraded>Troubleshooting</h2>
+<ul>
+<li>Startup time: This code may take several minutes to complete execution. The container must start, download, and install all of the libraries. This is one reason to build your own images using our Custom Image builder so notebooks start up instantly with all of the required libraries!</li>
+<li>Documentation on Facebook Prophet: <a href="https://facebook.github.io/prophet/" target="_blank">Link</a></li>
+<li>Known issue with the install <a href="https://facebook.github.io/prophet/docs/installation.html#python" target="_blank">documentation</a>: A fix is outlined <a href="https://github.com/facebook/prophet/issues/1856" target="_blank">here</a> and implemented in our code already</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Building a Time Series Forecast" duration="20">
+        <p><strong>TL;DR:</strong> Predicting the future based on past events requires the past to have patterns that may repeat in the future. Future stock market prices are influenced by many external sources, thus solely relying on past events to pick stocks is not the best strategy. In this walk through, we are going to ignore that guidance and do it anyway. This guide is not intended to influence your personal trading decisions.</p>
+<h2 is-upgraded>Overview</h2>
+<p>In this section we will explore the data for a specific stock ticker, build a time series forecast, and visualize the results. All of the code can be referenced here: <a href="https://app.zepl.com/viewer/notebooks/bm90ZTovL3pzaGFpbnNreUB6ZXBsLmNvbS8xZjNiMjQwZTFjZjQ0MDk4YTU0Njc1MDM3MTMwNThlZC9ub3RlLmpzb24/20210330-212709_1676214636" target="_blank">Notebook Code</a>. We will be using the Facebook Prophet library with Python for our analysis. Zepl also supports R so feel free to use R as well.</p>
+<p>We will be looking at stock prices for Johnson &amp; Johnson (JNJ). Using the FBProphet model, we will look at all of the past Adjusted Close values for JNJ and determine if we can make stock trend predictions with a remotely accurate result. The Prophet library uses an additive model which is composed of 3 major components, trend, seasonality, and holidays (<a href="https://towardsdatascience.com/a-quick-start-of-time-series-forecasting-with-a-practical-example-using-fb-prophet-31c4447a2274" target="_blank">Ref</a>). Prophet is robust to missing data and shifts in the trend, and typically handles outliers well (<a href="https://github.com/facebook/prophet#prophet-automatic-forecasting-procedure" target="_blank">Ref</a>).</p>
+<h2 is-upgraded>Retrieve Data for Specific Stock Ticker</h2>
+<p>First let&#39;s retrieve data from Snowflake with all of the open, high, low, close values for one specific stock one stock. Add this code to a new paragraph in your notebook:</p>
+<pre><code language="language-python" class="language-python">%python
+# Set ticker value
+stock_ticker = &#39;JNJ&#39;
+
+# Get a new DataFrame for a Specific Stock ticker
+cur = z.getDatasource(&#34;US_STOCKS_DAILY&#34;)
+
+# Retrieve data only for the specified stock ticker and order results by date. Distinct will eliminate any duplicate values.
+cur = cur.execute(&#34;&#34;&#34;
+            SELECT DISTINCT * FROM 
+            ZEPL_US_STOCKS_DAILY.PUBLIC.STOCK_HISTORY 
+            WHERE symbol=&#39;{}&#39; 
+            ORDER BY date
+            &#34;&#34;&#34;.format(stock_ticker))
+
+# Create Pandas DataFrame from query results            
+df_stock = cur.fetch_pandas_all()
+</code></pre>
+<h3 is-upgraded>Code Explained</h3>
+<p>This is the same code we used above with a different SQL statement. The SQL statement is going to return all rows and columns from the STOCK_HISTORY table WHERE the SYMBOL column is equal to the value of our <code>stock_ticker</code> python variable. In this case, that is ‘JNJ&#39; (Johnson &amp; Johnson).</p>
+<h2 is-upgraded>Create and Train a Prophet Model</h2>
+<p>Add this code to the next paragraph to build a predictive model using the Prophet library:</p>
+<pre><code language="language-python" class="language-python">%python
+# Initialize Prophet object
+m = Prophet()
+
+# Drop unused columns
+ph_df = df_stock.drop([&#39;OPEN&#39;, &#39;HIGH&#39;, &#39;LOW&#39;,&#39;VOLUME&#39;, &#39;SYMBOL&#39;,&#39;CLOSE&#39;], axis=1)
+
+# Rename values so Prophet knows what to predict (y) and when that event happened (ds)
+ph_df.rename(columns={&#39;ADJCLOSE&#39;: &#39;y&#39;, &#39;DATE&#39;: &#39;ds&#39;}, inplace=True)
+
+# Fit Model
+m.fit(ph_df)
+</code></pre>
+<h3 is-upgraded>Code Explained</h3>
+<p><code>m = Prophet()</code><br> First we must create a python object from the Prophet library. This will be used to access all functions for forecasting.</p>
+<p><code>ph_df = df_stock.drop(['OPEN', 'HIGH', 'LOW','VOLUME', 'SYMBOL','CLOSE'], axis=1)</code><br><code>ph_df.rename(columns={'ADJCLOSE': 'y', 'DATE': 'ds'}, inplace=True)</code> <br> The Prophet library only takes in two columns as inputs before training. Those inputs are a date column and a value to be predicted. In our case the date column in our dataset is labeled as ‘DATE&#39; and we would like to predict the close value of the stock which is labeled as, ‘ADJCLOSE&#39;.</p>
+<p><code>m.fit(ph_df)</code><br> Lastly we train (fit) the model on the two input values above DATE and ADJCLOSE.</p>
+<h2 is-upgraded>Make Future Predictions</h2>
+<pre><code language="language-python" class="language-python">%python
+# Num days to predict
+period = 30
+
+# Create an empty DataFrame to store preditison for future dates
+future_prices = m.make_future_dataframe(periods=period)
+
+# Predict Prices
+forecast = m.predict(future_prices)
+
+# Inspect the forecast prices over the next 30 days. The yhat value is the prediction value.
+z.show(forecast.tail(period))
+</code></pre>
+<p class="image-container"><img src="img/7872d28e6c8f82c2.png"></p>
+<h3 is-upgraded>Code Explained</h3>
+<p><code>future_prices = m.make_future_dataframe(periods=period)</code><br> We must create a new dataframe that can store our future prediction values. <code>future_prices</code> will have 30 empty rows for storing 30 days of future predictions. The <code>period</code> value can be changed to generate greater or fewer predictions.</p>
+<p><code>forecast = m.predict(future_prices)</code> <br> Create predictions and display the results. This function will generate a number of new columns. The important values are defined below:</p>
+<ul>
+<li><code>yhat</code>: Predicted value</li>
+<li><code>yhat_lower</code>: Lower bound of prediction. 95% confidence interval.</li>
+<li><code>yhat_upper</code>: Upper bound of prediction. 95% confidence interval.</li>
+</ul>
+<h2 is-upgraded>Visualize Predictions</h2>
+<p>The code below will generate a chart to display our trend in relation to actual stock close values. The black dots represent the close values from our original dataset (<code>df_stock['ADJCLOSE']</code>) and the blue line represents the trend determined by our model predictions (<code>forecast['yhat']</code>). The light blue shading represents the upper and lower bound of the trend (<code>forecast['yhat_lower']</code> or <code>forecast['yhat_upper']</code>).<br></p>
+<pre><code language="language-python" class="language-python">%python
+m.plot(forecast);
+</code></pre>
+<p class="image-container"><img src="img/a1166b1c73131071.png"></p>
+<h2 is-upgraded>Visualize Seasonality</h2>
+<p>The code below will generate a chart to display the impact of seasonality on the trend. This can be used to identify if certain times of the day, month, or year effects the final trend. <br></p>
+<p>If we look at the yearly trend (final chart) it appears that stock prices tend to drop in march and rise towards the end of the year. These factors may lead us to re-fit the model based on specific holiday trends which can be done easily using prophet. Feel free to play around with adding holiday seasonality as well: <a href="https://facebook.github.io/prophet/docs/seasonality,_holiday_effects,_and_regressors.html#built-in-country-holidays" target="_blank">Examples</a><br></p>
+<pre><code language="language-python" class="language-python">%python
+m.plot_components(forecast);
+</code></pre>
+<p class="image-container"><img src="img/20d11f1debf06a77.png"></p>
+<h2 is-upgraded>Target Stock Price (30 day prediction)</h2>
+<p>The code below will display the change in stock price between our forecast value and our last known stock value. At the time of creating this guide, the last known stock price was $161.40 on March 26th 2021. Our predicted value for April 25th 2021 is set at $154.88. The difference is a drop in price by $6.52. While that might be interesting, we still need to evaluate the known error in this model and see if tuning our inputs may lead to a more accurate prediction.<br></p>
+<pre><code language="language-python" class="language-python">%python
+# Get the last known adjusted close value and date from our stock dataset
+num_rows_stock = df_stock.shape[0]
+last_close_date = df_stock.at[num_rows_stock-1, &#39;DATE&#39;]
+last_close_value = df_stock.at[num_rows_stock-1, &#39;ADJCLOSE&#39;]
+
+# Get the prediction value and date from our forecasted trend
+num_rows_forecast = forecast.shape[0]
+last_forecast_date = forecast.at[num_rows_forecast-1, &#39;ds&#39;].strftime(&#34;%Y-%m-%d&#34;)
+last_forecast_value = forecast.at[num_rows_forecast-1, &#39;yhat&#39;]
+
+# Display those values using HTML and simple inline styling
+print(&#39;&#39;&#39;%html &lt;h4&gt; Last Known Close Price    ({date}): &lt;b&gt;&lt;span style=&#34;color:red;&#34;&gt;${value:.2f}&lt;/span&gt;&lt;/b&gt;&lt;/h4&gt;&#39;&#39;&#39;.format(date=last_close_date, value=last_close_value))
+print(&#39;&#39;&#39;%html &lt;h4&gt; Forecasted Target Price   ({date}): &lt;b&gt;&lt;span style=&#34;color:red;&#34;&gt;${value:.2f}&lt;/span&gt;&lt;/b&gt;&lt;/h4&gt;&#39;&#39;&#39;.format(date=last_forecast_date, value=last_forecast_value))
+print(&#39;&#39;&#39;%html &lt;h4&gt; Projected Change:                   &lt;b&gt;&lt;span style=&#34;color:red;&#34;&gt;${value:.2f}&lt;/span&gt;&lt;/b&gt;&lt;/h4&gt;&#39;&#39;&#39;.format(value=last_forecast_value - last_close_value))
+</code></pre>
+<p class="image-container"><img style="width: 600.00px" src="img/70502791f2eafc.png"></p>
+<aside class="special"><p>Note that you can display HTML directly from our Python interpreter! If you want to learn more, look here: <a href="https://new-docs.zepl.com/docs/using-the-zepl-notebook/develop/data-visualization#html-css-javascript" target="_blank">Link</a></p>
+</aside>
+<p>Finally, let&#39;s zoom in and visualize the forecasted values 30 days in the future. The price that our model predicted is displayed in blue and the final 365 days of adjusted close values are shown in black.</p>
+<pre><code language="language-python" class="language-python">%python
+import time
+# Set graph date range to 180 days + future prediction values
+graph_dates = 180 + period
+
+# Total number of days in forecast DataFrame
+len_forecast = len(forecast[&#39;ds&#39;])
+
+# Set total number of stock values to display
+last_x_days = len_forecast - graph_dates
+
+# Display Graph and set the x limit to show last 180 days + 30 forecast period
+fig = m.plot(forecast);
+ax = fig.gca()
+ax.set_xlim([forecast.tail(graph_dates)[&#39;ds&#39;][last_x_days], forecast.tail(graph_dates)[&#39;ds&#39;][len_forecast-1]]) 
+</code></pre>
+<p class="image-container"><img src="img/1673e78d5cb13986.png"></p>
+<h3 is-upgraded>Code Explained</h3>
+<p><code>graph_dates = 180 + period</code><br><code>len_forecast = len(forecast['ds'])</code><br><code>last_x_days = len_forecast - graph_dates</code><br> We want to display the last 180 days plus our future 30 day prediction period. These variables are used to determine the number of days to display.</p>
+<p><code>fig = m.plot(forecast);</code><br><code>ax = fig.gca()</code><br> Plot the forecast as we have done above and retrieve the matplotlib Axis value (<a href="https://matplotlib.org/3.1.1/api/_as_gen/matplotlib.pyplot.gca.html" target="_blank">ref</a>). The semicolon at the end of the first line ensures only one graph is displayed.</p>
+<p><code>ax.set_xlim([forecast.tail(graph_dates)['ds'][last_x_days], forecast.tail(graph_dates)['ds'][len_forecast-1]])</code><br> Limit the X-Axis range for our graph</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Validate Our Predictions" duration="15">
+        <h2 is-upgraded>Overview</h2>
+<p>Now that we have created a prediction, we should validate the confidence level in our results. We will use cross-validation to make a series of predictions for a given a time window (horizon) and compare the predicted value to the actual value. In our case, we will compare predicted adjusted close values to actual close values.</p>
+<h2 is-upgraded>Cross-Validation</h2>
+<pre><code language="language-python" class="language-python">%python
+from fbprophet.diagnostics import cross_validation
+
+# Use built in cross_validation function with parallelization across multiple CPU processes
+df_cv = cross_validation(m, initial=&#39;6570 days&#39;, period=&#39;90 days&#39;, horizon = &#39;30 days&#39;, parallel=&#34;processes&#34;)
+
+# Display last 5 rows of results
+z.show(df_cv.tail())
+</code></pre>
+<p class="image-container"><img src="img/9792b72c530cb2.png"></p>
+<h2 is-upgraded>Code Explained</h2>
+<p><code>df_cv = cross_validation(m, initial='6570 days', horizon = '30 days', period='90 days', parallel="processes")</code><br></p>
+<p>The fbprophet library has an easy to use <code>cross_validation()</code> function to automate the entire process. This may take several minutes to complete.</p>
+<p>Here is what the input parameters mean:</p>
+<ul>
+<li><code>initial</code>: This is the time window to use for training. We are training on 6,570 days worth of data (18 years).</li>
+<li><code>horizon</code>: This is the time window to make predictions over. We will use 30 days worth of adjusted close values to predict and compare our results to the actual adjusted close values.</li>
+<li><code>period</code>: This is the time window to skip over between prediction windows (<code>horizon</code>). Setting this to 90 days allows us to make one set of predictions every quarter.</li>
+<li><code>parallel</code>: Cross-validation can be CPU intensive, so we will try to multiple CPUs to reduce overall run time.</li>
+</ul>
+<h2 is-upgraded>Cross-Validation Results</h2>
+<pre><code language="language-python" class="language-python">%python
+from fbprophet.diagnostics import performance_metrics
+
+# Use built in performance_metrics() function to retrieve performance metrics 
+df_p = performance_metrics(df_cv)
+
+z.show(df_p.tail())
+</code></pre>
+<p class="image-container"><img src="img/79442c811db5833b.png"></p>
+<h2 is-upgraded>Code Explained</h2>
+<p><code>performance_metrics(df_cv)</code><br></p>
+<p>We will focus on the Mean Absolute Percentage Error (MAPE). This measurement explains the size of the error in our predictions as a percentage (<a href="https://stochasticcoder.com/2016/04/25/forecasting-and-python-part-1-moving-averages/" target="_blank">Ref</a>). Breaking down our result, the lowest MAPE value is around 0.11, which we can translate to say that our predictions differ from the actual value by 11% on average. Depending on your risk level, perhaps that is enough for you. But, we still have a few tools to try to reduce our error.</p>
+<p>If you want to retrieve the exact minimum value, use this code below:</p>
+<pre><code language="language-python" class="language-python">%python
+# Get lowest MAPE value
+mape_perf = df_p.min(level=np.argmin(df_p[&#34;mape&#34;]))
+print(&#39;&#39;&#39;%html &lt;h4&gt; Display Lowest MAPE value: &lt;b&gt;&lt;span style=&#34;color:red;&#34;&gt;{value:.2f}&lt;/span&gt;&lt;/b&gt;&lt;/h4&gt;&#39;&#39;&#39;.format(value=mape_perf[&#39;mape&#39;][0]))
+</code></pre>
+<p class="image-container"><img style="width: 500.00px" src="img/f5defe222e1a90d0.png"></p>
+<h2 is-upgraded>Visualize Error Results</h2>
+<p>We can quickly visualize the MAPE value across the 30 day prediction window (horizon) used during cross-validation. The graph below shows how MAPE oscillates over the 30 day prediction. *If anyone knows why that oscillation occurs feel free to message me for a chat, I&#39;d love to know :) <a href="mailto:zshainsky@zepl.com" target="_blank">zack@zepl.com</a></p>
+<pre><code language="language-python" class="language-python">%python
+from fbprophet.plot import plot_cross_validation_metric
+fig = plot_cross_validation_metric(df_cv, metric=&#39;mape&#39;)
+</code></pre>
+<p class="image-container"><img src="img/8d9ab4628cc92065.png"></p>
+<h2 is-upgraded>Troubleshooting:</h2>
+<ul>
+<li><code>BrokenProcessPool: A process in the process pool was terminated abruptly while the future was running or pending.</code> May occur due to lack of memory available in the running container. Stop the container and select a larger container size. Typically 16GB and 32GB should be sufficient. <a href="https://new-docs.zepl.com/docs/using-the-zepl-notebook/run/runtime-settings" target="_blank">Doc</a></li>
+<li><code>ImportError: FloatProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html</code>: TQDM not supported for Zepl notebooks. Must use a parallel flag. This issue is tracked here and will be available in the next release of fbprophet (<a href="https://github.com/facebook/prophet/issues/1825" target="_blank">Ref</a>).</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Next Steps: Improving our model with Hyperparameter Tuning" duration="0">
+        <h2 is-upgraded>Overview</h2>
+<p>In order to improve the accuracy of our forecasted predations, we will test out many different values for how sensitive the model is to changepoints and seasonality. Hyperparameter tuning is a fancy name for a very simple concept. In order to tun our model we will test out lots of different parameters and compare the accuracy of the results. The parameters that produce the most accurate prediction values (MAPE or other error values) is the winner. We will perform the same cross-validation as we have in the previous 2 steps, only this time, we will use 4 different values for <code>changepoint_prior_scale</code> and 4 different values for <code>seasonality_prior_scale</code>.</p>
+<h2 is-upgraded>Implement Hyperparameter Tuning and Display Results</h2>
+<pre><code language="language-python" class="language-python">%python
+# https://facebook.github.io/prophet/docs/diagnostics.html#hyperparameter-tuning
+
+import itertools
+import numpy as np
+import pandas as pd
+
+# Track original waits for comparison later:
+original_changepoint_prior_scale = m.changepoint_prior_scale
+original_seasonality_prior_scale = m.seasonality_prior_scale
+
+param_grid = {  
+    &#39;changepoint_prior_scale&#39;: [0.001, 0.01, 0.1, 0.5],
+    &#39;seasonality_prior_scale&#39;: [0.01, 0.1, 1.0, 10.0],
+}
+
+# Use cutoff values from initial cross-validation set
+cutoffs = pd.to_datetime(df_cv[&#39;cutoff&#39;].unique())
+
+# Generate all combinations of parameters
+all_params = [dict(zip(param_grid.keys(), v)) for v in itertools.product(*param_grid.values())]
+rmses = []  # Store the RMSEs for each params here
+mae = []  # Store the MAE for each params here
+mape = []  # Store the MAPE for each params here
+
+# Use cross validation to evaluate all parameters
+for params in all_params:
+    m = Prophet(**params).fit(ph_df)  # Fit model with given params
+    df_cv = cross_validation(m, cutoffs=cutoffs, horizon=&#39;30 days&#39;, parallel=&#34;processes&#34;)
+    df_p = performance_metrics(df_cv, rolling_window=1)
+    rmses.append(df_p[&#39;rmse&#39;].values[0])
+    mae.append(df_p[&#39;mae&#39;].values[0])
+    mape.append(df_p[&#39;mape&#39;].values[0])
+
+# Find the best parameters
+tuning_results = pd.DataFrame(all_params)
+tuning_results[&#39;rmse&#39;] = rmses
+tuning_results[&#39;mae&#39;] = mae
+tuning_results[&#39;mape&#39;] = mape
+
+z.show(tuning_results)
+</code></pre>
+<aside class="special"><p>This may take some time to run. Again, try a larger container size (&gt; 32GB) if you are running into any memory related errors. Go grab some coffee :)</p>
+</aside>
+<p>Lastly, display the parameters with the most optimal results and compare the new parameters with the original ones:</p>
+<pre><code language="language-python" class="language-python">%python
+best_params = all_params[np.argmin(mape)]
+print(original_changepoint_prior_scale, original_seasonality_prior_scale, best_params)
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="References and Notes" duration="0">
+        <h2 is-upgraded>References:</h2>
+<ul>
+<li>Blogs</li>
+<li><a href="https://towardsdatascience.com/apple-stock-and-bitcoin-price-predictions-using-fbs-prophet-for-beginners-python-96d5ec404b77" target="_blank">towards data science</a></li>
+<li><a href="https://medium.com/tokopedia-data/hacking-time-series-forecasting-like-a-pro-with-fbprophet-76f276f0a058#:~:text=FBProphet%20uses%20time%20as%20a,logistics%20growth%20from%20its%20arguments.&text=A%20reasonable%20number%20of%20missing%20or%20outlier%20data" target="_blank">medium</a></li>
+<li>Considerations for why Stock Forecasting is very hard: &#34;Prophet is able to detect and fit these, but what trend changes should we expect moving forward? It&#39;s impossible to know for sure, so we do the most reasonable thing we can, and we assume that the future will see similar trend changes as the history.&#34; <a href="https://facebook.github.io/prophet/docs/uncertainty_intervals.html#uncertainty-in-the-trend" target="_blank">Ref</a></li>
+<li>Cross Validation</li>
+<li><a href="https://facebook.github.io/prophet/docs/diagnostics.html#cross-validation" target="_blank">fbprophet documentation</a></li>
+<li>How to use multi-processing: &#34;For problems that aren&#39;t too big, we recommend using <code>parallel="processes"</code>. It will achieve the highest performance when the parallel cross validation can be done on a single machine.&#34; <a href="https://facebook.github.io/prophet/docs/diagnostics.html#:~:text=For%20problems%20that%20aren't,cross%20validation%20on%20many%20machines." target="_blank">Ref</a></li>
+<li>How Prophet determines change points: Changepoints are the datetime points where the time series have abrupt changes in the trajectory. By default, Prophet adds 25 changepoints to the initial 80% of the data-set. Let&#39;s plot the vertical lines where the potential changepoints occurred&#34; <a href="https://towardsdatascience.com/time-series-prediction-using-prophet-in-python-35d65f626236" target="_blank">Ref</a></li>
+<li>Error Metrics: <a href="https://stochasticcoder.com/2016/04/25/forecasting-and-python-part-1-moving-averages/" target="_blank">Ref</a></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

@@ -1,0 +1,373 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Getting Started With Snowpark for Python and Streamlit</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="getting_started_with_snowpark_for_python_streamlit"
+                  title="Getting Started With Snowpark for Python and Streamlit"
+                  environment="web"
+                  feedback-link="">
+    
+      <google-codelab-step label="Overview" duration="1">
+        <h2 is-upgraded>What is Snowpark?</h2>
+<p>Snowpark at its core provides an API that developers can use to construct DataFrames that are executed lazily on Snowflake&#39;s platform. It enables data engineers, data scientists, and developers coding in languages other than SQL such as Python to take advantage of Snowflake&#39;s powerful platform without having to first move data out of Snowflake. This enables data application developers to run complex transformations within Snowflake while taking advantage of the built-in unlimited scalability, performance, governance and security features. Learn more about <a href="https://www.snowflake.com/snowpark/" target="_blank">Snowpark</a>.</p>
+<h2 is-upgraded>What is Streamlit?</h2>
+<p>Streamlit is a pure-Python <a href="https://github.com/streamlit/streamlit" target="_blank">open-source</a> application framework that enables developers to quickly and easily write data applications. Learn more about <a href="https://streamlit.io/" target="_blank">Streamlit</a>.</p>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<ul>
+<li>A web-based data application that uses Snowpark for Python and Streamlit</li>
+</ul>
+<h2 class="checklist" is-upgraded>What You&#39;ll Learn</h2>
+<ul class="checklist">
+<li>How to create a Session object for connecting to Snowflake</li>
+<li>How to create Snowpark DataFrames and load data from Snowflake</li>
+<li>How to display tabular data and interactive charts using Streamlit</li>
+<li>How to run the web-based data application using Streamlit</li>
+<li>Tips and tricks for enhancing the web-based data application in Streamlit</li>
+</ul>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Familiarity with Python</li>
+<li>Python 3.8</li>
+<li>Snowpark for Python library</li>
+<li>A <a href="https://www.snowflake.com/" target="_blank">Snowflake</a> account with ACCOUNTADMIN role <ul>
+<li>For this guide, we&#39;ll use the <strong>Environment Data Atlas</strong> dataset provided (for free) by <strong>Knoema</strong>. In the <a href="https://app.snowflake.com/marketplace/listing/GZSTZ491VXY?search=Knoema" target="_blank">Data Marketplace</a>, click on Get Data and follow the instructions to gain access to ENVIRONMENT_DATA_ATLAS.</li>
+<li>In particular, we will analyze data in schema <strong>ENVIRONMENT</strong> from tables <strong>EDGARED2019</strong>, <strong>WBWDI2019Jan</strong>, and <strong>UNENVDB2018</strong>.</li>
+</ul>
+</li>
+<li>Streamlit Python library</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Setup Environment" duration="5">
+        <ul>
+<li>Create Conda environment by downloading the miniconda installer from <a href="https://conda.io/miniconda.html" target="_blank">https://conda.io/miniconda.html</a>. (OR, you may use any other Python environment with Python 3.8)</li>
+</ul>
+<p>IMPORTANT: If you are using a machine wth Apple M1 chip, follow <a href="https://docs.snowflake.com/en/developer-guide/snowpark/python/setup" target="_blank">these instructons</a> to create the virtual environment and install Snowpark Python instead of what&#39;s described below.</p>
+<pre><code language="language-shell" class="language-shell">conda create --name snowpark -c https://repo.anaconda.com/pkgs/snowflake python=3.8
+</code></pre>
+<ul>
+<li>Activate conda environment by running the following command:</li>
+</ul>
+<pre><code language="language-shell" class="language-shell">conda activate snowpark
+</code></pre>
+<ul>
+<li>Install Snowpark for Python including Pandas and Streamlit by running the following commands:</li>
+</ul>
+<pre><code language="language-shell" class="language-shell">conda install -c https://repo.anaconda.com/pkgs/snowflake snowflake-snowpark-python pandas
+
+pip install streamlit (OR, conda install streamlit)
+</code></pre>
+<p>Troubleshooting <code>pyarrow</code> related issues:</p>
+<ul>
+<li>If you do not have <code>pyarrow</code> installed, you do not need to install it yourself; installing Snowpark automatically installs the appropriate version.</li>
+<li>If you have already installed any version of the <code>pyarrow</code> other than the recommended version <code>8.0.0</code>, uninstall it before installing Snowpark.</li>
+<li>Do not reinstall a different version of <code>pyarrow</code> after installing Snowpark.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Create Python Script" duration="1">
+        <p>Let&#39;s start by creating a Python script and adding the import statements to include the required libraries.</p>
+<p><em>my_snowpark_streamlit_app.py</em></p>
+<pre><code language="language-python" class="language-python"># Import required libraries
+from snowflake.snowpark.session import Session
+from snowflake.snowpark.functions import avg, sum, col,lit
+import streamlit as st
+import pandas as pd
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Connect to Snowflake" duration="5">
+        <p>In this step, you&#39;ll create a <a href="https://docs.snowflake.com/en/developer-guide/snowpark/python/creating-session.html" target="_blank">Session object</a> to connect to your Snowflake. Here&#39;s a quick way of doing that, but note that hard coding credentials directly in code is not recommended in production environments. In production environments a better approach would be to load credentials from <a href="https://github.com/iamontheinet/sf-code-snippets/blob/main/aws_secrets_manager_sf_connection.py" target="_blank">AWS Secrets Manager</a> or <a href="https://github.com/iamontheinet/sf-code-snippets/blob/main/azure_key_vault_sf_connection.py" target="_blank">Azure Key Vault</a>, for example.</p>
+<pre><code language="language-python" class="language-python"># Create Session object
+def create_session_object():
+   connection_parameters = {
+      &#34;account&#34;: &#34;&lt;account_identifier&gt;&#34;,
+      &#34;user&#34;: &#34;&lt;username&gt;&#34;,
+      &#34;password&#34;: &#34;&lt;password&gt;&#34;,
+      &#34;role&#34;: &#34;&lt;role_name&gt;&#34;,
+      &#34;warehouse&#34;: &#34;&lt;warehouse_name&gt;&#34;,
+      &#34;database&#34;: &#34;ENVIRONMENT_DATA_ATLAS&#34;,
+      &#34;schema&#34;: &#34;ENVIRONMENT&#34;
+   }
+   session = Session.builder.configs(connection_parameters).create()
+   return session
+</code></pre>
+<p>In the above code snippet, replace variables enclosed in &#34;&lt;&gt;&#34; with your values.</p>
+<p><em>IMPORTANT</em>:</p>
+<ul>
+<li>At the time of writing this guide, the database name was ENVIRONMENT_DATA_ATLAS and the schema name was ENVIRONMENT when accessing the data from the Marketplace. If they&#39;ve changed, update the values in <code>connection_parameters</code> above accordingly.</li>
+<li>For the <em>account</em> parameter, specify your <a href="https://docs.snowflake.com/en/user-guide/admin-account-identifier.html" target="_blank">account identifier</a> and do not include the snowflakecomputing.com domain name. Snowflake automatically appends this when creating the connection.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Load Data in Snowpark DataFrames" duration="5">
+        <p>In this step, you&#39;ll create three Snowpark DataFrames to load data from tables EDGARED2019, WBWDI2019Jan, and UNENVDB2018 from schema ENVIRONMENT.</p>
+<pre><code language="language-python" class="language-python"># Create Snowpark DataFrames that loads data from Knoema: Environmental Data Atlas
+def load_data(session):
+    # CO2 Emissions by Country
+    snow_df_co2 = session.table(&#34;ENVIRONMENT.EDGARED2019&#34;).filter(col(&#39;Indicator Name&#39;) == &#39;Fossil CO2 Emissions&#39;).filter(col(&#39;Type Name&#39;) == &#39;All Type&#39;)
+    snow_df_co2 = snow_df_co2.group_by(&#39;Location Name&#39;).agg(sum(&#39;$16&#39;).alias(&#34;Total CO2 Emissions&#34;)).filter(col(&#39;Location Name&#39;) != &#39;World&#39;).sort(&#39;Location Name&#39;)
+
+    # Forest Occupied Land Area by Country
+    snow_df_land = session.table(&#34;ENVIRONMENT.\&#34;WBWDI2019Jan\&#34;&#34;).filter(col(&#39;Series Name&#39;) == &#39;Forest area (% of land area)&#39;)
+    snow_df_land = snow_df_land.group_by(&#39;Country Name&#39;).agg(sum(&#39;$61&#39;).alias(&#34;Total Share of Forest Land&#34;)).sort(&#39;Country Name&#39;)
+
+    # Total Municipal Waste by Country
+    snow_df_waste = session.table(&#34;ENVIRONMENT.UNENVDB2018&#34;).filter(col(&#39;Variable Name&#39;) == &#39;Municipal waste collected&#39;)
+    snow_df_waste = snow_df_waste.group_by(&#39;Location Name&#39;).agg(sum(&#39;$12&#39;).alias(&#34;Total Municipal Waste&#34;)).sort(&#39;Location Name&#39;)
+
+    # Convert Snowpark DataFrames to Pandas DataFrames for Streamlit
+    pd_df_co2 = snow_df_co2.to_pandas()
+    pd_df_land = snow_df_land.to_pandas()
+    pd_df_waste = snow_df_waste.to_pandas()
+</code></pre>
+<p>In the above code snippet, we&#39;re leveraging several Snowpark DataFrame functions to load and transform data. For example, <em>filter(), group_by(), agg(), sum(), alias() and sort()</em>.</p>
+<p><strong>More importantly</strong>, note that at this point nothing is executed on the server because of lazy evaluation–which reduces the amount of data exchanged between Snowflake and the client/application. Also note that when working with Streamlit we need Pandas DataFrames and Snowpark API for Python exposes a method to convert Snowpark DataFrames to Pandas. An action, for example <em>to_pandas()</em> in our case, causes the DataFrame to be evaluated and sends the corresponding generated SQL statement to the server for execution.</p>
+<p>At this point, you&#39;re technically done with most of the code and all you need to do to render the data in a web application in your browser is to use Streamlit&#39;s <em>dataframe()</em> API. For example, <em>st.dataframe(pd_df_co2)</em>.</p>
+<p>But let&#39;s add a few more web components to make our data application a bit more presentable and interactive.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Add Web Page Components" duration="10">
+        <p>In this step, you&#39;ll add...</p>
+<ul>
+<li>A header and sub-header</li>
+</ul>
+<pre><code language="language-python" class="language-python"># Add header and a subheader
+st.header(&#34;Knoema: Environment Data Atlas&#34;)
+st.subheader(&#34;Powered by Snowpark for Python and Snowflake Data Marketplace | Made with Streamlit&#34;)
+</code></pre>
+<ul>
+<li>Use containers and columns to organize our dataframes using Streamlit&#39;s <em>columns()</em> and <em>container()</em> to display the data using Streamlit&#39;s <em>dataframe()</em> and an interactive bar chart using Streamlit&#39;s <em>slider()</em> and <em>bar_chart()</em></li>
+</ul>
+<pre><code language="language-python" class="language-python"># Use columns to display the three dataframes side-by-side along with their headers
+col1, col2, col3 = st.columns(3)
+with st.container():
+   with col1:
+   st.subheader(&#39;CO2 Emissions by Country&#39;)
+   st.dataframe(pd_df_co2)
+with col2:
+   st.subheader(&#39;Forest Occupied Land Area by Country&#39;)
+   st.dataframe(pd_df_land)
+with col3:
+   st.subheader(&#39;Total Municipal Waste by Country&#39;)
+   st.dataframe(pd_df_waste)
+
+# Display an interactive bar chart to visualize CO2 Emissions by Top N Countries
+with st.container():
+   st.subheader(&#39;CO2 Emissions by Top N Countries&#39;)
+   with st.expander(&#34;&#34;):
+      emissions_threshold = st.number_input(label=&#39;Emissions Threshold&#39;,min_value=5000, value=20000, step=5000)
+      pd_df_co2_top_n = snow_df_co2.filter(col(&#39;Total CO2 Emissions&#39;) &gt; emissions_threshold).toPandas()
+      st.bar_chart(data=pd_df_co2_top_n.set_index(&#39;Location Name&#39;), width=850, height=500, use_container_width=True)
+</code></pre>
+<p>In the above code snippet, a bar chart is constructed using Streamlit&#39;s <em>bar_chart()</em> which takes a dataframe as one of the parameters. In our case, that is a subset of the <strong>CO2 Emissions by Country</strong> dataframe filtered by column Total CO2 Emissions via Snowpark DataFrame&#39;s <em>filter()</em> and user-defined CO2 emissions threshold set via Streamlit&#39;s user input component <em>slider()</em>.</p>
+<p>Here&#39;s what the entire code in <em>my_snowpark_streamlit_app.py</em> should look like:</p>
+<pre><code language="language-python" class="language-python"># Snowpark
+from snowflake.snowpark.session import Session
+from snowflake.snowpark.functions import avg, sum, col,lit
+import streamlit as st
+import pandas as pd
+
+st.set_page_config(
+     page_title=&#34;Environment Data Atlas&#34;,
+     page_icon=&#34;🧊&#34;,
+     layout=&#34;wide&#34;,
+     initial_sidebar_state=&#34;expanded&#34;,
+     menu_items={
+         &#39;Get Help&#39;: &#39;https://developers.snowflake.com&#39;,
+         &#39;About&#39;: &#34;This is an *extremely* cool app powered by Snowpark for Python, Streamlit, and Snowflake Data Marketplace&#34;
+     }
+)
+
+# Create Session object
+def create_session_object():
+    connection_parameters = {
+      &#34;account&#34;: &#34;&lt;account_identifier&gt;&#34;,
+      &#34;user&#34;: &#34;&lt;username&gt;&#34;,
+      &#34;password&#34;: &#34;&lt;password&gt;&#34;,
+      &#34;role&#34;: &#34;&lt;role_name&gt;&#34;,
+      &#34;warehouse&#34;: &#34;&lt;warehouse_name&gt;&#34;,
+      &#34;database&#34;: &#34;KNOEMA_ENVIRONMENT_DATA_ATLAS&#34;,
+      &#34;schema&#34;: &#34;ENVIRONMENT&#34;
+    }
+    session = Session.builder.configs(connection_parameters).create()
+    print(session.sql(&#39;select current_warehouse(), current_database(), current_schema()&#39;).collect())
+    return session
+
+# Add header and a subheader
+st.header(&#34;Knoema: Environment Data Atlas&#34;)
+st.subheader(&#34;Powered by Snowpark for Python and Snowflake Data Marketplace | Made with Streamlit&#34;)
+  
+# Create Snowpark DataFrames that loads data from Knoema: Environmental Data Atlas
+def load_data(session):
+    # CO2 Emissions by Country
+    snow_df_co2 = session.table(&#34;ENVIRONMENT.EDGARED2019&#34;).filter(col(&#39;Indicator Name&#39;) == &#39;Fossil CO2 Emissions&#39;).filter(col(&#39;Type Name&#39;) == &#39;All Type&#39;)
+    snow_df_co2 = snow_df_co2.group_by(&#39;Location Name&#39;).agg(sum(&#39;$16&#39;).alias(&#34;Total CO2 Emissions&#34;)).filter(col(&#39;Location Name&#39;) != &#39;World&#39;).sort(&#39;Location Name&#39;)
+    
+    # Forest Occupied Land Area by Country
+    snow_df_land = session.table(&#34;ENVIRONMENT.\&#34;WBWDI2019Jan\&#34;&#34;).filter(col(&#39;Series Name&#39;) == &#39;Forest area (% of land area)&#39;)
+    snow_df_land = snow_df_land.group_by(&#39;Country Name&#39;).agg(sum(&#39;$61&#39;).alias(&#34;Total Share of Forest Land&#34;)).sort(&#39;Country Name&#39;)
+    
+    # Total Municipal Waste by Country
+    snow_df_waste = session.table(&#34;ENVIRONMENT.UNENVDB2018&#34;).filter(col(&#39;Variable Name&#39;) == &#39;Municipal waste collected&#39;)
+    snow_df_waste = snow_df_waste.group_by(&#39;Location Name&#39;).agg(sum(&#39;$12&#39;).alias(&#34;Total Municipal Waste&#34;)).sort(&#39;Location Name&#39;)
+    
+    # Convert Snowpark DataFrames to Pandas DataFrames for Streamlit
+    pd_df_co2  = snow_df_co2.to_pandas()
+    pd_df_land = snow_df_land.to_pandas() 
+    pd_df_waste = snow_df_waste.to_pandas()
+    
+    # Use columns to display the three dataframes side-by-side along with their headers
+    col1, col2, col3 = st.columns(3)
+    with st.container():
+        with col1:
+            st.subheader(&#39;CO2 Emissions by Country&#39;)
+            st.dataframe(pd_df_co2)
+        with col2:
+            st.subheader(&#39;Forest Occupied Land Area by Country&#39;)
+            st.dataframe(pd_df_land)
+        with col3:
+            st.subheader(&#39;Total Municipal Waste by Country&#39;)
+            st.dataframe(pd_df_waste)
+    
+    # Display an interactive chart to visualize CO2 Emissions by Top N Countries
+    with st.container():
+        st.subheader(&#39;CO2 Emissions by Top N Countries&#39;)
+        with st.expander(&#34;&#34;):
+            emissions_threshold = st.slider(label=&#39;Emissions Threshold&#39;,min_value=5000, value=20000, step=5000)
+            pd_df_co2_top_n = snow_df_co2.filter(col(&#39;Total CO2 Emissions&#39;) &gt; emissions_threshold).to_pandas()
+            st.bar_chart(data=pd_df_co2_top_n.set_index(&#39;Location Name&#39;), width=850, height=500, use_container_width=True)
+
+if __name__ == &#34;__main__&#34;:
+    session = create_session_object()
+    load_data(session)
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Run Web Application" duration="10">
+        <p>The fun part! Assuming your <a href="https://github.com/Snowflake-Labs/sfguide-snowpark-for-python-streamlit/blob/main/src/my_snowpark_streamlit_app.py" target="_blank">application script</a> is free of syntax and connection errors, you&#39;re ready to run the application.</p>
+<p>To run the application, execute <code>streamlit run my_snowpark_streamlit_app.py</code> at the command line.</p>
+<p>In the application:</p>
+<ol type="1">
+<li>You can click on columns to sort the data</li>
+<li>You can increase/decrease the emissions threshold value using the slider to change the data visualization</li>
+</ol>
+<p class="image-container"><img alt="App" src="img/efc997b75ca811d4.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Tips, Tricks And Updated App" duration="1">
+        <p>Here are a couple of tips and tricks to note:</p>
+<ul>
+<li>You can change the theme (light or dark) by clicking on the hamburger menu on the top right and then clicking on the <strong>Settings</strong> menu</li>
+<li>Making any changes to the source script and saving it will automatically prompt you to <strong>Rerun</strong> the application in the browser without having to stop and restart the application at the command line. (This can also be configured to always rerun the app without a prompt.)</li>
+<li>You can use Streamlit&#39;s <code>st.session_state</code> to save objects like <code>snowflake.snowpark.Session</code> so it&#39;s only created once during a session. For example:</li>
+</ul>
+<pre><code language="language-python" class="language-python">if &#34;snowpark_session&#34; not in st.session_state:
+  session = Session.builder.configs(json.load(open(&#34;connection.json&#34;))).create()
+  st.session_state[&#39;snowpark_session&#39;] = session
+else:
+  session = st.session_state[&#39;snowpark_session&#39;]
+</code></pre>
+<ul>
+<li>Checkout the multi-page <a href="https://github.com/Snowflake-Labs/sfguide-snowpark-for-python-streamlit/blob/main/src/new_snowpark_streamlit_app.py" target="_blank">updated application</a> that you can run by executing <code>streamlit run new_snowpark_streamlit_app.py</code>.</li>
+</ul>
+<p class="image-container"><img alt="App" src="img/a54b5e43f64548c9.png"></p>
+<p class="image-container"><img alt="App" src="img/a1b2a90ef38dd5d4.png"></p>
+<p class="image-container"><img alt="App" src="img/938a11a0eefab588.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion And Resources" duration="1">
+        <p>Congratulations! You&#39;ve successfully completed the Getting Started with Snowpark for Python and Streamlit quickstart guide.</p>
+<h2 is-upgraded>What You Learned</h2>
+<ul>
+<li>How to create a Session object for connecting to Snowflake</li>
+<li>How to create Snowpark DataFrames and load data from Snowflake</li>
+<li>How to display tabular data and interactive charts using Streamlit</li>
+<li>How to run the web-based data application using Streamlit</li>
+<li>Tips and tricks for enhancing the web-based data application</li>
+</ul>
+<h2 is-upgraded>Related Resources</h2>
+<ul>
+<li><a href="https://github.com/Snowflake-Labs/sfguide-snowpark-for-python-streamlit/blob/main/src/my_snowpark_streamlit_app.py" target="_blank">Application Source Code on GitHub</a></li>
+<li><a href="https://quickstarts.snowflake.com/guide/getting_started_snowpark_machine_learning/index.html" target="_blank">Machine Learning with Snowpark for Python</a></li>
+<li><a href="https://github.com/Snowflake-Labs/snowpark-python-demos/blob/main/README.md" target="_blank">Snowpark for Python Examples</a></li>
+<li><a href="https://docs.snowflake.com/en/developer-guide/snowpark/python/index.html" target="_blank">Snowpark for Python Developer Guide</a></li>
+<li><a href="https://docs.snowflake.com/en/developer-guide/snowpark/reference/python/index.html" target="_blank">Snowpark for Python API Reference</a></li>
+<li><a href="https://docs.streamlit.io/" target="_blank">Streamlit Docs</a></li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

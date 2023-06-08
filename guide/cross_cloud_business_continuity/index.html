@@ -1,0 +1,603 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Cross Cloud Business Continuity With Snowflake</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="cross_cloud_business_continuity"
+                  title="Cross Cloud Business Continuity With Snowflake"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="0">
+        <p>&#34;By failing to prepare, you are preparing to fail&#34; - Benjamin Franklin</p>
+<p>A sound business continuity/disaster recovery plan is an important milestone for organizations looking to build resilient data platforms. We are in the information age and data-driven insights grow revenue, provide services, support customers and aid with critical decision making. Digital transformation is the need of the hour and in this important endeavor businesses face many forms of disruptions like fire, floods, cyberattacks, ransomware etc. These disruptions can spiral into various undesirable outcomes - from operational systems coming to a standstill leading to financial losses to something worse, like reputational damage.</p>
+<p>Technology is the center-piece of all businesses and mission-critical data can never be unavailable. As businesses become cloud-based, new complexity arises. Namely, business continuity and continuous global operations rely even more on cloud dependability.</p>
+<p>Snowflake&#39;s new <strong>Group-Based Replication and Failover</strong> feature (in preview) enables account metadata, including everything from user identity and role-based access controls to governance policies, warehouses and resource monitors, to be automatically synchronized across clouds and regions for continuous availability. Multiple databases, shares and account metadata can be replicated as a unit, ensuring point-in-time consistency with the primary region.</p>
+<p>Snowflake&#39;s <strong>Client Redirect</strong> feature facilitates seamless failover from primary to secondary so that apps and users can continue functioning without disruption. In the past, to recover, the connection string in every client application had to be manually changed to connect to the new primary site (the former secondary site) in a different region or cloud. With Client Redirect, administrators can use a single server-side command to redirect client applications to the new primary site, without disrupting business teams.</p>
+<h2 is-upgraded>Prerequisites</h2>
+<ul>
+<li>Basic understanding of Snowflake concepts, familiarity with Snowflake UI.</li>
+<li>Two snowflake trial accounts, preferably in different regions and different cloud platforms. Designate any one of them as the primary account and the other one will be secondary. The instructions in this guide will ask you to fire specific commands on source and target accounts. So remember (or make a note) of your primary and secondary account names to avoid confusion.</li>
+<li>Account replication preview feature enabled on both trial accounts. If you&#39;ve applied for this lab in advance and provided your account details, this should already be enabled for you by the Snowflake team. Verify that account replication has been enabled for both your accounts with the command below</li>
+</ul>
+<pre><code language="language-bash" class="language-bash">use role ACCOUNTADMIN;
+show replication accounts;
+</code></pre>
+<ul>
+<li>The organization administrator (ORGADMIN role) must enable replication for the source and target accounts before replicating a database as documented <a href="https://docs.snowflake.com/en/user-guide/database-replication-config.html#prerequisite-enable-replication-for-accounts-in-the-organization" target="_blank">here</a>. For the Summit Lab, your Snowflake team will ensure this is done for the two trial accounts.</li>
+<li>Accountadmin access on both trial accounts.</li>
+<li>Failover App: BI Sigma Dashboard<ul>
+<li>A sigma trial account that is valid on the day of the lab. The trial account is valid for 14 days from the day of signing up. You can sign for the trial account directly from the <a href="https://www.sigmacomputing.com/free-trial/" target="_blank">sigmacomputing free trial link</a> or from your Snowflake UI by clicking on &#34;Partner Connect&#34; -&gt; Click on &#34;Sigma&#34; tile.</li>
+</ul>
+</li>
+<li>Failover App: Python Streamlit Dashboard - Install the following modules/connectors. Minimum python version needed is 3.7<ul>
+<li><a href="https://docs.snowflake.com/en/user-guide/python-connector-install.html#installing-the-python-connector" target="_blank">snowflake python connector</a></li>
+<li><a href="https://docs.streamlit.io/library/get-started/installation" target="_blank">streamlit</a> (pip/pip3 install streamlit)</li>
+<li>streamlit-echarts (pip/pip3  install streamlit-echarts)</li>
+<li>Pandas (pip/pip3 install pandas)</li>
+<li>Json  (pip/pip3 install json)</li>
+</ul>
+</li>
+<li>Failover App: SnowSQL<ul>
+<li><a href="https://docs.snowflake.com/en/user-guide/snowsql-install-config.html#installing-snowsql" target="_blank">Install SnowSQL</a></li>
+</ul>
+</li>
+<li>Access to SNOWFLAKE_SAMPLE_DATA share.</li>
+</ul>
+<h2 class="checklist" is-upgraded>What You&#39;ll Learn</h2>
+<p>In this quickstart you will learn</p>
+<ul>
+<li>How to use out of the box features available in Snowflake to build resiliency against region failures.</li>
+<li>Group based replication and failover of account objects.</li>
+<li>Database replication (as part of the group) from primary to secondary.</li>
+<li>Account object replication (users, roles, WHs, resource monitors, data shares) from primary to secondary.</li>
+<li>How to keep a DR instance ready to serve as exact replica of the primary instance - with upto date data and governance policies.</li>
+<li>How to trigger failover of replication/failover groups and client connections.</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Need</h2>
+<ul>
+<li>Python installed on local machine to stimulate a python app failover (Needed for streamlit app).</li>
+<li>A Sigma trial account to stimulate a BI dashboard failover (Needed for Sigma BI app).</li>
+<li>Our source data is based on the TPC-DS benchmark dataset that is shared with all Snowflake accounts by default. If you don&#39;t see that share, you can create it with below commands.</li>
+</ul>
+<pre><code language="language-bash" class="language-bash">use role ACCOUNTADMIN;
+create database SNOWFLAKE_SAMPLE_DATA from share SFC_SAMPLES.SAMPLE_DATA;
+grant imported privileges on database SNOWFLAKE_SAMPLE_DATA to role PUBLIC;
+</code></pre>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<ul>
+<li>Source account resources to mimic a production grade Snowflake account.</li>
+<li>Replicate/Failover selective resources to a secondary account in a transactionally consistent fashion.</li>
+<li>Build apps powered by primary snowflake account.</li>
+<li>Failover from primary to secondary account.</li>
+<li>Observe your apps now seamlessly powered by the secondary account.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Source Account Setup" duration="0">
+        <p>Download scripts to populate your source account from <a href="https://github.com/Snowflake-Labs/sfguide_failover_scripts" target="_blank">this Github repository</a> as a ZIP</p>
+<p>OR clone to a directory in your local machine with the below command</p>
+<pre><code language="language-bash" class="language-bash">git clone https://github.com/Snowflake-Labs/vhol_failover_scripts.git
+</code></pre>
+<p>After downloading the code you should see numbered sql scripts in the scripts folder. The sequence also determines their order of execution.</p>
+<p>Execute the below scripts (100 - 600) on your <em>source account</em>. Script 300 needs to have the generic user name replaced in order for it to run without issues. Make sure you replace the user name before running the 300 script as instructed below.</p>
+<ul>
+<li><strong>100_create_env_resources_source.sql</strong>: Create roles, roles hierarchy, databases and warehouses.</li>
+<li><strong>200_create_users_source.sql</strong>: Create user base.</li>
+<li><strong>300_roles_privileges_assignment_source.sql</strong>: Grant object privileges to roles and grant roles to create personas. <em>Be sure to replace user name &#34;REPLACEME&#34; with your own admin user.</em></li>
+<li><strong>400_ingest_data_source.sql</strong>: Create tables and data share and ingests data in tables.</li>
+<li><strong>500_governance_policies_source.sql</strong>: Create and assign object tags, masking policies and row access policy.</li>
+<li><strong>600_update_primary_task.sql</strong>: Create and start task to update primary tables every 3 minutes.</li>
+</ul>
+<p>You can run these scripts via UI by copy/pasting them or importing them as shown below. For some of our seasoned Snowflake users - if you have installed our awesome CLI SnowSQL and are comfortable pointing it to your source account for the lab, feel free to use that to execute the script. Make sure though that you pay attention to any errors encountered along the way.</p>
+<p class="image-container"><img alt="import_sql_ss" src="img/944b98d8d9f0f077.png"></p>
+<h3 is-upgraded>Ingest Payroll Data</h3>
+<p>In the code base downloaded from Github earlier, there&#39;s a data/hr_data_sample.csv file that we&#39;ll now ingest in our &#34;payroll.noam_northeast.employee_detail&#34; table. We&#39;ll use the data loader functionality of the UI to achieve this (unfortunately, the data loader functionality is only available in the classic UI for now. Psst.. it will soon be available in snowsight as well!). Follow along the screenshots to load the data</p>
+<p><strong>Navigate to the table Databases -&gt; Payroll -&gt; Employee_detail</strong></p>
+<p class="image-container"><img alt="payroll_ingest_1" src="img/b39d52cb6314f9dc.png"></p>
+<p><strong>Select ETL_WH to load your data</strong></p>
+<p class="image-container"><img alt="payroll_ingest_2" src="img/b248eab78388ff45.png"></p>
+<p><strong>Choose source file location</strong></p>
+<p class="image-container"><img alt="payroll_ingest_3" src="img/92a84a467b0a06f8.png"></p>
+<p><strong>Create a new file format and call it &#34;csv_format&#34;</strong></p>
+<p class="image-container"><img alt="payroll_ingest_4" src="img/7916dfe8f0cbafc6.png"></p>
+<p><strong>Choose following options for the file format</strong></p>
+<p class="image-container"><img alt="payroll_ingest_5" src="img/eb09e2a0d1dae24a.png"></p>
+<p><strong>You should have successfully loaded 100 records</strong></p>
+<p class="image-container"><img alt="payroll_ingest_6" src="img/8639df4eb2e7a1a0.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Review Source Account" duration="0">
+        <p>Our scripts in the previous step have created a production like snowflake environment for us. Here&#39;s a list of objects you just created when you ran those scripts:</p>
+<ul>
+<li>Users &amp; Roles</li>
+<li>RBAC Hierarchy</li>
+<li>Databases</li>
+<li>Compute warehouses</li>
+<li>Data copied from the snowflake_sample_data share</li>
+<li>Direct data shares</li>
+<li>Dynamic data masking policies</li>
+<li>Row access policy</li>
+<li>Object tags</li>
+</ul>
+<p>Phew! That&#39;s quite a list here&#39;s what all of this looks like in a picture:</p>
+<p class="image-container"><img alt="snowflake_source_account" src="img/eb092bc43e4753b6.png"></p>
+<h2 is-upgraded>Let&#39;s review our source account</h2>
+<h3 is-upgraded>Observe your RBAC</h3>
+<p>Below is what the roles hierarchy should look like in your source account. Do note that the roles hierarchy is only available via the new UI - Snowsight. Log on to Snowsight and assume the &#34;securityadmin&#34; role and then navigate to home -&gt; admin -&gt; users &amp; roles -&gt; roles.</p>
+<p class="image-container"><img alt="snowsight_screenshot" src="img/1a9d6acc185e095e.png"></p>
+<h3 is-upgraded>Verify Row Access Policy</h3>
+<p>Our row access policy is applied to the global_sales.online_retail.customer table with the following rules:</p>
+<ul>
+<li>sales_analyst role should be able to see data for market segments ‘automobile&#39; and ‘machinery&#39;.</li>
+<li>sales_admin role should be able to see data for market segments ‘automobile&#39;, ‘machinery&#39;, ‘building&#39; and ‘household&#39;.</li>
+<li>product_manager role should be able to see data for ALL market segments.</li>
+<li>All other roles should not be able to see data for ANY market segment.</li>
+</ul>
+<p>Below query when run with the sysadmin role should return 0 records, but when run with the sales_analyst, sales_admin or product_manaher role it should return results based on their privilege described above. Run the query once with each role - sysadmin, sales_analyst, sales_admin and product_manager and verify whether these rules are being adhered. Switch roles in your worksheet with the &#34;use role &lt;role_name&gt;&#34; command.</p>
+<pre><code language="language-sql" class="language-sql">use role sysadmin;
+use warehouse sales_wh;
+select * from global_sales.online_retail.customer limit 100;
+</code></pre>
+<p>When we replicate our data and our account objects, row level security is applied to the target account as well. This ensures that your access rules around data are retained even on the DR instance.</p>
+<h3 is-upgraded>Verify dynamic data masking policy</h3>
+<p>Our payroll.noam_northeast.employee_detail data contains critical PII data elements such as salary, ssn, email and iban. This is information that cannot be visible by everyone that has access to this data. We therefore deploy dynamic data masking policy protecting this dataset and only allowing authorized roles to see this information in the clear. The remaining roles would either see partially masked or completely redacted version of these columns, while having full visibility on other columns in this dataset that they can still use. Below are the rules of our dynamic data masking policy.</p>
+<ul>
+<li>email_address: hr_admin and product_manager roles can see complete email ids while all the other roles would see partially masked values, with only the domain name (@gmail.com, @yahoo.com) being visible.</li>
+<li>iban, credits_card and ssn: hr_admin and product_manager see ibans in the clear, all the other roles would see fully masked values.</li>
+<li>salary: hr_admin and product_manager see actual salaries and all the other roles would see 0.0</li>
+</ul>
+<p>Run the query below with two different roles - hr_analyst and hr_admin, observe all fields in the return results. What values does hr_analyst see for email, iban, cc and salary columns? What values does the hr_admin see?</p>
+<pre><code language="language-sql" class="language-sql">use role hr_analyst;
+use warehouse hr_wh;
+select * from payroll.noam_northeast.employee_detail limit 100;
+</code></pre>
+<h3 is-upgraded>Verify data shares</h3>
+<p>We&#39;ve created a few data shares with different variations, we&#39;ll observe what permissions each of these shares have and whether these are replicated as is to our secondary account.</p>
+<p>Below code snippet displays permissions on three data shares - GLOBAL_SALES_SHARE, INVENTORY_SHARE and CROSS_DATABASE_SHARE</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+show grants to share global_sales_share;
+show grants to share inventory_share;
+show grants to share cross_database_share;
+</code></pre>
+<ul>
+<li>GLOBAL_SALES_SHARE should have<ul>
+<li>usage on global_sales DB</li>
+<li>usage on global_sales.online_retail schema</li>
+<li>select on customer, lineitem and nation tables in global_sales.online_retail schema</li>
+</ul>
+</li>
+<li>INVENTORY_SHARE should have<ul>
+<li>usage on products DB</li>
+<li>reference_usage on references DB</li>
+<li>usage on internal and public schema in the products DB</li>
+<li>usage on products.internal.item_quantity() table function</li>
+</ul>
+</li>
+<li>CROSS_DATABASE_SHARE should have<ul>
+<li>usage on cross_database DB</li>
+<li>reference_usage on references and sales DB</li>
+<li>usage on cross_database.public schema</li>
+<li>usage on cross_database.public.morning_sales view</li>
+</ul>
+</li>
+</ul>
+<h3 is-upgraded>Verify location, type and owner of governance policies</h3>
+<p>We have built 6 masking policies, 4 object tags and 2 row access policies that we use to protect our data. Observe their details like which schema are these policies kept in, who owns them etc.</p>
+<pre><code language="language-sql" class="language-sql">use role governance_admin;
+show masking policies;
+show row access policies;
+show tags;
+</code></pre>
+<p>The output of the three commands should look something like this:</p>
+<p><strong>Masking Policies:</strong><img alt="masking_policy" src="img/341e5599a605027c.png"></p>
+<p><strong>Row Access Policy:</strong><img alt="row_access_policy" src="img/e443a2241b77633e.png"></p>
+<p><strong>Object Tags:</strong><img alt="object_tags" src="img/60fe8f2c935bc491.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Configure DR On Source And Target Accounts" duration="0">
+        <p>Let the DR configuration Begin! (and finish, you&#39;ll breeze through these steps with the blink of the eye - it&#39;s that easy to setup DR configuration on Snowflake). This is where we make use of the account replication and client redirect features and setup two first class snowflake objects on the source account:</p>
+<ul>
+<li><strong>Connection:</strong> The connection object stores a secure connection URL that you can use with any Snowflake client to connect to Snowflake.</li>
+<li><strong>Failover group:</strong>  It is a collection of objects in a source account that are replicated as a unit to one or more target accounts and can failover as a unit. A secondary failover group in a target account provides read-only access for the replicated objects. When a secondary failover group is promoted to become the primary failover group, read-write access is available.</li>
+</ul>
+<h3 is-upgraded>Note values for orgname, source_account_name and target_account_name</h3>
+<p>Fire the command below and note down values for &#34;organization_name&#34; and &#34;account_name&#34; for source and target accounts. You will need these in order to setup DR resources on the source and target accounts</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+show replication accounts;
+</code></pre>
+<h3 is-upgraded>Run these queries on source account</h3>
+<p>Substitue value of orgname and target_account_name (as noted above) in the commands below</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+create connection sfsummitfailover;
+alter connection sfsummitfailover enable failover to accounts &lt;orgname.target_account_name&gt;;
+
+create failover group sales_payroll_failover
+    object_types = users, roles, warehouses, resource monitors, databases, shares
+    allowed_databases = global_sales,common,payroll,inventory,loyalty,sales,crm,products,references,cross_database,externals
+    allowed_shares = global_sales_share,sales_history_share, cross_database_share, crm_share, inventory_share
+    replication_allowed_to_accounts = &lt;org_name.target_account_name&gt;
+    failover_allowed_to_accounts = &lt;org_name.target_account_name&gt;;
+
+</code></pre>
+<h3 is-upgraded>Run these queries on target account</h3>
+<p>Here you&#39;ll create a secondary connection and a secondary failover group.</p>
+<ul>
+<li>A secondary connection is linked to the primary connection and must be created in an account in a different region from the source account. The secondary connection name must be the same as the primary connection name.</li>
+<li>Just like the secondary connection, a secondary failover group is also linked to it&#39;s corresponding primary failover group and must be created in an account in a different region from the source account and with the same name as the primary failover group.</li>
+</ul>
+<p>Substitue value of orgname and source_account_name (as noted above) in the commands below</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+create connection sfsummitfailover
+    as replica of &lt;organame.source_account_name.SFSUMMITFAILOVER&gt;;
+
+create failover group SALES_PAYROLL_FAILOVER
+    as replica of &lt;organame.source_account_name.SALES_PAYROLL_FAILOVER&gt;;
+</code></pre>
+<h3 is-upgraded>Note the value for connection_url</h3>
+<p>Once you&#39;ve setup your connection object successfully, we need to note the value for connection_url for our connection object. This URL is what we&#39;ll be using in all our application building from this point on. The url takes an account agnostic form (<em>orgname-connection_name.snowflakecomputing.com</em>) because it could be pointing to either account depending upon which one is primary.</p>
+<pre><code language="language-sql" class="language-sql">#Fire command below and for the connection object created note the value of 
+#connection_url_ property. It is the 3rd last column in the result of the 
+# show connections command.
+show connections;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Build BI and/or Streamlit Apps" duration="2">
+        <p>Welcome app developers! this is where we have some fun, all of the hard work thus far with account setup, data curation, RBAC hierarchy and governance policy would be of no use if we&#39;re not powering apps that provide meaningful insights. It is after all these insightful apps that we want operational in case of an outage.</p>
+<p>We have two options for you today to build quick and simple, snowflake powered apps that we&#39;ll see later, will continue to be operational (By failing over to the DR) once we simulate a region failure.</p>
+<p>You can choose to build one of both of these.</p>
+<ul>
+<li>Option 1: For BI enthusiasts (Now is when that Sigma trial account will come in handy) - You&#39;ll be building a Sigma dashboard. Step by step instructions are available in the video below.</li>
+<li>Option 2: For the pythonistas in the house - you&#39;ll be playing with some streamlit and streamlit extensions magic (hopefully, it&#39;s already installed on your local machines. If not, don&#39;t stress - pip install streamlit &amp; pips install streamlit-echarts is all you need). If you have the required libraries installed, you can leverage the code below - enter your credentials to your Snowflake account and run the streamlit app.</li>
+<li>Option3: If you&#39;re not in the mood to build, no problem. There&#39;s an easy (and unfotrunately boring) way to test this too. You can stick with the good ole snowflake UI or Snowflake&#39;s CLI tool - snowsql to connect to the url mentioned in the connection_url field and see which account did snowflake route you to?</li>
+</ul>
+<h2 is-upgraded>Sigma BI Dashboard</h2>
+<p>In this step, we&#39;ll build a sigma dashboard that will rely on data available on our primary account. Once we replicate this data to our secondary account and failover, we&#39;ll see the sigma dashboard seamlessly point to the failover region and powered by our secondary account.</p>
+<p>In the video, you will see we connect Sigma to Snowflake by creating a connection. When filling up the connection details ensure that account name is same as the value recorded for &#34;connection_url&#34; at the end of step 4.</p>
+<iframe class="youtube-video" src="https://www.youtube.com/embed/vfmmDcQ1uB0?rel=0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<h3 is-upgraded>Query used to build the global sales dashboard</h3>
+<p>Here&#39;s the code snippet used for charting the global revenue figures.</p>
+<pre><code language="language-bash" class="language-bash">select n_name nation
+    , sum(o_totalprice) revenue
+from global_sales.online_retail.orders 
+inner join global_sales.online_retail.customer on c_custkey = o_custkey
+inner join global_sales.online_retail.nation on c_nationkey = n_nationkey
+where o_orderdate between dateadd(day,-2,current_date) and current_date()
+group by 1
+order by 2 desc
+</code></pre>
+<h3 is-upgraded>Final Dashboard</h3>
+<p>Once you&#39;re done building the dashboard, the end result should look something like this <img alt="sigma_dashboard" src="img/b3c5b1b7e9a55c95.png"></p>
+<h2 is-upgraded>Python Streamlit App</h2>
+<p>Save the code below in a python file and run it with the command &#34;streamlit run &lt;your-python-filename.py&gt;&#34;. Remember to substitute user_name, password and account_name (in the ctx object) for your account before running the script. The account_name should be same as the value recorded for &#34;connection_url&#34; at the end of step 4, you only need to include everything before &#34;.snowflakecomputing.com&#34;.</p>
+<pre><code language="language-python" class="language-python">#Save this python script in a file and run from terminal/command prompt as &#39;streamlit run &lt;name_of_script&gt;.py&#39;
+import snowflake.connector
+import streamlit as st
+import pandas as pd
+import streamlit_echarts as ste
+import json
+
+# Snowflake connection details
+ctx = snowflake.connector.connect(
+    user=&lt;user_name&gt;,
+    password=&lt;password&gt;,
+    #account name value should be that of connection_url from the show connections command. Everything before snowflakecomputing.com
+    account=&lt;account_name&gt;,
+    session_parameters={
+        &#39;QUERY_TAG&#39;: &#39;Snowflake Summit 2022: Failover HoL&#39;
+    },
+    warehouse=&#39;bi_reporting_wh&#39;,
+    database=&#39;global_sales&#39;,
+    role=&#39;product_manager&#39;
+    )
+
+# Create a cursor object
+cur = ctx.cursor()
+
+#Query to power streamlit app
+app_sql = &#34;&#34;&#34;
+select round(sum(o_totalprice)/1000,2) as value,
+       lower(c_mktsegment) as name
+       from
+       global_sales.online_retail.orders
+       inner join global_sales.online_retail.customer
+       on c_custkey = o_custkey
+       where o_orderdate between dateadd(day,-4,current_date) and current_date()
+       group by 2
+       order by 1 desc;
+&#34;&#34;&#34;
+#Query to get account name.
+get_account_sql = &#34;select current_account() as account_name;&#34;
+
+#Query to get region name.
+get_region_sql = &#34;select current_region() as region_name;&#34;
+
+#Query to get total sales transactions.
+trans_count_sql = &#34;select count(*) as transaction_count from sales..total_sales;&#34;
+
+#Query to get median qty.
+median_qty_sql = &#34;select median(quantity) as median_qty from sales..total_sales;&#34;
+
+#Query to get Last Update.
+last_update_sql = &#34;select max(last_update_time) as last_update from sales..total_sales;&#34;
+
+#Get Query results to power the main viz.
+cur.execute(app_sql)
+df = cur.fetch_pandas_all()
+
+#Get account name.
+cur.execute(get_account_sql)
+account_name_json = cur.fetch_pandas_all().to_json(orient = &#39;records&#39;)
+account_name = json.loads(account_name_json)[0][&#39;ACCOUNT_NAME&#39;]
+
+#Get region name.
+cur.execute(get_region_sql)
+region_name_json = cur.fetch_pandas_all().to_json(orient = &#39;records&#39;)
+region_name = json.loads(region_name_json)[0][&#39;REGION_NAME&#39;]
+
+#Get total transactions.
+cur.execute(trans_count_sql)
+trans_count_json = cur.fetch_pandas_all().to_json(orient = &#39;records&#39;)
+trans_count = json.loads(trans_count_json)[0][&#39;TRANSACTION_COUNT&#39;]
+
+#Get median qty.
+cur.execute(median_qty_sql)
+median_qty_json = cur.fetch_pandas_all().to_json(orient = &#39;records&#39;)
+median_qty = json.loads(median_qty_json)[0][&#39;MEDIAN_QTY&#39;]
+
+#Get last update timestamp.
+cur.execute(last_update_sql)
+last_update_json = cur.fetch_pandas_all().to_json(orient = &#39;records&#39;)
+last_update = json.loads(last_update_json)[0][&#39;LAST_UPDATE&#39;]
+
+#Adjust column case for our data frame to work well with streamlit extensions.
+df_col_case = df.rename(columns = {&#39;VALUE&#39;:&#39;value&#39;,&#39;NAME&#39;:&#39;name&#39;})
+df_chart_data = df_col_case.to_json(orient = &#39;records&#39;)
+df_chart_data = json.loads(df_chart_data);
+
+#Streamlit Extensions Pie chart visualization config.
+options = {
+    &#34;tooltip&#34;: {&#34;trigger&#34;: &#34;item&#34;},
+    &#34;legend&#34;: {&#34;top&#34;: &#34;5%&#34;, &#34;left&#34;: &#34;center&#34;},
+    &#34;series&#34;: [
+        {
+            &#34;name&#34;: &#34;Revenue By Market Segment&#34;,
+            &#34;type&#34;: &#34;pie&#34;,
+            &#34;radius&#34;: [&#34;40%&#34;, &#34;70%&#34;],
+            &#34;avoidLabelOverlap&#34;: False,
+            &#34;itemStyle&#34;: {
+                &#34;borderRadius&#34;: 15,
+                &#34;borderColor&#34;: &#34;#fff&#34;,
+                &#34;borderWidth&#34;: 7,
+            },
+            &#34;label&#34;: {&#34;show&#34;: False, &#34;position&#34;: &#34;center&#34;},
+            &#34;emphasis&#34;: {
+                &#34;label&#34;: {&#34;show&#34;: True, &#34;fontSize&#34;: &#34;40&#34;, &#34;fontWeight&#34;: &#34;bold&#34;}
+            },
+            &#34;labelLine&#34;: {&#34;show&#34;: False},
+            &#34;data&#34;: df_chart_data,
+        }
+    ],
+}
+
+#st.sidebar.title(&#34;Real Time Sales Insight&#34;)
+#original_title = &#39;&lt;p style=&#34;font-family:Courier; color:Blue; font-size: 20px;&#34;&gt;Transaction Count&lt;/p&gt;&#39;
+title_template = &#39;&lt;p style=&#34;color:Grey; font-size: 15px;&#34;&gt;&#39;
+value_template = &#39;&lt;p style=&#34;color:Black; font-size: 25px;&#34;&gt;&#39;
+
+account_title = title_template + &#39;Account Name:&lt;/p&gt;&#39;
+region_title = title_template + &#39;Region Name:&lt;/p&gt;&#39;
+transaction_title = title_template + &#39;Transaction Count:&lt;/p&gt;&#39;
+median_title = title_template + &#39;Median Qty:&lt;/p&gt;&#39;
+update_title = title_template + &#39;Last Updated Time:&lt;/p&gt;&#39;
+
+account_value = value_template + account_name + &#39;&lt;/p&gt;&#39;
+region_value = value_template + region_name + &#39;&lt;/p&gt;&#39;
+transaction_value = value_template + str(trans_count) + &#39;&lt;/p&gt;&#39;
+median_value = value_template + str(median_qty) + &#39;&lt;/p&gt;&#39;
+update_time_value = value_template + str(last_update) + &#39;&lt;/p&gt;&#39;
+
+st.sidebar.markdown(account_title,unsafe_allow_html=True)
+st.sidebar.markdown(account_value,unsafe_allow_html=True)
+st.sidebar.markdown(&#34;***&#34;)
+st.sidebar.markdown(region_title,unsafe_allow_html=True)
+st.sidebar.markdown(region_value,unsafe_allow_html=True)
+st.sidebar.markdown(&#34;***&#34;)
+st.sidebar.markdown(transaction_title,unsafe_allow_html=True)
+st.sidebar.markdown(transaction_value,unsafe_allow_html=True)
+st.sidebar.markdown(&#34;***&#34;)
+st.sidebar.markdown(median_title,unsafe_allow_html=True)
+st.sidebar.markdown(median_value,unsafe_allow_html=True)
+st.sidebar.markdown(&#34;***&#34;)
+st.sidebar.markdown(update_title,unsafe_allow_html=True)
+st.sidebar.markdown(update_time_value,unsafe_allow_html=True)
+
+overview_text = &#34;&#34;&#34;
+This dashboard will help demonstrate revenue share per market segment
+as of yesterday. It is additionally highlighting information about the
+Snowflake deployment that is powering the pie-chart visualization,
+observe the name and region of your snowflake account. We will now
+stimulate a failover scenario by promoting our secondary account to
+primary and observe seamless failover while our ever so important data
+apps such as this continue to be powered by Snowflake, not just on a
+completely new region but also on a different cloud provider as well.
+&#34;&#34;&#34;
+conclusion_text = &#34;&#34;&#34;
+Congratulations, on achieving cross-cloud cross-region
+replication in a matter of minutes. Remember, what happens in vegas doesn&#39;t
+necessarily need to stay in Vegas. Now go out, share this useful spear of
+knowledge that you now have in your quiver and go make your org resilient
+to region failures.
+&#34;&#34;&#34;
+st.button(&#34;Refresh&#34;)
+st.title(&#34;Snowflake + Streamlit&#34;)
+st.header(&#34;Overview&#34;)
+st.text(overview_text)
+
+st.header(&#34;Revenue By Market Segment&#34;)
+ste.st_echarts(
+    options=options, height=&#34;500px&#34;
+)
+st.header(&#34;Conclusion&#34;)
+st.text(conclusion_text)
+st.snow()
+</code></pre>
+<h3 is-upgraded>Streamlit app should look like this</h3>
+<p class="image-container"><img alt="streamlit_ss" src="img/bd60e987b0bb769b.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Replication To Target" duration="0">
+        <p>All that work behind us, we set up our account resources like users, roles, RBAC hierarchy, databases (not to mention, the crucial data it contains), compute warehouses, governance policies with RLS and CLS features, direct shares and then some beautiful customer facing apps - Phew!</p>
+<p>Now we have to do this all over again just to have a DR instance - how much more work will this be?? Oh right, negligible. With Snowflake a single command will bring all that setup from our source account to our target account in a matter of minutes if not seconds (depending upon the size/number of objects).</p>
+<p>But wait a minute, our source account and target account are on <em>different</em> public cloud providers - won&#39;t that factor into the setup or cause some kind of <em>extra work</em>? Nope, not with Snowflake - we&#39;re cloud agnostic and we hide all that complexity from you.</p>
+<h3 is-upgraded>Replicate to Secondary</h3>
+<p>Run the command below on your <strong>target/secondary account</strong> to begin replication</p>
+<pre><code language="language-bash" class="language-bash">use role accountadmin;
+alter failover group sales_payroll_failover refresh;
+</code></pre>
+<h3 is-upgraded>Did the replication fail?</h3>
+<p>Why do you think the first attempt to replication fail? Notice that there&#39;s an externals db that contains an external table which is not supported for replication and is the reason why replication failed.</p>
+<p>Let&#39;s fix this by removing the externals db from our failover group. Run the below command on the <strong>primary account</strong>.</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+alter failover group sales_payroll_failover remove externals from allowed_databases;
+</code></pre>
+<p>Now lets re-reun our replication, it should succeed this time. Run the below command on the <strong>secondary account</strong>.</p>
+<pre><code language="language-bash" class="language-bash">use role accountadmin;
+alter failover group sales_payroll_failover refresh;
+</code></pre>
+<p>This command would take about a minute to run , but wait where&#39;s it getting the compute from? is it using any of our WHs that we&#39;ve provisioned? Nope, we got you covered - this is serverless compute that Snowflake provides and autoscales depending upon the amound of work that needs to get done. There will be a separate lineitem under &#34;Replication&#34; for this on your bill.</p>
+<p>After this command has run - you should all of the databases and other objects that we included in the failover group definition available in your secondary account.</p>
+<h3 is-upgraded>Verify Replication</h3>
+<p>In order to ensure that replication worked, go back to step 3 and run all commands under &#34;Lets review our source account&#34; on <em>your target account</em> and ensure that you see the exact same results as you did on your source account. This will confirm that our replication worked as expected.</p>
+<h3 is-upgraded>Replicate on a schedule</h3>
+<p>With the initial replication successfully completed, we want to now replicate on a schedule so that any additional changes on the primary account are regularly made available to the secondary. Let&#39;s assume a strict RPO and replicate every 3 minutes. It is important to note that if there are no changes to primary, nothing will be replicated to secondary and there will be no replication cost incurred. Run the command below (on the <strong>primary account</strong>) to replicate our group evey three minutes.</p>
+<pre><code language="language-sql" class="language-sql">use role accountadmin;
+alter failover group sales_payroll_failover set replication_schedule = &#39;3 MINUTES&#39;;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Failover To Target" duration="0">
+        <p>Moment of truth! With our data and account objects safely replicated to the secondary account. Let&#39;s assume disaster has struck! Our primary account is experiencing outage and business and tech teams (The awesome failover HoL participants) have invested time and money in ensuring that they are prepared for this very event.</p>
+<p>So what do we do? Again, something very simple - fire two commands.</p>
+<ul>
+<li>The first command will failover our connection - making the secondary account the new primary account for account redirect. Meaning the url in the connection_url property of our connection object will start to point to the new primary account.</li>
+<li>The second command will do the same for our failover group, it has made the other account primary for objects covered in the failover group. This means that databases within this FG have now become read-write and the same databases in our new secondary (old primary) account have become read-only.</li>
+</ul>
+<p>Run the two commands below on the <strong>secondary account</strong></p>
+<pre><code language="language-bash" class="language-bash">use role accountadmin;
+
+alter connection sfsummitfailover primary;
+alter failover group sales_payroll_failover primary;
+</code></pre>
+<h3 is-upgraded>Run sales updates on the new primary account</h3>
+<p>Now that we have a new primary account, let&#39;s re-create the task (remember that tasks are not replicated) from our 600 script to update the sales table every 3 minutes</p>
+<pre><code language="language-sql" class="language-sql">use role sysadmin;
+#Important to note that IT_WH is available as part of the failover group that was replicated.
+use warehouse it_wh;
+
+CREATE OR REPLACE TASK REFERENCES..UPDATESALES
+    WAREHOUSE = etl_wh
+    SCHEDULE = &#39;3 minute&#39;
+AS
+    CALL sales..update_sales();
+
+use role accountadmin;
+grant execute task on account to role sysadmin;
+use role sysadmin;
+ALTER TASK REFERENCES..UPDATESALES RESUME;
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Let&#39;s Revisit Our Apps" duration="0">
+        <p>With your connection_url now pointing to a new primary account, refresh your BI Dashboards and/or Streamlit Apps and notice which accounts are they powered by? But let&#39;s not blindly believe the visualizations! Login to the new primary account and look at the query history. Were the queries behind the Viz indeed fired on your new primary account? They should very well be!</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion" duration="1">
+        <p>In this lab we have seen advantages of having a BC/DR strategy ensuring the data apps (that power the world) are resilient to region failures.</p>
+<p>We utilized Snowflake&#39;s shiny new group based replication to replicate not just our databases but other critical account resources like users, roles (and the privileges), data shares, warehouses, resource monitors.</p>
+<p>We also noticed that the data governance rules that keep our data secured on the source account, are retained on the target account. Masking policies, row access policies and object tags are replicated along with the database and applied on the target account. Thereby ensuring that in the event of a region failure you&#39;re not tasked with re-applying governance rules on your new primary.</p>
+<p>We&#39;ve worked through the following tasks:</p>
+<ul>
+<li>Setup source account resources needed to mimic a prod like environment.</li>
+<li>Understood the new group based replication and client re-direct.</li>
+<li>Configured failover group and connection on primary and created clones of these objects in the secondary.</li>
+<li>Built <em>slightly</em> fancy apps in Sigma and Streamlit.</li>
+<li>Replicated all resources configured in the failover group to the secondary account (<em>ahem, at lightning speed, ahem</em>)</li>
+<li>Finally, we simulated a DR scenario simply by promoting our secondary account to be the new primary account and observed that our applications continued to function seamlessly.</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>

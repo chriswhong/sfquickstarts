@@ -1,0 +1,408 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Getting started with Search Optimization</title>
+
+  
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5Q8R2G');</script>
+  
+
+  
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-08H27EW14N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-08H27EW14N');
+</script>
+
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5Q8R2G"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  
+  <google-codelab-analytics gaid="UA-41491190-9"></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  id="getting_started_with_search_optimization"
+                  title="Getting started with Search Optimization"
+                  environment="web"
+                  feedback-link="https://github.com/Snowflake-Labs/sfguides/issues">
+    
+      <google-codelab-step label="Overview" duration="10">
+        <p>Are you looking to significantly improve the performance of point lookup queries and certain analytical queries that require fast access to records? Search Optimization Service will help you achieve exactly that.</p>
+<p>We create optimized search access paths for the columns in your tables. We take advantage of those optimized paths in addition to other processing enhancements to reduce the number of micro partitions scanned and hence speed up the queries.</p>
+<p>For example, in the picture below, we have a query that is trying to find all rows where the name is Martin in a table. If Search Optimization is enabled, it helps identify <strong><em>the micro partitions that don&#39;t contain ‘Martin&#39; in the name column</em></strong> and reduces the number of partitions to be scanned. In this particular example, it reduces the number of partitions to be scanned from 15 to 1. <img alt="SO Working" src="img/d18f1b889f54ef5a.png"></p>
+<h2 is-upgraded>Prerequisites</h2>
+<p>A basic knowledge of how to run and monitor queries in the Snowflake Web UI.</p>
+<h2 class="checklist" is-upgraded>What you&#39;ll learn</h2>
+<ul class="checklist">
+<li>How to acquire a suitable dataset from Snowflake Marketplace</li>
+<li>How to enable Search Optimization</li>
+<li>What the performance impact of enabling Search Optimization on different queries is</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Need</h2>
+<ul>
+<li>A supported <a href="https://docs.snowflake.com/en/user-guide/setup.html" target="_blank">browser</a></li>
+<li>A Snowflake account with the Enterprise Edition <ul>
+<li>Sign-up using <a href="https://signup.snowflake.com/" target="_blank">Snowflake Trial</a><strong><em>OR</em></strong></li>
+<li>Get access to an existing Snowflake Enterprise Edition account with the <code>ACCOUNTADMIN</code> role or the <code>IMPORT SHARE</code> privilege</li>
+</ul>
+</li>
+</ul>
+<h2 is-upgraded>What You&#39;ll Build</h2>
+<p>Performant queries that explore the data from wikidata datasource. Wikidata is a free, collaborative, multilingual knowledge graph.  It is a document-oriented database, focused on items, which represent any kind of topic, concept, or object. More information can be found at https://en.wikipedia.org/wiki/Wikidata</p>
+<p>Negative: The Marketplace data used in this guide changes from time-to-time, and your query results may be slightly different than indicated in this guide. Additionally, the Snowflake UI changes periodically as well, and instructions/screenshots may be out of date.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Setup Snowflake Account and Virtual Warehouse" duration="5">
+        <p>The first step in the guide is to set up or log into Snowflake and set up a virtual warehouse if necessary.</p>
+<h2 is-upgraded>Access Snowflake&#39;s Web UI</h2>
+<p><a href="https://app.snowflake.com" target="_blank">app.snowflake.com</a></p>
+<p><strong>If this is the first time you are logging into the Snowflake UI</strong>, you will be prompted to enter your account name or account URL that you were given when you acquired a trial. The account URL contains your account name and potentially the region. Click <code>Sign-in</code> and you will be prompted for your user name and password.</p>
+<p><strong>If this is not the first time you are logging into the Snowflake UI</strong>, you should see a <code>Select an account to sign into</code> prompt and a button for your account name listed below it. Click the account you wish to access and you will be prompted for your user name and password (or another authentication mechanism).</p>
+<h2 is-upgraded>Switch to the appropriate role</h2>
+<p>The Snowflake web interface has a lot to offer, but for now, switch your current role from the default <code>SYSADMIN</code> to <code>ACCOUNTADMIN</code>.</p>
+<p class="image-container"><img alt="worksheet-image" src="img/b9575209bfee61ca.png"></p>
+<p>This will allow you to create shared databases from Snowflake Marketplace listings. If you don&#39;t have the <code>ACCOUNTADMIN</code> role, switch to a role with <code>IMPORT SHARE</code> privileges instead.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Create a Virtual Warehouse (if needed)" duration="2">
+        <p><strong><em>If you don&#39;t already have access to a Virtual Warehouse to run queries</em></strong>, you will need to create one.</p>
+<ul>
+<li>Navigate to the Compute &gt; Warehouses screen using the menu on the left side of the window</li>
+<li>Click the big blue + Warehouse button in the upper right of the window</li>
+<li>Create a Small Warehouse as shown in the screen below</li>
+</ul>
+<p class="image-container"><img alt="new-warehouse" src="img/255158dd804faa66.png"></p>
+<p>Be sure to change the <code>Suspend After (min) field</code> to 1 min to avoid wasting compute credits.</p>
+<p><strong><em>If you already have access to a Virtual Warehouse to run queries</em></strong>, make sure to scale it up or down to <code>Small</code> Warehouse for this guide.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Acquiring Data from Snowflake Marketplace" duration="2">
+        <p>The next step is to acquire data that has all data types supported by Search Optimization. The best place to acquire this data is the Snowflake Marketplace.</p>
+<ul>
+<li>Navigate to the <code>Marketplace</code> screen using the menu on the left side of the window</li>
+<li>Search for <code>Wikidata</code>  in the search bar</li>
+<li>Find and click the <code>Util Wikidata</code> tile</li>
+</ul>
+<p class="image-container"><img alt="wikidata" src="img/e8d74adda64e67d5.png"></p>
+<ul>
+<li>Once in the listing, click the big blue Get Data button</li>
+</ul>
+<p>On the <code>Get Data</code> screen, you may be prompted to complete your user profile if you have not done so before. Enter your name and email address into the profile screen and click the blue <code>Save</code> button. You will be returned to the <code>Get Data</code> screen.</p>
+<p>Congratulations! You have just created a shared database named <code>WIKIDATA</code> from a listing on the Snowflake Marketplace. Click the big blue <code>Query Data</code> button and advance to the next step in the guide.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Data Setup" duration="10">
+        <p>The prior section opened a worksheet editor in the new Snowflake UI with a few pre-populated queries that came from the sample queries defined in the Marketplace listing. You are not going to run any of these queries in this guide, but you are welcome to run them later.</p>
+<h2 is-upgraded>Understanding the data</h2>
+<p>You are going to first copy over two of the tables from <code>WIKIDATA</code> (the database that you just imported) into a new database (we will call it <code>WIKI_SO</code>).</p>
+<p>This is necessary as</p>
+<ul>
+<li>You wouldn&#39;t have the privileges to set up Search Optimization on the shared <code>WIKIDATA</code> database</li>
+<li>It will allow you to run the same query on both search optimized (in <code>WIKI_SO</code> database) and non search optimized tables (in <code>WIKIDATA</code> database) to compare the performance of Search Optimization.</li>
+</ul>
+<p>The first table we will use is <code>wikidata_original</code>, it has information about the wikidata articles such as description, label etc. There are <strong><em>96.9 million rows</em></strong> in this table.</p>
+<p>The second table is <code>entity_is_subclass_of</code>, which contains the information about subclass categories like subclass id and subclass name. It is a smaller table and has <strong><em>~3.3 million rows</em></strong>.</p>
+<p>To further understand the relationship between these two tables, consider the following 	query, where we are exploring an entity with Id <code>Q1968</code> (which is a Formula One article)</p>
+<pre><code>SELECT o.label, e.subclass_of_name
+    FROM
+        entity_is_subclass_of as e
+    JOIN wikidata_original as o
+    ON e.entity_id = o.id
+WHERE
+    e.entity_id = &#39;Q1968&#39;; -- Formula One article
+
+</code></pre>
+<p>The result looks like this:</p>
+<p class="image-container"><img alt="result" src="img/281b5b2a2c20151c.png"></p>
+<p>So, Id <code>Q1968</code> is an article about <code>Formula One</code> (<code>LABEL</code>) and this entity rightly belongs to the subclass <code>Formula Racing</code> (<code>SUBCLASS_OF_NAME</code>).</p>
+<h2 is-upgraded>Copy the required tables into a new database</h2>
+<p>Now let&#39;s copy over the above two tables into a new database before we enable Search Optimization on them.</p>
+<p>Before we run the queries to do so, let&#39;s create a new worksheet named <code>Search Optimization Guide</code> by clicking the <code>+ icon</code> on the left navigation bar. Throughout this guide, we will run  the queries on the search optimized tables in the <code>Search Optimization Guide</code> worksheet.</p>
+<p>Run the query below in the <code>Search Optimization Guide</code> worksheet:</p>
+<pre><code>CREATE DATABASE wiki_so;
+CREATE SCHEMA experiments;
+
+//Note: Substitute my_wh with your warehouse name if different
+ALTER WAREHOUSE my_wh set warehouse_size=&#39;4x-large&#39;;
+
+//This query will run in ~90 seconds.
+CREATE TABLE wiki_so.experiments.wikidata_original AS (SELECT * FROM wikidata.wikidata.wikidata_original);
+
+//This query will run in ~7 seconds.
+CREATE TABLE wiki_so.experiments.entity_is_subclass_of AS (SELECT * FROM wikidata.wikidata.entity_is_subclass_of);
+
+//Note: Substitute my_wh with your warehouse name if different
+ALTER WAREHOUSE my_wh set warehouse_size=&#39;small&#39;;
+</code></pre>
+<h2 is-upgraded>Enable Search Optimization</h2>
+<p>Now let&#39;s enable Search Optimization for the <code>wikidata_original</code> table in the newly created <code>WIKI_SO</code> Database (<code>Search Optimization Guide</code> Worksheet). We can either enable Search Optimization on the whole table or enable it for a few columns depending on the queries we want to accelerate.</p>
+<p>For this guide, let&#39;s selectively enable Search optimization for a few columns:</p>
+<pre><code>// Defining Search Optimization on VARCHAR fields
+ALTER TABLE wikidata_original ADD SEARCH OPTIMIZATION ON EQUALITY(id, label, description);
+
+// Defining Search Optimization on VARCHAR fields optimized for Wildcard search
+ALTER TABLE wikidata_original ADD SEARCH OPTIMIZATION ON SUBSTRING(description);
+
+// Defining Search Optimization on VARIANT field
+ALTER TABLE wikidata_original ADD SEARCH OPTIMIZATION ON EQUALITY(labels);
+</code></pre>
+<h2 is-upgraded>Ensure Search Optimization first time indexing is complete</h2>
+<p>Now, let&#39;s verify that Search Optimization is enabled and the backend process has finished indexing our data. It will take about 2 minutes for that to happen as the optimized search access paths are being built for these columns by Snowflake.</p>
+<p>Run the below query against the newly created database (<code>WIKI_SO</code>)</p>
+<pre><code>DESCRIBE SEARCH OPTIMIZATION ON wikidata_original;
+</code></pre>
+<p>It would return a result like below:</p>
+<p class="image-container"><img alt="SOActive" src="img/43b805ed886ff00.png"></p>
+<p>Make sure that all the rows have the <code>active</code> column set to <code>true</code> before proceeding further in this guide.</p>
+<p>Now you are all set up to run some queries and dive deep into Search Optimization.</p>
+<p>We have intentionally enabled Search Optimization for <code>wikidata_original</code> table and not <code>entity_is_subclass_of</code> table for this guide.</p>
+<p><strong><em>NOTE:</em></strong> Please note that the results, query time, partitions or bytes scanned might differ when you run the queries in comparison to the values noted below as the data gets refreshed monthly in the above two tables.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Equality and Wildcard Search" duration="10">
+        <p>Now let&#39;s build some queries and observe how Search Optimization helps optimize them.</p>
+<p>To start off, we have already enabled Search Optimization on the <code>LABEL</code> and <code>DESCRIPTION</code> fields for equality and substring predicates respectively in the previous section.</p>
+<p class="image-container"><img alt="SOEqualitySearch" src="img/f63d5319c162b265.png"></p>
+<p><strong><em>NOTE:<br></em></strong> If you wish to run the queries below on both databases (<code>WIKIDATA</code> and <code>WIKI_SO</code>) to evaluate performance impact, please make sure to run the commands below before you switch from one database to another. This will ensure that no cached results (hot or warm) are used.<br><br> ALTER SESSION SET USE_CACHED_RESULT = false;<br> ALTER WAREHOUSE my_wh SUSPEND;</p>
+<p>Now, let&#39;s say you want to find all the articles about the <code>iPhone</code> which have the words <code>wikimedia or page</code> in the description (in that order). The query would look like:</p>
+<pre><code>SELECT * 
+  FROM wikidata_original
+  WHERE 
+    label= &#39;iPhone&#39; AND 
+    description ILIKE &#39;%wikimedia%page%&#39;;
+</code></pre>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong>Without search optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>With Search Optimization</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>It takes 28 seconds to run the query on the table without search optimization. the other interesting aspect is, <strong>almost all partitions</strong> need to be scanned. also you will note that ~23.01GB data is scanned. Following are the full statistics <img alt="equalityStat1" src="img/57a5071df1be1afc.png"></p>
+</td><td colspan="1" rowspan="1"><p>On the other hand, the query takes 5.7 seconds on the search optimized table. you will notice that <strong>only 7 partitions</strong> of the total 5413 partitions are scanned. in addition only 31.79MB of the data needs to be scanned.<img alt="equalityStats2" src="img/1042b89f22509c8.png"></p>
+</td></tr>
+</table>
+<p><em>Looking at the numbers side by side, we know that Search Optimization has definitely improved the query performance.</em></p>
+<table>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p><strong>Without Search Optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>With Search Optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>Performance Impact</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Query run time</strong></p>
+</td><td colspan="1" rowspan="1"><p>28 seconds</p>
+</td><td colspan="1" rowspan="1"><p>5.7 seconds</p>
+</td><td colspan="1" rowspan="1"><p><strong>79.64% improvement</strong> in query speed</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Percentage of partitions scanned</strong></p>
+</td><td colspan="1" rowspan="1"><p>99.91%</p>
+</td><td colspan="1" rowspan="1"><p>0.13%</p>
+</td><td colspan="1" rowspan="1"><p><strong>99.78% less partitions</strong> scanned</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Bytes scanned</strong></p>
+</td><td colspan="1" rowspan="1"><p>23.01GB</p>
+</td><td colspan="1" rowspan="1"><p>31.79MB</p>
+</td><td colspan="1" rowspan="1"><p><strong>99.86% less data</strong> scanned</p>
+</td></tr>
+</table>
+<p>Let&#39;s look at another example. Say, you want to find all articles which have the words <code>blog post</code> in their description, following would be the query to do so:</p>
+<pre><code>SELECT * 
+  FROM wikidata_original 
+  WHERE 
+    description ILIKE &#39;%blog post%&#39;;
+</code></pre>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong>Without search optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>With Search Optimization</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>The query runs for 23 seconds and <strong>ALL partitions</strong> are scanned. Also, 10.60GB of data is scanned. See the picture below for full details.<img alt="equalityStat3" src="img/4535f3835a62134b.png"></p>
+</td><td colspan="1" rowspan="1"><p>On the other hand, the query runs in 8.7 seconds on the Search Optimized table. You&#39;ll also notice that <strong>only 347 partitions</strong> of the total 5413 partitions are scanned. In addition 4.09GB of the data was scanned.  See the picture below for full details.<img alt="equalityStats4" src="img/85eb3fcc08c4f07b.png"></p>
+</td></tr>
+</table>
+<p><em>As you can see from the </em></p>
+<p><strong><em>Performance Impact</em></strong></p>
+<p><em> column above, using Search Optimization allows us to make significant improvements in query performance.</em></p>
+<table>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p><strong>Without Search Optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>With Search Optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>Performance Impact</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Query run time</strong></p>
+</td><td colspan="1" rowspan="1"><p>23 seconds</p>
+</td><td colspan="1" rowspan="1"><p>8.7 seconds</p>
+</td><td colspan="1" rowspan="1"><p><strong>62.17% improvement</strong> in query speed</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Percentage of partitions scanned</strong></p>
+</td><td colspan="1" rowspan="1"><p>100%</p>
+</td><td colspan="1" rowspan="1"><p>6.41%</p>
+</td><td colspan="1" rowspan="1"><p><strong>99.59% less partitions</strong> scanned</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Bytes scanned</strong></p>
+</td><td colspan="1" rowspan="1"><p>10.60GB</p>
+</td><td colspan="1" rowspan="1"><p>4.09GB</p>
+</td><td colspan="1" rowspan="1"><p><strong>61.42% less data</strong> scanned</p>
+</td></tr>
+</table>
+<p>Want to learn more? You can refer to our external documentations for benefitting from Search Optimization for queries with <a href="https://docs.snowflake.com/en/user-guide/search-optimization-service.html#equality-or-in-predicates" target="_blank"> Equality Predicates</a> and <a href="https://docs.snowflake.com/en/user-guide/search-optimization-service.html#substrings-and-regular-expressions" target="_blank">Wildcards</a></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Searching in Variant data" duration="5">
+        <p>In this section, let&#39;s search in the variant data and analyze how Search Optimization helps in these cases.</p>
+<p><strong><em>NOTE:<br></em></strong> If you wish to run the queries below on both databases (<code>WIKIDATA</code> and <code>WIKI_SO</code>) to evaluate performance impact, please make sure to run the commands below before you switch from one database to another. This will ensure that no cached results (hot or warm) are used.<br><br> ALTER SESSION SET USE_CACHED_RESULT = false;<br> ALTER WAREHOUSE my_wh SUSPEND;</p>
+<p>To start off, we have already enabled Search Optimization on the <code>Labels</code> field which is an unstructured JSON.</p>
+<p class="image-container"><img alt="VariantSOActive" src="img/6230a9673711ff37.png"></p>
+<p>Let&#39;s say you want to find all entries where the label is set to <code>National Doughnut Day</code> in the <code>English version</code> of the article. To do so, you can run the following query:</p>
+<pre><code>SELECT * 
+  FROM wikidata_original 
+  WHERE labels:en:value = &#39;National Doughnut Day&#39;;
+</code></pre>
+<p>The above query returns <strong>2 rows out of 96.9 million rows</strong>.</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong>Without search optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>With Search Optimization</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>The query runs for 42 seconds on the shared database. You will also see that <strong>ALL partitions</strong> need to be scanned. In addition, ~83.38GB of data was scanned. <img alt="variantStats1" src="img/d5bcf2f069453e74.png"></p>
+</td><td colspan="1" rowspan="1"><p>On the other hand, it takes 5.2 seconds to run the same query on the search optimized table. You will also notice that <strong>only 5 partitions</strong> of the total 5413 partitions are scanned. In addition only 94.25MB of the data was scanned.<img alt="varinatStats2" src="img/95318889de482939.png"></p>
+</td></tr>
+</table>
+<p><em>From the </em></p>
+<p><strong><em>Performance Impact</em></strong></p>
+<p><em> column below, we see that using Search Optimization allows us to make significant improvements in query performance</em></p>
+<table>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p><strong>Without Search Optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>With Search Optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>Performance Impact</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Query run time</strong></p>
+</td><td colspan="1" rowspan="1"><p>42 seconds</p>
+</td><td colspan="1" rowspan="1"><p>5.2 seconds</p>
+</td><td colspan="1" rowspan="1"><p><strong>87.62% improvement</strong> in query speed</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Percentage of partitions scanned</strong></p>
+</td><td colspan="1" rowspan="1"><p>100%</p>
+</td><td colspan="1" rowspan="1"><p>0.09%</p>
+</td><td colspan="1" rowspan="1"><p><strong>99.91% less partitions</strong> scanned</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Bytes scanned</strong></p>
+</td><td colspan="1" rowspan="1"><p>83.38GB</p>
+</td><td colspan="1" rowspan="1"><p>94.35MB</p>
+</td><td colspan="1" rowspan="1"><p><strong>99.80% less data</strong> scanned</p>
+</td></tr>
+</table>
+<p>Want to learn more? You can refer to our external documentations for <a href="https://docs.snowflake.com/en/user-guide/search-optismization-service.html#fields-in-variant-columns" target="_blank">benefitting from Search Optimization for queries on Variant Data</a></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Accelerating Joins" duration="5">
+        <p>The search optimization service can improve the performance of queries that join a small table with a large table.</p>
+<p><strong><em>NOTE:<br></em></strong> In data warehousing, the large table is often referred to as the fact table. The small table is referred to as the dimension table. The rest of this topic uses these terms when referring to the large table and the small table in the join.</p>
+<p>To enable the search optimization service to improve the performance of joins, you need to add Search Optimization to the fact table (the larger of the two tables). In addition, the dimension table (the smaller of the two tables) should have few distinct values. In our guide, <code>wikidata_original</code> is the fact table whereas <code>entity_is_subclass_of</code> is the dimension table.</p>
+<p>Let&#39;s say you want to find out the Subclass ID of all articles related to <code>‘Formula One'</code>. Say we know the following entity ids in the wikidata_original table mapping to ‘Formula One&#39; articles are =&gt; <code>'Q1437617','Q8564669','Q1968' and 'Q5470299'</code></p>
+<p>So, the query to find the <code>‘Formula One'</code> subclass Ids would look like below:</p>
+<pre><code>SELECT *  
+  FROM entity_is_subclass_of AS e 
+  JOIN wikidata_original AS o ON (e.subclass_of_name = o.label)
+  WHERE e.entity_id IN (&#39;Q1437617&#39;,&#39;Q8564669&#39;,&#39;Q1968&#39;,&#39;Q5470299&#39;) ;
+</code></pre>
+<p><strong><em>NOTE:<br></em></strong> If you wish to run the queries below on both databases (<code>WIKIDATA</code> and <code>WIKI_SO</code>) to evaluate performance impact, please make sure to run the commands below before you switch from one database to another. This will ensure that no cached results (hot or warm) are used.<br><br> ALTER SESSION SET USE_CACHED_RESULT = false;<br> ALTER WAREHOUSE my_wh SUSPEND;</p>
+<table>
+<tr><td colspan="1" rowspan="1"><p><strong>Without search optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>With Search Optimization</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p>It takes ~43 seconds and scans nearly <strong>ALL partitions</strong> and about 64.64GB of data to find the resulting Subclass ID. See the picture below for full details. <img alt="joinStats1" src="img/8c9c59a9503697c7.png"></p>
+</td><td colspan="1" rowspan="1"><p>On the other hand, the query on the search optimized table, returns the result (subclass_of_id =&gt; Q1199515) in 4.4 seconds. Also, only a small portion of data is scanned to find the answer (<strong>12 partitions</strong> and 99.30MB of data is scanned).<img alt="joinStats2" src="img/a9a1f193e8ec21e2.png"></p>
+</td></tr>
+</table>
+<p><em>If we compare the statistics side by side, we can observe that Search Optimization greatly optimized the JOIN query.</em></p>
+<table>
+<tr><td colspan="1" rowspan="1"></td><td colspan="1" rowspan="1"><p><strong>Without Search Optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>With Search Optimization</strong></p>
+</td><td colspan="1" rowspan="1"><p><strong>Performance Impact</strong></p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Query run time</strong></p>
+</td><td colspan="1" rowspan="1"><p>43 seconds</p>
+</td><td colspan="1" rowspan="1"><p>4.4 seconds</p>
+</td><td colspan="1" rowspan="1"><p><strong>92.09% improvement</strong> in query speed</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Percentage of partitions scanned</strong></p>
+</td><td colspan="1" rowspan="1"><p>99.92%</p>
+</td><td colspan="1" rowspan="1"><p>0.22%</p>
+</td><td colspan="1" rowspan="1"><p><strong>99.70% less partitions</strong> scanned</p>
+</td></tr>
+<tr><td colspan="1" rowspan="1"><p><strong>Bytes scanned</strong></p>
+</td><td colspan="1" rowspan="1"><p>62.64GB</p>
+</td><td colspan="1" rowspan="1"><p>99.30MB</p>
+</td><td colspan="1" rowspan="1"><p><strong>99.84% less data</strong> scanned</p>
+</td></tr>
+</table>
+<p>Want to learn more? You can refer to our external documentations for <a href="https://docs.snowflake.com/en/user-guide/search-optimization-service.html#enabling-the-search-optimization-service-to-improve-the-performance-of-joins" target="_blank">benefitting from Search Optimization for JOIN queries</a></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Queries that are not benefitting from Search Optimization" duration="0">
+        <p>Not all queries benefit from Search Optimization. One such example is the following query to get all entries that have description with the words wikimedia and page in that order. The query would look like:</p>
+<pre><code>SELECT * 
+  FROM WIKIDATA_ORIGINAL 
+  WHERE description ILIKE &#39;%wikimedia%page%&#39;;
+</code></pre>
+<p>The following query returns <strong>1.4 Million rows</strong>. As shown in the snapshot below, <strong><em>only 1 out of the 5413 partitions is skipped</em></strong> when you run the query on the search optimized <code>wikimedia_original</code> table in our newly created <code>WIKI_SO</code> database .</p>
+<p class="image-container"><img alt="SO_Not_Applicable" src="img/39f84b25ac5157c8.png"></p>
+<p><strong>Such queries aren&#39;t benefitted from Search Optimization as the number of partitions that can be skipped by Search Optimization Service are very minimal.</strong></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion" duration="1">
+        <p>In this guide, we have covered how to acquire a shared database from Snowflake Marketplace, how to enable Search Optimization on specific columns and analyze the performance improvements in queries with Search Optimization enabled.</p>
+<p>You are now ready to explore the larger world of Snowflake <a href="https://docs.snowflake.com/en/user-guide/search-optimization-service.html" target="_blank">Search Optimizaitn Service</a></p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/native-shim.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/custom-elements.min.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/prettify.js"></script>
+  <script src="https://quickstarts.snowflake.com/elements/codelab-elements/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+  <script type="text/javascript">
+    window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=t.forceSSL||"https:"===document.location.protocol,a=document.createElement("script");a.type="text/javascript",a.async=!0,a.src=(r?"https:":"http:")+"//cdn.heapanalytics.com/js/heap-"+e+".js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(a,n);for(var o=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","removeEventProperty","setEventProperties","track","unsetEventProperty"],c=0;c<p.length;c++)heap[p[c]]=o(p[c])};
+    heap.load("2025084205");
+  </script>
+</body>
+</html>
